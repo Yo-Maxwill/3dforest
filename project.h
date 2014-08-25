@@ -136,6 +136,7 @@ class Project
 //TERRAINCLOUD
     void set_TerrainCloud(Cloud cloud);
     void set_TerrainCloudat(int,Cloud);
+    void set_TreeCloudat(int,Cloud);
     Cloud get_TerrainCloud(int i);
     int get_sizeTerainCV();
 

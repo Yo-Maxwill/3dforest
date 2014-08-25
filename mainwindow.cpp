@@ -180,8 +180,8 @@ void MainWindow::newProject()
 //NEBO DEFINOVAT NOVOU
   if(!ok)
   {
-    name = QInputDialog::getText(this,tr("nazev projektu"),tr("zadejte nazev projektu:"));
-    QMessageBox::information(this,"","nejsou nastaveny souradnice projektu,vyberte soubor podle ktereho buDou nastaveny");
+    name = QInputDialog::getText(this,tr("name of project"),tr("enter name of project:"));
+    QMessageBox::information(this,"","coordinats are not set up, please select file with coordinates which will be used in transformation matrix");
     QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.txt *.xyz)"));
 
     QFile file (fileName);
@@ -363,7 +363,7 @@ void MainWindow::openTreeFile(QString file)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   pcl::io::loadPCDFile<pcl::PointXYZI> (file.toUtf8().constData(), *cloud);
 
-  QStringList coords = file.split("/");
+  QStringList coords = file.split("\\");
 
   QColor col = QColor(rand() %255,rand() %255,rand() %255);
   Cloud *c =new Cloud(cloud,coords.back(),col);
@@ -563,22 +563,19 @@ void MainWindow::importVegeCloud()
 }
 void MainWindow::importTreeCloud()
 {
-  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.pcd)"));
-  if (!fileName.isEmpty())
-    {
-      openTreeFile(fileName);
-      Proj->save_newCloud("strom",fileName);
-      //menu
-      tAAct->setEnabled(true);
-      tAReadAct->setEnabled(true);
-      posAct->setEnabled(true);
-      dbhAct->setEnabled(true);
-      heightAct->setEnabled(true);
-      manualSelAct->setEnabled(true);
-      treeEditAct->setEnabled(true);
-    }
-  else
-    QMessageBox::warning(this,"ERROR","no name filled");
+  QStringList ls =QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
+  if (ls.isEmpty())
+  {
+    QMessageBox::warning(this,"ERROR","No file selected");
+    return;
+  }
+
+  for(int i=0;i<ls.size(); i++)
+  {
+    QString fileName = ls.at(i);
+    openTreeFile(fileName);
+    Proj->save_newCloud("strom",fileName);
+  }
 }
 
 //EXPORT method
@@ -1775,30 +1772,38 @@ void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
     }
   }
 }
-void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString name)
+void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString name, bool overwrt = false)
 {
   Cloud *c = new Cloud(tree_cloud,name);
   Proj->set_OstCloud(*c);
   QString pathT = QString("%1/%2.pcd").arg(Proj->get_Path()).arg(name);
   QFile file(pathT);
-  if(file.exists())
+  if(overwrt== true)
   {
+    Proj->save_newCloud("strom",name,tree_cloud);
+    openTreeFile(pathT);
+  }
+  else
+  {
+    if(file.exists())
+    {
     //do you wish to rewrite existing file?
-    QMessageBox::StandardButton rewrite = QMessageBox::question(this,tr("overwrite file?"),tr("File with given name exist. Do you wish to overwrite file?"),QMessageBox::Yes|QMessageBox::No);
-    if(rewrite == QMessageBox::Yes)
+      QMessageBox::StandardButton rewrite = QMessageBox::question(this,tr("overwrite file?"),tr("File with given name exist. Do you wish to overwrite file?"),QMessageBox::Yes|QMessageBox::No);
+      if(rewrite == QMessageBox::Yes)
+      {
+        Proj->save_newCloud("strom",name,tree_cloud);
+        openTreeFile(pathT);
+      }
+      else
+      {
+        saveTreeCloud(tree_cloud);
+      }
+    }
+    else
     {
       Proj->save_newCloud("strom",name,tree_cloud);
       openTreeFile(pathT);
     }
-    else
-    {
-      saveTreeCloud(tree_cloud);
-    }
-  }
-  else
-  {
-    Proj->save_newCloud("strom",name,tree_cloud);
-    openTreeFile(pathT);
   }
 }
 void MainWindow::saveOstCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr s_cloud)
@@ -1872,54 +1877,146 @@ void MainWindow::seg_dist()
     Cloud *cl = new Cloud(Proj->get_Cloud(item));
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_main (cl->get_Cloud());
 
+//vybrat jen body do vysky 1,5 m a zbytek ulozit bokem
+    //vybrat teren
+    QStringList tereny;
+    for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
+    {
+      tereny << Proj->get_TerrainCloud(i).get_name();
+    }
+    bool okk;
+    QString teren = QInputDialog::getItem(this, tr("select terrain"), tr("cloud name:"), tereny, 0, false, &okk);
+    if (teren.isEmpty())
+    {
+      QMessageBox::warning(this, tr("error"), tr("You do not select terrain operation canceled"));
+      return;
+    }
+    Cloud *clt = new Cloud(Proj->get_Cloud(teren));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_teren (clt->get_Cloud());
+    // vybrat body
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vyrez (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_rest (new pcl::PointCloud<pcl::PointXYZI>);
+    kdtree.setInputCloud (cloud_teren);
+
+    #pragma omp parallel for
+    for(int i=0; i < cloud_main->points.size();i++)
+    {
+      pcl::PointXYZI searchPointV;
+      searchPointV=cloud_main->points.at(i);
+      std::vector<int> pointIDv(1);
+      std::vector<float> pointSDv(1);
+  //#pragma omp critical
+      if(kdtree.nearestKSearch(searchPointV,1,pointIDv,pointSDv) > 0 && (searchPointV.z - cloud_teren->points[ pointIDv.at(0) ].z) < 1.3)
+      {
+        pcl::PointXYZI in;
+        in.x = searchPointV.x;
+        in.y = searchPointV.y;
+        in.z = searchPointV.z;
+        #pragma omp critical
+        cloud_vyrez->points.push_back(in);
+      }
+      else
+      {
+        pcl::PointXYZI in;
+        in.x = searchPointV.x;
+        in.y = searchPointV.y;
+        in.z = searchPointV.z;
+        #pragma omp critical
+        cloud_rest->points.push_back(in);
+      }
+    }
+    cloud_vyrez->width = cloud_vyrez->points.size ();
+    cloud_vyrez->is_dense=true;
+    cloud_vyrez->height=1;
+//segmentace na jednotlive objekty
   // zacit segmentaci
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
-    tree->setInputCloud (cloud_main);
+    tree->setInputCloud (cloud_vyrez);
     // samotna segmentace
     ec.setClusterTolerance (res/100); // m
-    ec.setMinClusterSize (300);
-    ec.setMaxClusterSize (1000000);// max velikost clusteru
+    ec.setMinClusterSize (500);
+    ec.setMaxClusterSize (10000000);// max velikost clusteru
     ec.setSearchMethod (tree);
-    ec.setInputCloud (cloud_main);
+    ec.setInputCloud (cloud_vyrez);
     ec.extract (cluster_indices); //uklada se do vectoru
-
-
-
     //#pragma omp parallel for
     int c =0;
     for( c ; c< cluster_indices.size(); c++)
     {
-
       pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
       pcl::PointIndices it = cluster_indices.at(c);
-
       //ulozeni do cloud_clusteru
       for (int t=0; t < it.indices.size(); t++) //vem kazdou indice co obsahuje pole indices
       {
-        cloud_cluster->points.push_back (cloud_main->points.at(it.indices.at(t))); // prirad ji do cloudu
+        cloud_cluster->points.push_back (cloud_vyrez->points.at(it.indices.at(t))); // prirad ji do cloudu
         inliers->indices.push_back(it.indices.at(t));
       }
-
       //ulozeni do souboru
       QString name =QString("%1_%2").arg(prefix).arg(c);
       saveTreeCloud(cloud_cluster,name);
     }
-  //ulozit zbytkovy soubor
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_rest (new pcl::PointCloud<pcl::PointXYZI>);
+  //prida zbytky do cloud_rest
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_zbytek (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::ExtractIndices<pcl::PointXYZI> ext;
     // Extract the inliers
-    ext.setInputCloud (cloud_main);
+    ext.setInputCloud (cloud_vyrez);
     ext.setIndices (inliers);
     ext.setNegative (true);
-    ext.filter (*cloud_rest);
-    saveOstCloud(cloud_rest);
+    ext.filter (*cloud_zbytek);
+    *cloud_rest= *cloud_rest + *cloud_zbytek;
 
-    QString procenta = QString("celkem bylo rozdeleno %1 % bodů z %2. celkem vytvoreno %3 objektu.")
-    .arg((inliers->indices.size()*100)/cloud_main->points.size()).arg(cloud_main->points.size()).arg(c);
-    QMessageBox::information(this, tr("info"),procenta);
+// pro kazdy bod ve zbytku spocitat dva nejblizsi objekty
+
+   //pro kazdy bod
+   #pragma omp parallel for
+   for(int i=0; i < cloud_rest->points.size();i++)
+   {
+      pcl::PointXYZI searchPointV;
+      searchPointV=cloud_rest->points.at(i);
+     // pro kazdy object
+      int n = -1;
+      for(int j=0; j < Proj->get_sizeTreeCV(); j++)
+      {
+        Cloud *tree = new Cloud (Proj->get_TreeCloud(j));
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tree (tree->get_Cloud());
+        pcl::KdTreeFLANN<pcl::PointXYZI> kdt;
+        kdt.setInputCloud (cloud_tree);// object cloud
+        float dist = 1000;// distance to object
+
+        std::vector<int> pointIDv(1);
+        std::vector<float> pointSDv(1);
+        // najde nejbizsi bod a urci jeho vzdalenost
+        if(kdtree.nearestKSearch(searchPointV,1,pointIDv,pointSDv))
+        {
+          if(pointSDv.at(0) < dist)
+          {
+            dist = pointSDv.at(0);
+            n = j;
+          }
+        }
+      }
+      if(n>-1)
+      {
+        //priradit bod k danemu objektu
+        Cloud *tree = new Cloud (Proj->get_TreeCloud(n));
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_object(tree->get_Cloud());
+        QString nameCloud = tree->get_name();
+        #pragma omp critical
+        cloud_object->points.push_back(searchPointV);
+        Cloud *tree_new = new Cloud(cloud_object,nameCloud);
+        Proj->set_TreeCloudat(n,*tree_new);
+      }
+    }
+    //ulozit kazdy object
+    for(int j=0; j < Proj->get_sizeTreeCV(); j++)
+    {
+      Cloud *tree = new Cloud (Proj->get_TreeCloud(j));
+      saveTreeCloud(tree->get_Cloud(),tree->get_name(),true);
+    }
   }
 }
 

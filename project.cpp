@@ -410,6 +410,10 @@ void Project::set_TerrainCloudat(int i, Cloud cloud)
 {
   m_terrainCloud.at(i) = cloud;
 }
+void Project::set_TreeCloudat(int i, Cloud cloud)
+{
+  m_stromy.at(i) = cloud;
+}
 void Project::set_VegeCloud(Cloud cloud)// TODO: nastavit aby neprepisovalo jiz zname, ale spojilo
 {
 m_vegeCloud.push_back(cloud);
@@ -523,7 +527,7 @@ void Project::save_newCloud(QString type, QString path)
   //save cloud
   QString path1 = save_Cloud(path);
   //otevrit Proj.3df file pro pripsani
-  QString projfile = QString("%1/proj.3df").arg(get_Path());
+  QString projfile = QString("%1\proj.3df").arg(get_Path());
   QFile file (projfile);
   file.open(QIODevice::Append | QIODevice::Text);
   QTextStream out(&file);
@@ -546,7 +550,7 @@ QString Project::save_Cloud(QString path)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   pcl::io::loadPCDFile(path.toUtf8().constData(),*cloud);
 
-  QStringList name = path.split("/");
+  QStringList name = path.split("\\");
   QString file = name.back();
   QStringList ext = file.split(".");
 

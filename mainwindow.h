@@ -164,7 +164,7 @@ class MainWindow : public QMainWindow
   void createTreeView();
   void saveOstCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr s_cloud);
   void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud);
-  void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString filename);
+  void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString filename,bool overwrt);
   //MENUS
     QMenu *fileMenu;
     QMenu *terenMenu;
