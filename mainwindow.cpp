@@ -139,13 +139,13 @@ void MainWindow::newProject()
   else
   {
     QMessageBox *msgBox =  new QMessageBox(this);
-    msgBox->setText("projekt existuje");
-    msgBox->setInformativeText("zdana slozaka jiz existuje prejete si ji prepsat?");
+    msgBox->setText("project exist");
+    msgBox->setInformativeText("directory with the same name exist already. Do you wish to rewrite it?");
     msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msgBox->setDefaultButton(QMessageBox::Yes);
     if(msgBox->exec() != QMessageBox::Yes)
     {
-      QMessageBox::about(this,tr("neprepisuje"),tr("projekt nebude vytvoren"));
+      QMessageBox::about(this,tr("do not ovewrite"),tr("project creation arborted"));
       return;
     }
   }
@@ -176,7 +176,7 @@ void MainWindow::newProject()
     QString a = QString("%1").arg(seznam.at(i).name);
     items<<(a);
   }
-  QString name = QInputDialog::getItem(this, tr("select your forest"),tr("vyberte tranformacni matici projektu:\n nebo zadejte CANCEL pro vytvoreni nove:"), items, 0, false, &ok);
+  QString name = QInputDialog::getItem(this, tr("select your forest"),tr("Select transform matrix of project:\n or CANCEl for creating new:"), items, 0, false, &ok);
 //NEBO DEFINOVAT NOVOU
   if(!ok)
   {
