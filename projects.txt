@@ -4,4 +4,4 @@ Velka_Ples -788000 -1047000
 Salajka 465000 1150000
 Boubin 804000 1158000
 Zofin 743000 1202000 
-norway 0 0
+null 0 0

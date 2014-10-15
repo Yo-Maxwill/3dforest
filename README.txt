@@ -1,6 +1,7 @@
 3DFOREST application
 created as a part of PhD thesis at VUKOZ Czech republic.
-Published under term of BSD licence.
+Published under term of GPL v3 license. for more info see LICENSE file
+
 created by: Jan trochta j.trochta@gmail.com
 
 INSTALLATION
