@@ -123,6 +123,7 @@ class MainWindow : public QMainWindow
   void openCloudFile(QString file, QColor col);
   //IMPORT
   void importtxt();
+  void importlas();
   void importTerrainFile();
   void importCloud();
   void importVegeCloud();
@@ -193,6 +194,7 @@ class MainWindow : public QMainWindow
     QAction *open_projectAct;
     QAction *close_projectAct;
     QAction *importTXTAct;
+    QAction *importLASAct;
     QAction *importPCDAct;
     QAction *importTerenAct;
     QAction *importVegeAct;

@@ -543,6 +543,49 @@ void MainWindow::importtxt()
 
   }
 }
+void MainWindow::importlas()
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.las)"));
+  if (fileName.isEmpty())
+  {
+    QMessageBox::warning(this,"ERROR","no name filled");
+    return;
+  }
+  else
+  {
+    std::ifstream ifs;
+    ifs.open(fileName.toUtf8().constData(), std::ios::in | std::ios::binary);
+
+    liblas::ReaderFactory f;
+    liblas::Reader reader = f.CreateWithStream(ifs);
+    liblas::Header const& header = reader.GetHeader();
+
+//read data into cloud
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    while (reader.ReadNextPoint())
+    {
+      liblas::Point const& p = reader.GetPoint();
+      pcl::PointXYZI data;
+
+      data.x = p.GetX()+Proj->get_Xtransform();
+      data.y = p.GetY()+Proj->get_Ytransform();
+      data.z = p.GetZ();
+      data.intensity=0;
+      cloud->points.push_back(data);
+    }
+    cloud->width = cloud->points.size ();
+    cloud->is_dense=true;
+    cloud->height=1;
+
+    QString name = QInputDialog::getText(this, tr("Name of Import File"),tr("Please insert name of\nimported file (e.g. cloud)"));
+    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
+    Proj->save_newCloud("cloud",name,cloud);
+//open new file
+    openCloudFile(fullname);
+  }
+}
 void MainWindow::importTerrainFile()
 {
   QString fileName = QFileDialog::getOpenFileName(this,tr("open file for terrain"),"",tr("files (*.pcd)"));
@@ -2152,6 +2195,10 @@ void MainWindow::createActions()
   importTXTAct->setStatusTip(tr("Import of txt file"));
   connect(importTXTAct, SIGNAL(triggered()), this, SLOT(importtxt()));
 
+  importLASAct = new QAction( tr("&Import LAS"), this);
+  importTXTAct->setStatusTip(tr("Import of las file"));
+  connect(importLASAct, SIGNAL(triggered()), this, SLOT(importlas()));
+
   importPCDAct = new QAction(tr("&Import basic cloud (PCD)"), this);
   importPCDAct->setStatusTip(tr("Open an existing file"));
   connect(importPCDAct, SIGNAL(triggered()), this, SLOT(importCloud()));
@@ -2286,6 +2333,7 @@ void MainWindow::createMenus()
   fileMenu->addSeparator();
   fileMenu->addAction(importTXTAct);
   fileMenu->addAction(importPCDAct);
+  fileMenu->addAction(importLASAct);
   fileMenu->addAction(importTerenAct);
   fileMenu->addAction(importVegeAct);
   fileMenu->addAction(importTreeAct);
