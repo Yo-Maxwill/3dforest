@@ -32,13 +32,20 @@
 #include <omp.h>
 #include <project.h>
 
-
 class QAction;
 class QMenu;
 class QCheckBox;
 class QInputDialog;
 class QLabel;
 class QComboBox;
+
+class Visualizer : public pcl::visualization::PCLVisualizer
+{
+  public:
+    Visualizer(QString name);
+};
+
+
 
 class PlusDialog :public QDialog
 {
@@ -85,6 +92,8 @@ private slots:
     void onItemChange(QTreeWidgetItem *item,int i);
     void onDeleteItem(QString name);
     void onColor(QString name);
+    void onColorField(QString name);
+    void onPsize(QString name);
     void allON();
     void allOFF();
 
@@ -93,6 +102,8 @@ private slots:
     void checkedOFF(QString);
     void deleteItem(QString);
     void colorItem(QString);
+    void colorItemField(QString);
+    void psize(QString);
 };
 
 class MainWindow : public QMainWindow
@@ -123,6 +134,7 @@ class MainWindow : public QMainWindow
   void openCloudFile(QString file, QColor col);
   //IMPORT
   void importtxt();
+  void importtxt2();
   void importlas();
   void importTerrainFile();
   void importCloud();
@@ -147,6 +159,7 @@ class MainWindow : public QMainWindow
   void cylinderSeg();   //show best selected cylinders on each tree
   int dbh (pcl::PointCloud<pcl::PointXYZI>::Ptr input);
   void dbh();           //show cylinder computed by Hough Transform with graph of accumulated sum
+  void dbhLSR();        //least sqweare regression for circle
   void height();        //show line connecting lowest and highest point in tree cloud
   void position();      //show sphere at tree position
   void manualSelect();  //manually secting of trees
@@ -154,12 +167,14 @@ class MainWindow : public QMainWindow
   void treeEdit();      //manual editing of tree cloud
   void treeEditStop();  //stop of manual editing of tree cloud
   void lenght();        //lenght of cloud
-  void lenghtExport();
   void seg_dist();      //euclidian segmentation
+  void skeleton();
+  void dbhCloudEdit();
+  void dbhCloudStopEdit();
 
 ////MISC
   void plusCloud();     //contencate cloud
-  void plusCloud(QStringList names);
+  void plusCloud(QStringList names, QString typ);
   void voxelize();  //voxels of various size on selected cloud
   void backgroundColor();
 //// ABOUT
@@ -171,6 +186,9 @@ class MainWindow : public QMainWindow
   void removeCloud(QString name);
   void deleteCloud(QString name);
   void colorCloud(QString name);
+  void colorCloudField(QString name);
+  void PointSize(QString name);
+
 //// ACTION and MENUS
  private:
   void createActions();
@@ -183,7 +201,9 @@ class MainWindow : public QMainWindow
   void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString filename,bool overwrt);
   //MENUS
     QMenu *fileMenu;
+    QMenu *importMenu;
     QMenu *terenMenu;
+    QMenu *vegeMenu;
     QMenu *treeMenu;
     QMenu *helpMenu;
     QMenu *miscMenu;
@@ -211,13 +231,15 @@ class MainWindow : public QMainWindow
     QAction *tAReadAct;
     QAction *cylinderAct;
     QAction *dbhAct;
+    QAction *dbhLSRAct;
     QAction *heightAct;
     QAction *posAct;
     QAction *manualSelAct;
     QAction *treeEditAct;
+    QAction *dbhEditAct;
     QAction *lengAct;
-    QAction *lengExAct;
     QAction *segDistAct;
+    QAction *skeletonAct;
   //MISC ACTIONS
     QAction *plusAct;
     QAction *voxAct;
@@ -233,6 +255,7 @@ class MainWindow : public QMainWindow
   void onItemChange(QString name, bool st);
   void treeWid();
   void delete_cloud(QString name);
+
   //CONTEXT MENU
 
   void ShowTreeContextMenu(const QPoint& pos);
@@ -243,19 +266,21 @@ class MainWindow : public QMainWindow
 
 //// QVTKWIDGET
   QVTKWidget *qvtkwidget;
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> m_vis;
+  boost::shared_ptr<Visualizer> m_vis;
   void AreaEvent(const pcl::visualization::AreaPickingEvent& event, void* );
+
+  void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void* );
   void ShowContextMenu(const QPoint& pos);
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr lowPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr c,float res, bool v);
 
 
   Project *Proj;
-  pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud ;
-  QString m_cloud_name;
-  pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud1;
-  QString m_cloud1_name;
+  Cloud *m_cloud ;
+  Cloud *m_cloud1;
+
   void dispCloud(Cloud cloud);
+  void dispCloud(Cloud cloud, QString i);
   void dispCloud(Cloud cloud,int red, int green, int blue);
 
   QToolBar *fileToolBar;

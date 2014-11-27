@@ -33,6 +33,18 @@ struct stred {
     {return (i < str.i);}
 				};
 
+struct stredLSR {
+				float a;
+				float b;
+				float r;
+        float s;
+        float i;
+        float j;
+        float g;
+   bool operator < (const stred& str) const
+    {return (i < str.i);}
+				};
+
 struct vert{
 		double x;
 		double y;
@@ -53,6 +65,27 @@ struct coef{
     float r;
     };
 
+struct matrix3x3{
+    float a;
+    float b;
+    float c;
+    float d;
+    float e;
+    float f;
+    float g;
+    float h;
+    float i;
+    };
+
+struct median{
+    float x;
+    float y;
+    float z;
+    std::vector<int> pi;
+    float alfa;
+    float alf_sum;
+    };
+
 
 class Cloud
 {
@@ -60,26 +93,29 @@ protected:
   pcl::PointCloud<pcl::PointXYZI>::Ptr m_Cloud;
   QString m_name;
   QColor m_color;
+  int m_PointSize;
 
 public:
     Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name,QColor col);
     Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
     Cloud();
+    Cloud operator=(Cloud &kopie);
 
     void set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     void set_name(QString name);
     void set_color (QColor col);
+    void set_Psize (int p);
 
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr get_Cloud();
     QString get_name();
     QColor get_color();
-
+    int get_Psize();
 };
 
 class Tree : public Cloud
 {
-  Cloud m_dbhCloud; //cloud s doby v dbh bude mít jenom pár bodů
+  Cloud *m_dbhCloud; //cloud s doby v dbh bude mít jenom pár bodů
   stred m_dbh; //dbh
   float m_height; //tree height
   float m_lenght;
@@ -88,13 +124,33 @@ class Tree : public Cloud
 public:
     Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s);
     Tree (Cloud cloud);
-
+    Tree operator=(Tree &kopie);
     void set_dbhCloud();
+    void set_dbhCloud(Cloud c);
     void set_dbh(); //Hough transform
+    void set_dbhLSR();
+    stred set_dbhLSRALG(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    stred set_dbhLSRGEOM(stred circ, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    float Sigma(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle);
     void set_dbh(stred s);
     void set_height();
     void set_position(Cloud teren);
     void set_lenght();
+
+    //skeletizace
+    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton();
+    median median_(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+
+    median wlopInit(median med,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud );
+    std::vector<median> iterate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, std::vector<median> med);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, double h);
+    matrix3x3 jacobi(matrix3x3 in);
+    matrix3x3 covariance(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr c);
+    float alfa (float a, float b, float h=0.2);
+    float beta (float a, float b, float h=0.2);
+    float sigma(matrix3x3);
+
+
 
     Cloud get_dbhCloud();
     float get_height();
@@ -133,9 +189,13 @@ class Project
     QString save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c);
     void save_color(QString, QColor);
     void set_color(QString name, QColor col);
+    void set_PointSize(QString name, int p);
     void cleanAll();
     void readAtrs();
     void delete_Cloud(QString name);
+    void set_Psize(QString name, int p);
+
+
     //GET
     double get_Xtransform();
     double get_Ytransform();
@@ -164,6 +224,8 @@ class Project
     void set_Tree(Cloud cloud);
     Tree get_TreeCloud(int i);
     int get_sizeTreeCV();
+    void set_treedbh(int i, stred x);
+
 
 //OSTCLOUD
     void set_OstCloud(Cloud cloud);
@@ -176,6 +238,4 @@ class Project
   //jeste pridat mazani ze souboru proj.3df a podobne funkce
 
 };
-
-
 #endif // PROJECT_H_INCLUDED
