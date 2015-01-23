@@ -180,8 +180,11 @@ class MainWindow : public QMainWindow
   void importCloud();
   void importVegeCloud();
   void importTreeCloud();
+  void importpts();
+  void importptx();
   //EXPORT
   void exportCloud();
+  void exporttopts();
   //EXIT
   void closeEvent(QCloseEvent *event);
 
@@ -274,11 +277,14 @@ class MainWindow : public QMainWindow
     QAction *importTXTAct;
     QAction *importLASAct;
     QAction *importPCDAct;
+    QAction *importPTSAct;
+    QAction *importPTXAct;
     QAction *importTerenAct;
     QAction *importVegeAct;
     QAction *importTreeAct;
     QAction *exportTXTAct;
     QAction *exportPLYAct;
+    QAction *exportPTSAct;
     QAction *exitAct;
   //TEREN ACTIONS
     QAction *voxelAct;

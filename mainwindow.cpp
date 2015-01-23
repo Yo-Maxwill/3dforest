@@ -976,6 +976,121 @@ void MainWindow::importlas()
     openCloudFile(fullname);
   }
 }
+void MainWindow::importpts()
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.pts)"));
+  if (fileName.isEmpty())
+  {
+    QMessageBox::warning(this,"ERROR","no name filled");
+    return;
+  }
+  else
+  {
+    QFile file (fileName);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream in(&file);
+    bool header = true;
+    while(!in.atEnd())
+    {
+      QString line = in.readLine();
+      QStringList coords = line.split(" ");
+      pcl::PointXYZI data;
+
+      if(header ==true)
+      {
+        header = false;
+      }
+      else
+      {
+          if(!line.isEmpty())
+          {
+            data.x = coords.at(0).toDouble()+Proj->get_Xtransform();
+            data.y = coords.at(1).toDouble()+Proj->get_Ytransform();
+            data.z = coords.at(2).toFloat();
+            data.intensity=coords.at(3).toFloat();
+            cloud->points.push_back(data);
+          }
+      }
+    }
+    file.close();
+    in.~QTextStream();
+    cloud->width = cloud->points.size ();
+    cloud->is_dense=true;
+    cloud->height=1;
+
+    QStringList Fname = fileName.split("/");
+    QStringList name = Fname.back().split(".");
+    QString a =QString("vytvoreno; velikost cloudu: %1").arg(cloud->points.size ());
+    Proj->save_newCloud("cloud",name.at(0),cloud);
+    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+    QMessageBox::warning(this,"ERROR","ulozeno, pred otevrenim");
+//open new file
+    openCloudFile(fullname);
+
+  }
+}
+void MainWindow::importptx()
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+
+  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.ptx)"));
+  if (fileName.isEmpty())
+  {
+    QMessageBox::warning(this,"ERROR","no name filled");
+    return;
+  }
+  else
+  {
+    QFile file (fileName);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream in(&file);
+    int i = 0;
+    while(!in.atEnd())
+    {
+      if (i < 11)
+      {
+          QString hlavicka = in.readLine();
+      }
+      else
+      {
+      QString line = in.readLine();
+      QStringList coords = line.split(" ");
+      pcl::PointXYZI data;
+      double x,y;
+      float z,i;
+      x = coords.at(0).toDouble();
+      y = coords.at(1).toDouble();
+      z = coords.at(2).toFloat();
+      i = coords.at(3).toFloat();
+          if (x != 0 && y != 0 && z != 0 && i != 0.5)
+          {
+            data.x = x+Proj->get_Xtransform();
+            data.y = y+Proj->get_Ytransform();
+            data.z = z;
+            data.intensity=i;
+            cloud->points.push_back(data);
+          }
+      }
+      i++;
+    }
+    file.close();
+    in.~QTextStream();
+    cloud->width = cloud->points.size ();
+    cloud->is_dense=true;
+    cloud->height=1;
+
+    QStringList Fname = fileName.split("/");
+    QStringList name = Fname.back().split(".");
+    QMessageBox::warning(this,"ERROR",a);
+    Proj->save_newCloud("cloud",name.at(0),cloud);
+    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+//open new file
+    openCloudFile(fullname);
+
+  }
+}
 void MainWindow::importTerrainFile()
 {
   QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
@@ -1113,6 +1228,33 @@ void MainWindow::plysave()
 
   pcl::io::savePLYFileASCII(newFile.toUtf8().constData(),*cloud);
 
+}
+void MainWindow::exporttopts()
+{
+//vybrat cloud
+  QString cloudName = QInputDialog::getItem(this,("select cloud for voxelization"),("name of cloud:"),get_allNames());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+
+  *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
+//vybrat jmeno noveho souboru
+  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.pts)"));
+//zapisovat jednotlive radky
+  QFile file (newFile);
+  file.open(QIODevice::WriteOnly | QIODevice::Text);
+  QTextStream out(&file);
+  out.setRealNumberNotation(QTextStream::FixedNotation);
+  out.setRealNumberPrecision(3);
+
+    int pocetbodu = cloud->width;
+    out << pocetbodu << "\n";
+
+  for(pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+  {
+    double x = it->x - Proj->get_Xtransform();
+    double y = it->y - Proj->get_Ytransform();
+    out << x << " " << y << " " << it->z << "\n";
+  }
+  file.close();
 }
 //EXIT method
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -3036,6 +3178,14 @@ void MainWindow::createActions()
   importLASAct->setStatusTip(tr("Import of las file"));
   connect(importLASAct, SIGNAL(triggered()), this, SLOT(importlas()));
 
+  importPTSAct = new QAction( tr("&Import PTS"), this);
+  importPTSAct->setStatusTip(tr("Import of pts file"));
+  connect(importPTSAct, SIGNAL(triggered()), this, SLOT(importpts()));
+
+  importPTXAct = new QAction( tr("&Import PTX"), this);
+  importPTXAct->setStatusTip(tr("Import of ptx file"));
+  connect(importPTXAct, SIGNAL(triggered()), this, SLOT(importptx()));
+
   importPCDAct = new QAction(tr("&Import basic cloud (PCD)"), this);
   importPCDAct->setStatusTip(tr("Open an existing file"));
   connect(importPCDAct, SIGNAL(triggered()), this, SLOT(importCloud()));
@@ -3059,6 +3209,10 @@ void MainWindow::createActions()
   exportPLYAct = new QAction(tr("&Export file (ply)"), this);
   exportPLYAct->setStatusTip(tr("Export cloud into ply file"));
   connect(exportPLYAct, SIGNAL(triggered()), this, SLOT(plysave()));
+
+  exportPTSAct = new QAction(tr("&Export file (pts)"), this);
+  exportPTSAct->setStatusTip(tr("Export cloud into pts file"));
+  connect(exportPTSAct, SIGNAL(triggered()), this, SLOT(exporttopts()));
 
   exitAct = new QAction(tr("E&xit"), this);
   exitAct->setShortcuts(QKeySequence::Quit);
@@ -3195,6 +3349,8 @@ void MainWindow::createMenus()
   importMenu =  fileMenu->addMenu(tr("Import"));
   importMenu->addAction(importTXTAct);
   importMenu->addAction(importLASAct);
+  importMenu->addAction(importPTSAct);
+  importMenu->addAction(importPTXAct);
   importMenu->addAction(importPCDAct);
   importMenu->addAction(importTerenAct);
   importMenu->addAction(importVegeAct);
@@ -3202,6 +3358,7 @@ void MainWindow::createMenus()
   fileMenu->addSeparator();
   fileMenu->addAction(exportTXTAct);
   fileMenu->addAction(exportPLYAct);
+  fileMenu->addAction(exportPTSAct);
   fileMenu->addSeparator();
   fileMenu->addAction(exitAct);
 
