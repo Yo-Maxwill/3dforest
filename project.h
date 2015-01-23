@@ -27,12 +27,11 @@ struct stred {
 				float a;
 				float b;
 				float z;
-					int i;
-					int r;
+        float i;
+        float r;
    bool operator < (const stred& str) const
     {return (i < str.i);}
 				};
-
 struct stredLSR {
 				float a;
 				float b;
@@ -64,7 +63,6 @@ struct coef{
     float z;
     float r;
     };
-
 struct matrix3x3{
     float a;
     float b;
@@ -126,9 +124,9 @@ public:
     Tree (Cloud cloud);
     Tree operator=(Tree &kopie);
     void set_dbhCloud();
-    void set_dbhCloud(Cloud c);
-    void set_dbh(); //Hough transform
-    void set_dbhLSR();
+    void set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    void set_dbhHT(); //Hough transform
+    void set_dbhLSR(); //Least Square Regression
     stred set_dbhLSRALG(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     stred set_dbhLSRGEOM(stred circ, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     float Sigma(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle);
@@ -136,6 +134,7 @@ public:
     void set_height();
     void set_position(Cloud teren);
     void set_lenght();
+
 
     //skeletizace
     pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton();
@@ -150,9 +149,7 @@ public:
     float beta (float a, float b, float h=0.2);
     float sigma(matrix3x3);
 
-
-
-    Cloud get_dbhCloud();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr get_dbhCloud();
     float get_height();
     stred get_dbh();
     pcl::PointXYZI get_pose();
@@ -223,9 +220,10 @@ class Project
 //TREECLOUD
     void set_Tree(Cloud cloud);
     Tree get_TreeCloud(int i);
+    Tree get_TreeCloud(QString name);
     int get_sizeTreeCV();
     void set_treedbh(int i, stred x);
-
+    void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
 
 //OSTCLOUD
     void set_OstCloud(Cloud cloud);
@@ -238,4 +236,6 @@ class Project
   //jeste pridat mazani ze souboru proj.3df a podobne funkce
 
 };
+
+
 #endif // PROJECT_H_INCLUDED

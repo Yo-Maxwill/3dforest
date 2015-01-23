@@ -89,21 +89,24 @@ int Cloud::get_Psize()
 
 //Tree
 Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s)
-: Cloud(cloud, name, col),
-m_dbhCloud(new Cloud())
+: Cloud(cloud, name, col)
 {
-  set_dbh(s);
+  //set_dbh(s);
   pcl::getMinMax3D(*get_Cloud(),m_minp,m_maxp);
-  set_dbhCloud();
+
+  QString a = QString("%1_dbh").arg(m_name);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
+  m_dbhCloud = new Cloud(cloud_, a);
 }
 Tree::Tree (Cloud cloud)
-: Cloud(cloud),
-m_dbhCloud(new Cloud())
+: Cloud(cloud)
 {
   stred c {1,0,0,0,0};
   pcl::getMinMax3D(*get_Cloud(),m_minp,m_maxp);
+  QString a = QString("%1_dbh").arg(m_name);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
+  m_dbhCloud = new Cloud(cloud_, a);
   set_dbh(c);
-  set_dbhCloud();
 }
 Tree Tree::operator=(Tree &kopie)
 {
@@ -121,7 +124,7 @@ void Tree::set_height() //check if tree is connected to terrain!!!
 }
 void Tree::set_dbhCloud()
 {
-
+  m_dbhCloud = new Cloud();
 //PAS BODU CCA 10 CM OKOLO 1,3 M
   pcl::PointCloud<pcl::PointXYZI>::Ptr dbhCloud (new pcl::PointCloud<pcl::PointXYZI>);
   for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
@@ -135,6 +138,7 @@ void Tree::set_dbhCloud()
       bod.intensity = ith->intensity;
 
       dbhCloud->points.push_back(bod);
+      dbhCloud->points.size();
     }
   }
  //voxelize
@@ -150,20 +154,39 @@ void Tree::set_dbhCloud()
   Cloud *cl = new Cloud(cloud_fil, a);
   m_dbhCloud = cl;
 }
-void Tree::set_dbhCloud(Cloud c)
+void Tree::set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
-  m_dbhCloud->set_Cloud(c.get_Cloud());
+  m_dbhCloud->set_Cloud(cloud);
 }
-void Tree::set_dbh()
+void Tree::set_dbhHT()
 {
-//VOXELIZATION
+
   if(!m_dbhCloud->get_Cloud()->points.empty())
   {
+    //VOXELIZATION
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_fil (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::VoxelGrid<pcl::PointXYZI> sor;
     sor.setInputCloud (m_dbhCloud->get_Cloud());
     sor.setLeafSize (0.01f, 0.01f, 0.01f);
     sor.filter (*cloud_fil);
+
+
+    // select 20 random points
+    // pro kazdou dvojici bodu  urcit
+      //polovinu vzdalenosti mezi nimi
+      //normalovy vektor
+      // urcit rovnici primky  z normaloveho vektoru ulozit
+    // spocitat pruseciky primek a urcit nejpocetnejsi - stred
+    // urcit prumernu vzdalenost bodu od stredu - DBh, procento uspechu
+
+
+
+
+
+
+
+
+
     //HOUGH TRANSFORM
     std::vector<stred> maxima;
     for(int r=2; r < 55; r++)
@@ -703,9 +726,9 @@ pcl::PointXYZI Tree::get_lpoint(bool low)
   else
     {return m_lmax;}
 }
-Cloud Tree::get_dbhCloud()
+pcl::PointCloud<pcl::PointXYZI>::Ptr Tree::get_dbhCloud()
 {
-  return *m_dbhCloud;
+  return m_dbhCloud->get_Cloud();
 }
 
 pcl::PointCloud<pcl::PointXYZI>::Ptr Tree::skeleton()
@@ -1397,10 +1420,9 @@ void Project::set_treedbh(int i, stred x)
 {
   m_stromy.at(i).set_dbh(x);
 }
-void Project::set_VegeCloud(Cloud cloud)// TODO: nastavit aby neprepisovalo jiz zname, ale spojilo
+void Project::set_VegeCloud(Cloud cloud)
 {
-m_vegeCloud.push_back(cloud);
-
+  m_vegeCloud.push_back(cloud);
 }
  void Project::set_Tree(Cloud cloud)
  {
@@ -1415,6 +1437,16 @@ m_vegeCloud.push_back(cloud);
   m_stromy.back().set_dbhCloud();
 
  }
+void Project::set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_dbhCloud(cloud);
+    }
+  }
+}
 void Project::set_OstCloud(Cloud cloud)
 {
   m_ostCloud.push_back(cloud);
@@ -1466,6 +1498,14 @@ int Project::get_sizevegeCV()
 Tree Project::get_TreeCloud(int i)
 {
 return m_stromy.at(i);
+}
+Tree Project::get_TreeCloud(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+      return m_stromy.at(i);
+  }
 }
 Cloud Project::get_ostCloud(int i)
 {

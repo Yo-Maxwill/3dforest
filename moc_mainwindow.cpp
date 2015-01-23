@@ -1,22 +1,7 @@
-//  3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created: Mon 25. Aug 16:03:13 2014
+** Created: Fri 23. Jan 09:51:36 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -32,108 +17,88 @@
 #endif
 
 QT_BEGIN_MOC_NAMESPACE
-static const uint qt_meta_data_PlusDialog[] = {
+static const uint qt_meta_data_InputDialog[] = {
 
  // content:
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       7,   14, // methods
+       5,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       2,       // signalCount
-
- // signals: signature, parameters, type, tag, flags
-      12,   11,   11,   11, 0x05,
-      35,   11,   11,   11, 0x05,
+       0,       // signalCount
 
  // slots: signature, parameters, type, tag, flags
-      45,   11,   11,   11, 0x08,
-      54,   11,   11,   11, 0x08,
-      63,   11,   11,   11, 0x08,
-      82,   11,   11,   11, 0x08,
-     101,   11,   11,   11, 0x08,
+      13,   12,   12,   12, 0x08,
+      18,   12,   12,   12, 0x08,
+      36,   12,   12,   12, 0x08,
+      57,   12,   12,   12, 0x08,
+      82,   12,   12,   12, 0x08,
 
        0        // eod
 };
 
-static const char qt_meta_stringdata_PlusDialog[] = {
-    "PlusDialog\0\0pluscloud(QStringList)\0"
-    "rejecte()\0accept()\0reject()\0"
-    "setCloud1(QString)\0setCloud2(QString)\0"
-    "setCloud3(QString)\0"
+static const char qt_meta_stringdata_InputDialog[] = {
+    "InputDialog\0\0ok()\0validate(QString)\0"
+    "validateInt(QString)\0validateOutput1(QString)\0"
+    "validateOutput2(QString)\0"
 };
 
-void PlusDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+void InputDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     if (_c == QMetaObject::InvokeMetaMethod) {
         Q_ASSERT(staticMetaObject.cast(_o));
-        PlusDialog *_t = static_cast<PlusDialog *>(_o);
+        InputDialog *_t = static_cast<InputDialog *>(_o);
         switch (_id) {
-        case 0: _t->pluscloud((*reinterpret_cast< QStringList(*)>(_a[1]))); break;
-        case 1: _t->rejecte(); break;
-        case 2: _t->accept(); break;
-        case 3: _t->reject(); break;
-        case 4: _t->setCloud1((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 5: _t->setCloud2((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 6: _t->setCloud3((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 0: _t->ok(); break;
+        case 1: _t->validate((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 2: _t->validateInt((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 3: _t->validateOutput1((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 4: _t->validateOutput2((*reinterpret_cast< QString(*)>(_a[1]))); break;
         default: ;
         }
     }
 }
 
-const QMetaObjectExtraData PlusDialog::staticMetaObjectExtraData = {
+const QMetaObjectExtraData InputDialog::staticMetaObjectExtraData = {
     0,  qt_static_metacall
 };
 
-const QMetaObject PlusDialog::staticMetaObject = {
-    { &QDialog::staticMetaObject, qt_meta_stringdata_PlusDialog,
-      qt_meta_data_PlusDialog, &staticMetaObjectExtraData }
+const QMetaObject InputDialog::staticMetaObject = {
+    { &QDialog::staticMetaObject, qt_meta_stringdata_InputDialog,
+      qt_meta_data_InputDialog, &staticMetaObjectExtraData }
 };
 
 #ifdef Q_NO_DATA_RELOCATION
-const QMetaObject &PlusDialog::getStaticMetaObject() { return staticMetaObject; }
+const QMetaObject &InputDialog::getStaticMetaObject() { return staticMetaObject; }
 #endif //Q_NO_DATA_RELOCATION
 
-const QMetaObject *PlusDialog::metaObject() const
+const QMetaObject *InputDialog::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
 }
 
-void *PlusDialog::qt_metacast(const char *_clname)
+void *InputDialog::qt_metacast(const char *_clname)
 {
     if (!_clname) return 0;
-    if (!strcmp(_clname, qt_meta_stringdata_PlusDialog))
-        return static_cast<void*>(const_cast< PlusDialog*>(this));
+    if (!strcmp(_clname, qt_meta_stringdata_InputDialog))
+        return static_cast<void*>(const_cast< InputDialog*>(this));
     return QDialog::qt_metacast(_clname);
 }
 
-int PlusDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int InputDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QDialog::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 7)
+        if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 7;
+        _id -= 5;
     }
     return _id;
-}
-
-// SIGNAL 0
-void PlusDialog::pluscloud(QStringList _t1)
-{
-    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
-    QMetaObject::activate(this, &staticMetaObject, 0, _a);
-}
-
-// SIGNAL 1
-void PlusDialog::rejecte()
-{
-    QMetaObject::activate(this, &staticMetaObject, 1, 0);
 }
 static const uint qt_meta_data_MyTree[] = {
 
@@ -141,26 +106,30 @@ static const uint qt_meta_data_MyTree[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+      14,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       4,       // signalCount
+       6,       // signalCount
 
  // signals: signature, parameters, type, tag, flags
        8,    7,    7,    7, 0x05,
       27,    7,    7,    7, 0x05,
       47,    7,    7,    7, 0x05,
       67,    7,    7,    7, 0x05,
+      86,    7,    7,    7, 0x05,
+     110,    7,    7,    7, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-      90,   86,    7,    7, 0x08,
-     121,  114,    7,    7, 0x08,
-     161,  156,    7,    7, 0x08,
-     183,  156,    7,    7, 0x08,
-     200,    7,    7,    7, 0x08,
-     208,    7,    7,    7, 0x08,
+     129,  125,    7,    7, 0x08,
+     160,  153,    7,    7, 0x08,
+     200,  195,    7,    7, 0x08,
+     222,  195,    7,    7, 0x08,
+     239,  195,    7,    7, 0x08,
+     261,  195,    7,    7, 0x08,
+     278,    7,    7,    7, 0x08,
+     286,    7,    7,    7, 0x08,
 
        0        // eod
 };
@@ -168,9 +137,11 @@ static const uint qt_meta_data_MyTree[] = {
 static const char qt_meta_stringdata_MyTree[] = {
     "MyTree\0\0checkedON(QString)\0"
     "checkedOFF(QString)\0deleteItem(QString)\0"
-    "colorItem(QString)\0pos\0showContextMenu(QPoint)\0"
+    "colorItem(QString)\0colorItemField(QString)\0"
+    "psize(QString)\0pos\0showContextMenu(QPoint)\0"
     "item,i\0onItemChange(QTreeWidgetItem*,int)\0"
     "name\0onDeleteItem(QString)\0onColor(QString)\0"
+    "onColorField(QString)\0onPsize(QString)\0"
     "allON()\0allOFF()\0"
 };
 
@@ -184,12 +155,16 @@ void MyTree::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void
         case 1: _t->checkedOFF((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 2: _t->deleteItem((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 3: _t->colorItem((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 4: _t->showContextMenu((*reinterpret_cast< const QPoint(*)>(_a[1]))); break;
-        case 5: _t->onItemChange((*reinterpret_cast< QTreeWidgetItem*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 6: _t->onDeleteItem((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 7: _t->onColor((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 8: _t->allON(); break;
-        case 9: _t->allOFF(); break;
+        case 4: _t->colorItemField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 5: _t->psize((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 6: _t->showContextMenu((*reinterpret_cast< const QPoint(*)>(_a[1]))); break;
+        case 7: _t->onItemChange((*reinterpret_cast< QTreeWidgetItem*(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 8: _t->onDeleteItem((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 9: _t->onColor((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 10: _t->onColorField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 11: _t->onPsize((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 12: _t->allON(); break;
+        case 13: _t->allOFF(); break;
         default: ;
         }
     }
@@ -227,9 +202,9 @@ int MyTree::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 14)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 14;
     }
     return _id;
 }
@@ -261,13 +236,27 @@ void MyTree::colorItem(QString _t1)
     void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 3, _a);
 }
+
+// SIGNAL 4
+void MyTree::colorItemField(QString _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 4, _a);
+}
+
+// SIGNAL 5
+void MyTree::psize(QString _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 5, _a);
+}
 static const uint qt_meta_data_MainWindow[] = {
 
  // content:
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      51,   14, // methods
+      65,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -290,42 +279,56 @@ static const uint qt_meta_data_MainWindow[] = {
      299,  172,   11,   11, 0x08,
      329,   11,   11,   11, 0x08,
      341,   11,   11,   11, 0x08,
-     361,   11,   11,   11, 0x08,
-     375,   11,   11,   11, 0x08,
-     393,   11,   11,   11, 0x08,
-     411,   11,   11,   11, 0x08,
-     431,  425,   11,   11, 0x08,
-     456,   11,   11,   11, 0x08,
-     468,   11,   11,   11, 0x08,
-     516,  480,   11,   11, 0x08,
-     641,   11,   11,   11, 0x08,
-     654,   11,   11,   11, 0x08,
-     669,   11,   11,   11, 0x08,
-     688,   11,   11,   11, 0x08,
-     704,   11,   11,   11, 0x08,
-     724,   11,   11,   11, 0x08,
-     748,  742,  738,   11, 0x08,
-     790,   11,   11,   11, 0x08,
-     796,   11,   11,   11, 0x08,
-     805,   11,   11,   11, 0x08,
-     816,   11,   11,   11, 0x08,
-     831,   11,   11,   11, 0x08,
-     850,   11,   11,   11, 0x08,
-     861,   11,   11,   11, 0x08,
-     876,   11,   11,   11, 0x08,
-     885,   11,   11,   11, 0x08,
-     900,   11,   11,   11, 0x08,
-     911,   11,   11,   11, 0x08,
-     929,  923,   11,   11, 0x08,
-     952,   11,   11,   11, 0x08,
+     354,   11,   11,   11, 0x08,
+     366,   11,   11,   11, 0x08,
+     386,   11,   11,   11, 0x08,
+     400,   11,   11,   11, 0x08,
+     418,   11,   11,   11, 0x08,
+     436,   11,   11,   11, 0x08,
+     456,  450,   11,   11, 0x08,
+     481,   11,   11,   11, 0x08,
+     493,   11,   11,   11, 0x08,
+     541,  505,   11,   11, 0x08,
+     666,   11,   11,   11, 0x08,
+     679,   11,   11,   11, 0x08,
+     694,   11,   11,   11, 0x08,
+     713,   11,   11,   11, 0x08,
+     720,   11,   11,   11, 0x08,
+     736,   11,   11,   11, 0x08,
+     756,   11,   11,   11, 0x08,
+     780,  774,  770,   11, 0x08,
+     822,   11,   11,   11, 0x08,
+     828,   11,   11,   11, 0x08,
+     837,   11,   11,   11, 0x08,
+     846,   11,   11,   11, 0x08,
+     857,   11,   11,   11, 0x08,
+     872,   11,   11,   11, 0x08,
+     891,   11,   11,   11, 0x08,
+     902,   11,   11,   11, 0x08,
+     917,   11,   11,   11, 0x08,
+     926,   11,   11,   11, 0x08,
+     937,   11,   11,   11, 0x08,
+     948,   11,   11,   11, 0x08,
      963,   11,   11,   11, 0x08,
-     981,   11,   11,   11, 0x08,
-     989,   11,   11,   11, 0x08,
-    1008, 1003,   11,   11, 0x08,
-    1027, 1003,   11,   11, 0x08,
-    1046, 1003,   11,   11, 0x08,
-    1067, 1003,   11,   11, 0x08,
-    1088, 1003,   11,   11, 0x08,
+     982,   11,   11,   11, 0x08,
+     992,   11,   11,   11, 0x08,
+    1008, 1004,   11,   11, 0x08,
+    1051,   11,   11,   11, 0x08,
+    1062,   11,   11,   11, 0x08,
+    1080,   11,   11,   11, 0x08,
+    1086,   11,   11,   11, 0x08,
+    1104, 1093,   11,   11, 0x08,
+    1126,   11,   11,   11, 0x08,
+    1136,   11,   11,   11, 0x08,
+    1147,   11,   11,   11, 0x08,
+    1155,   11,   11,   11, 0x08,
+    1174, 1169,   11,   11, 0x08,
+    1193, 1169,   11,   11, 0x08,
+    1212, 1169,   11,   11, 0x08,
+    1233, 1169,   11,   11, 0x08,
+    1254, 1169,   11,   11, 0x08,
+    1274, 1169,   11,   11, 0x08,
+    1299, 1169,   11,   11, 0x08,
 
        0        // eod
 };
@@ -340,26 +343,30 @@ static const char qt_meta_stringdata_MainWindow[] = {
     "openOstFile(QString,QColor)\0"
     "openTreeFile(QString,QColor)\0"
     "openCloudFile(QString,QColor)\0importtxt()\0"
-    "importTerrainFile()\0importCloud()\0"
-    "importVegeCloud()\0importTreeCloud()\0"
-    "exportCloud()\0event\0closeEvent(QCloseEvent*)\0"
-    "voxelgrid()\0voxelstat()\0"
-    "res,input,output_vege,output_ground\0"
+    "importtxt2()\0importlas()\0importTerrainFile()\0"
+    "importCloud()\0importVegeCloud()\0"
+    "importTreeCloud()\0exportCloud()\0event\0"
+    "closeEvent(QCloseEvent*)\0voxelgrid()\0"
+    "voxelstat()\0res,input,output_vege,output_ground\0"
     "octree(float,pcl::PointCloud<pcl::PointXYZI>::Ptr,pcl::PointCloud<pcl:"
     ":PointXYZI>::Ptr,pcl::PointCloud<pcl::PointXYZI>::Ptr)\0"
     "octreeSlot()\0manualAdjust()\0"
-    "manualAdjustStop()\0treeAtributes()\0"
+    "manualAdjustStop()\0undo()\0treeAtributes()\0"
     "treeAtributesRead()\0cylinderSeg()\0int\0"
     "input\0dbh(pcl::PointCloud<pcl::PointXYZI>::Ptr)\0"
-    "dbh()\0height()\0position()\0manualSelect()\0"
-    "manualSelectStop()\0treeEdit()\0"
-    "treeEditStop()\0lenght()\0lenghtExport()\0"
-    "seg_dist()\0plusCloud()\0names\0"
-    "plusCloud(QStringList)\0voxelize()\0"
-    "backgroundColor()\0about()\0removeCloud()\0"
+    "dbh()\0dbhLSR()\0height()\0position()\0"
+    "manualSelect()\0manualSelectStop()\0"
+    "treeEdit()\0treeEditStop()\0lenght()\0"
+    "seg_dist()\0skeleton()\0dbhCloudEdit()\0"
+    "dbhCloudStopEdit()\0plysave()\0plusCloud()\0"
+    ",,,\0plusCloud(QString,QString,QString,QString)\0"
+    "voxelize()\0backgroundColor()\0IDW()\0"
+    "clip()\0cl,cl2,res\0clip(Cloud,Cloud,int)\0"
+    "clipped()\0clipStop()\0about()\0removeCloud()\0"
     "name\0dispCloud(QString)\0showCLoud(QString)\0"
     "removeCloud(QString)\0deleteCloud(QString)\0"
-    "colorCloud(QString)\0"
+    "colorCloud(QString)\0colorCloudField(QString)\0"
+    "PointSize(QString)\0"
 };
 
 void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -382,44 +389,58 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 11: _t->openTreeFile((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QColor(*)>(_a[2]))); break;
         case 12: _t->openCloudFile((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QColor(*)>(_a[2]))); break;
         case 13: _t->importtxt(); break;
-        case 14: _t->importTerrainFile(); break;
-        case 15: _t->importCloud(); break;
-        case 16: _t->importVegeCloud(); break;
-        case 17: _t->importTreeCloud(); break;
-        case 18: _t->exportCloud(); break;
-        case 19: _t->closeEvent((*reinterpret_cast< QCloseEvent*(*)>(_a[1]))); break;
-        case 20: _t->voxelgrid(); break;
-        case 21: _t->voxelstat(); break;
-        case 22: _t->octree((*reinterpret_cast< float(*)>(_a[1])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[2])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[3])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[4]))); break;
-        case 23: _t->octreeSlot(); break;
-        case 24: _t->manualAdjust(); break;
-        case 25: _t->manualAdjustStop(); break;
-        case 26: _t->treeAtributes(); break;
-        case 27: _t->treeAtributesRead(); break;
-        case 28: _t->cylinderSeg(); break;
-        case 29: { int _r = _t->dbh((*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[1])));
+        case 14: _t->importtxt2(); break;
+        case 15: _t->importlas(); break;
+        case 16: _t->importTerrainFile(); break;
+        case 17: _t->importCloud(); break;
+        case 18: _t->importVegeCloud(); break;
+        case 19: _t->importTreeCloud(); break;
+        case 20: _t->exportCloud(); break;
+        case 21: _t->closeEvent((*reinterpret_cast< QCloseEvent*(*)>(_a[1]))); break;
+        case 22: _t->voxelgrid(); break;
+        case 23: _t->voxelstat(); break;
+        case 24: _t->octree((*reinterpret_cast< float(*)>(_a[1])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[2])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[3])),(*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[4]))); break;
+        case 25: _t->octreeSlot(); break;
+        case 26: _t->manualAdjust(); break;
+        case 27: _t->manualAdjustStop(); break;
+        case 28: _t->undo(); break;
+        case 29: _t->treeAtributes(); break;
+        case 30: _t->treeAtributesRead(); break;
+        case 31: _t->cylinderSeg(); break;
+        case 32: { int _r = _t->dbh((*reinterpret_cast< pcl::PointCloud<pcl::PointXYZI>::Ptr(*)>(_a[1])));
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
-        case 30: _t->dbh(); break;
-        case 31: _t->height(); break;
-        case 32: _t->position(); break;
-        case 33: _t->manualSelect(); break;
-        case 34: _t->manualSelectStop(); break;
-        case 35: _t->treeEdit(); break;
-        case 36: _t->treeEditStop(); break;
-        case 37: _t->lenght(); break;
-        case 38: _t->lenghtExport(); break;
-        case 39: _t->seg_dist(); break;
-        case 40: _t->plusCloud(); break;
-        case 41: _t->plusCloud((*reinterpret_cast< QStringList(*)>(_a[1]))); break;
-        case 42: _t->voxelize(); break;
-        case 43: _t->backgroundColor(); break;
-        case 44: _t->about(); break;
-        case 45: _t->removeCloud(); break;
-        case 46: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 47: _t->showCLoud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 48: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 49: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 50: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 33: _t->dbh(); break;
+        case 34: _t->dbhLSR(); break;
+        case 35: _t->height(); break;
+        case 36: _t->position(); break;
+        case 37: _t->manualSelect(); break;
+        case 38: _t->manualSelectStop(); break;
+        case 39: _t->treeEdit(); break;
+        case 40: _t->treeEditStop(); break;
+        case 41: _t->lenght(); break;
+        case 42: _t->seg_dist(); break;
+        case 43: _t->skeleton(); break;
+        case 44: _t->dbhCloudEdit(); break;
+        case 45: _t->dbhCloudStopEdit(); break;
+        case 46: _t->plysave(); break;
+        case 47: _t->plusCloud(); break;
+        case 48: _t->plusCloud((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2])),(*reinterpret_cast< QString(*)>(_a[3])),(*reinterpret_cast< QString(*)>(_a[4]))); break;
+        case 49: _t->voxelize(); break;
+        case 50: _t->backgroundColor(); break;
+        case 51: _t->IDW(); break;
+        case 52: _t->clip(); break;
+        case 53: _t->clip((*reinterpret_cast< Cloud(*)>(_a[1])),(*reinterpret_cast< Cloud(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 54: _t->clipped(); break;
+        case 55: _t->clipStop(); break;
+        case 56: _t->about(); break;
+        case 57: _t->removeCloud(); break;
+        case 58: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 59: _t->showCLoud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 60: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 61: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 62: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 63: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 64: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -457,9 +478,9 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 51)
+        if (_id < 65)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 51;
+        _id -= 65;
     }
     return _id;
 }

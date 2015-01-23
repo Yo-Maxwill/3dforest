@@ -45,38 +45,76 @@ class Visualizer : public pcl::visualization::PCLVisualizer
     Visualizer(QString name);
 };
 
-
-
-class PlusDialog :public QDialog
+class InputDialog :public QDialog
 {
   Q_OBJECT
-public:
+  public:
+    InputDialog(QWidget *parent = 0 );
+    void DialogSize();
+    void DialogLayout();
 
-    PlusDialog(QStringList items, QWidget *parent = 0);
-    QStringList get_names();
-signals:
-    void pluscloud(QStringList);
-    void rejecte();
+    void set_inputCloud1(QString, QStringList);
+    void set_inputCloud2(QString, QStringList);
+    void set_inputCloud3(QString, QStringList);
+    void set_outputCloud1(QString,QString);
+    void set_outputCloud2(QString,QString);
+    void set_inputInt(QString, QString);
+    void set_description(QString);
+    void set_title(QString);
+    void set_stretch();
+    void set_path(QString);
 
-private slots:
-   void accept();
-   void reject();
-   void setCloud1(QString);
-   void setCloud2(QString);
-   void setCloud3(QString);
+    QString get_inputCloud1();
+    QString get_inputCloud2();
+    QString get_inputCloud3();
+    QString get_outputCloud1();
+    QString get_outputCloud2();
 
-private:
-    QLabel *label1;
-    QLabel *label2;
-    QLabel *label3;
-    QComboBox *combo1;
-    QComboBox *combo2;
-    QLineEdit *name;
-    QStringList result;
-    QString cloud1;
-    QString cloud2;
-    QString cloud3;
+    int get_intValue();
+    bool accet();
+  private slots:
+    void ok();
+    void validate(QString);
+    void validateInt(QString);
+    void validateOutput1(QString);
+    void validateOutput2(QString);
+
+  private:
+    QString input_cloud1;
+    QString input_cloud2;
+    QString input_cloud3;
+    QString output_cloud1;
+    QString output_cloud2;
+
+    float float_value1;
+    float float_value2;
+    int int_value1;
+    int int_value2;
+    QString path;
+    QComboBox * inputCloud1;
+    bool isIC1;
+    QComboBox * inputCloud2;
+    bool isIC2;
+    QComboBox * inputCloud3;
+    bool isIC3;
+    QLineEdit *outputCloud1;
+    bool output1Bool;
+    bool isOC1;
+    QLineEdit *outputCloud2;
+    bool isOC2;
+    bool output2Bool;
+    QLineEdit *intInput;
+    bool intInputBool;
+    bool isII1;
+
+    QDialogButtonBox *buttonBox;
+
+    QHBoxLayout *buttontLayout;
+    QVBoxLayout *InputLayout;
+    QHBoxLayout *inputareaLayout;
+    QVBoxLayout *mainLayout;
 };
+
 class MyTree :public QTreeWidget
 {
   Q_OBJECT
@@ -86,6 +124,7 @@ public:
     void cleanAll();
     void itemdelete(QString name);
     void allItemOFF();
+    void itemON(QString);
 
 private slots:
     void showContextMenu(const QPoint &pos);
@@ -112,6 +151,7 @@ class MainWindow : public QMainWindow
 
   public:
     MainWindow();
+    QString get_path();
 
  private slots:
 
@@ -152,6 +192,7 @@ class MainWindow : public QMainWindow
   void octreeSlot();    //octree segmentation of cloud and selecting of lowest nodes and it points
   void manualAdjust();  // manual adjustment of terrain file
   void manualAdjustStop(); //stop manual adjustment and save result file
+  void undo();
 
 //// TREE ATRIBUTES
   void treeAtributes(); //save tree atributes into file
@@ -171,12 +212,18 @@ class MainWindow : public QMainWindow
   void skeleton();
   void dbhCloudEdit();
   void dbhCloudStopEdit();
+  void plysave();
 
 ////MISC
   void plusCloud();     //contencate cloud
-  void plusCloud(QStringList names, QString typ);
+  void plusCloud(QString, QString, QString, QString );
   void voxelize();  //voxels of various size on selected cloud
   void backgroundColor();
+  void IDW();
+  void clip();
+  void clip(Cloud cl, Cloud cl2, int res);
+  void clipped();
+  void clipStop();
 //// ABOUT
   void about();         //about 3D FOREST application
 ////TREE SLOTS
@@ -197,8 +244,19 @@ class MainWindow : public QMainWindow
   void createStatusBar();
   void createTreeView();
   void saveOstCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr s_cloud);
+  void saveOstCloud(Cloud *s_cloud);
   void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud);
   void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString filename,bool overwrt);
+  void saveTreeCloud(Cloud *s_cloud);
+  void saveVegeCloud(Cloud *s_cloud);
+  void saveTerrainCloud(Cloud *s_cloud);
+
+  QStringList get_allNames();
+  QStringList get_treeNames();
+  QStringList get_terrainNames();
+  QStringList get_vegetationNames();
+  QStringList get_ostNames();
+  QStringList get_baseNames();
   //MENUS
     QMenu *fileMenu;
     QMenu *importMenu;
@@ -220,6 +278,7 @@ class MainWindow : public QMainWindow
     QAction *importVegeAct;
     QAction *importTreeAct;
     QAction *exportTXTAct;
+    QAction *exportPLYAct;
     QAction *exitAct;
   //TEREN ACTIONS
     QAction *voxelAct;
@@ -244,9 +303,12 @@ class MainWindow : public QMainWindow
     QAction *plusAct;
     QAction *voxAct;
     QAction *backgrdColAct;
+    QAction *clipAct;
+    QAction *clipedAct;
   //ABOUT ACTIONS
     QAction *aboutAct;
     QAction *aboutQtAct;
+    QAction *IDWAct;
 
 ////TREEWIDGET
   MyTree *treeWidget;
@@ -267,7 +329,10 @@ class MainWindow : public QMainWindow
 //// QVTKWIDGET
   QVTKWidget *qvtkwidget;
   boost::shared_ptr<Visualizer> m_vis;
+  boost::signals2::connection area;
+
   void AreaEvent(const pcl::visualization::AreaPickingEvent& event, void* );
+  void AreaEvent2(const pcl::visualization::AreaPickingEvent& event, void* );
 
   void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void* );
   void ShowContextMenu(const QPoint& pos);
@@ -278,6 +343,7 @@ class MainWindow : public QMainWindow
   Project *Proj;
   Cloud *m_cloud ;
   Cloud *m_cloud1;
+  Cloud *m_cloud2;
 
   void dispCloud(Cloud cloud);
   void dispCloud(Cloud cloud, QString i);
@@ -286,6 +352,10 @@ class MainWindow : public QMainWindow
   QToolBar *fileToolBar;
   QToolBar *editToolBar;
   QProgressBar *pBar;
+  std::vector<int> undopoint;
+
+  int m_width;
+  int m_res;
  };
 
 #endif // MAINWINDOW_H_INCLUDED

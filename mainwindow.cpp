@@ -103,11 +103,348 @@ Visualizer::Visualizer(QString name)
   PCLVisualizer (name.toUtf8().constData());
 }
 
+////InputDialog
+InputDialog::InputDialog( QWidget *parent)
+: QDialog(parent)
+{
+  DialogSize();
+
+  isIC1 = false;
+  isIC2 = false;
+  isIC3 = false;
+  isOC1 = false;
+  isOC2 = false;
+  isII1 = false;
 
 
+//buttons
+
+  buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(ok()));
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+
+  DialogLayout();
+}
+void InputDialog::ok()
+{
+  if(isIC1 == true)
+    input_cloud1 = inputCloud1->currentText();
+  if(isIC2 == true)
+    input_cloud2 = inputCloud2->currentText();
+  if(isIC3 == true)
+    input_cloud3 = inputCloud3->currentText();
+  if(isOC1 == true)
+    output_cloud1 = outputCloud1->text();
+  if(isOC2 == true)
+    output_cloud2 = outputCloud2->text();
+  if(isII1 == true)
+    int_value1 = intInput->text().toInt();
+}
+void InputDialog::DialogSize()
+{
+  int nWidth = 500;
+  int nHeight = 300;
+  resize(nWidth, nHeight);
+}
+void InputDialog::DialogLayout()
+{
+  // buttons
+  buttontLayout = new QHBoxLayout();
+  buttontLayout->setGeometry(QRect(0,0,400,50));
+  buttontLayout->setAlignment(Qt::AlignRight);
+  buttontLayout->setSpacing(10);
+  buttontLayout->addWidget(buttonBox );
+  //buttontLayout->addWidget(okButton);
+  //buttontLayout->addWidget(cancelButton);
+
+  //inputlayout of cloudnames and labels
+  InputLayout = new QVBoxLayout();
+
+// input of cloud and main label
+  inputareaLayout = new QHBoxLayout();
+  inputareaLayout->addLayout(InputLayout);
+
+//mainlayout
+  mainLayout = new QVBoxLayout();
+  mainLayout->addLayout(inputareaLayout);
+  mainLayout->addLayout(buttontLayout);
+  setLayout(mainLayout);
+
+}
+void InputDialog::set_inputCloud1(QString label, QStringList li)
+{
+//input cloud
+  QLabel *label1 = new QLabel();
+  label1->setText(label);
+  inputCloud1= new QComboBox();
+  inputCloud1->insertItems(0,li);
+//layout
+  InputLayout->addWidget(label1);
+  InputLayout->addWidget(inputCloud1);
+  isIC1 =true;
+}
+
+void InputDialog::set_inputCloud2(QString label, QStringList li)
+{
+//input cloud
+  QLabel *label2 = new QLabel();
+  label2->setText(label);
+
+  inputCloud2 = new QComboBox();
+  inputCloud2->insertItems(0,li);
+  label2->setBuddy(inputCloud2);
+//layout
+  InputLayout->addWidget(label2);
+  InputLayout->addWidget(inputCloud2);
+  isIC2 =true;
+}
+void InputDialog::set_inputCloud3(QString label, QStringList li)
+{
+//input cloud
+  QLabel *labeli3 = new QLabel();
+  labeli3->setText(label);
+
+  inputCloud3 = new QComboBox();
+  inputCloud3->insertItems(0,li);
+  labeli3->setBuddy(inputCloud3);
+//layout
+  InputLayout->addWidget(labeli3);
+  InputLayout->addWidget(inputCloud3);
+  isIC3 =true;
+}
+
+void InputDialog::set_description(QString text)
+{
+  // text about function
+  QLabel *label = new QLabel();
+  label->setText(text);
+  label->setMaximumSize(180,300);
+  label->setWordWrap(true);
+  label->setMargin(10);
+  label->setAlignment(Qt::AlignJustify | Qt::AlignTop);
+  //layout
+  inputareaLayout->addWidget(label);
+
+}
+
+void InputDialog::set_title(QString title)
+{
+  setWindowTitle ( title );
+}
+void InputDialog::set_outputCloud1(QString label, QString example)
+{
+  //output cloud
+  QLabel *labelOC1 = new QLabel();
+  labelOC1 ->setText(label);
+  outputCloud1 = new QLineEdit;
+
+  output1Bool=true;
+  labelOC1 ->setBuddy(outputCloud1);
+  connect(outputCloud1,SIGNAL(textChanged(QString)),this,SLOT(validateOutput1(QString)));
+  connect(outputCloud1,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
+  outputCloud1->setText(example);
+//layout
+  InputLayout->addWidget(labelOC1 );
+  InputLayout->addWidget(outputCloud1);
+  isOC1 =true;
+}
+void InputDialog::set_outputCloud2(QString label, QString example)
+{
+  //output cloud
+  QLabel *labelOC2 = new QLabel();
+  labelOC2 ->setText(label);
+  outputCloud2 = new QLineEdit;
+
+  output2Bool=true;
+  labelOC2 ->setBuddy(outputCloud2);
+  connect(outputCloud2,SIGNAL(textChanged(QString)),this,SLOT(validateOutput2(QString)));
+  connect(outputCloud2,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
+  outputCloud2->setText(example);
+//layout
+  InputLayout->addWidget(labelOC2 );
+  InputLayout->addWidget(outputCloud2);
+  isOC2 =true;
+}
+void InputDialog::set_inputInt(QString label, QString x)
+{
+  QLabel *labelint = new QLabel();
+  labelint->setText(label);
+  intInput = new QLineEdit;
+  intInput->setText(x);
+  intInputBool=true;
+  intInput->setCursorPosition(0);
+  labelint->setBuddy(intInput);
+  //resolution
+  InputLayout->addWidget(labelint);
+  InputLayout->addWidget(intInput);
+
+//ACTION
+  connect(intInput,SIGNAL(textChanged(QString)),this,SLOT(validateInt(QString)));
+  connect(intInput,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
+  isII1 = true;
+}
+void InputDialog::set_stretch()
+{
+ InputLayout->addStretch();
+}
+ void InputDialog::set_path(QString path_m)
+ {
+   path= path_m;
+ }
+void InputDialog::validateInt(QString text)
+{
+   if (text.contains(QRegExp("^\\d+")))
+  {
+    intInputBool= true;
+  }
+  else
+  {
+    buttonBox->setEnabled(false);
+    intInputBool= false;
+  }
+}
+void InputDialog::validateOutput1(QString text)
+{
+  if (text.contains(QRegExp("^\\S+$")))
+  {
+    QString fullName = QString("%1//%2.pcd").arg(path).arg(text);
+    QFile file(fullName);
+    if(file.exists())
+    {
+      outputCloud1->setStyleSheet("QLineEdit{background: red;}");
+      buttonBox->setEnabled(false);
+    }
+    else
+    {
+      outputCloud1->setStyleSheet("QLineEdit{background: white;}");
+      output1Bool= true;
+    }
+  }
+  else
+  {
+    buttonBox->setEnabled(false);
+    output1Bool= false;
+  }
+}
+void InputDialog::validateOutput2(QString text)
+{
+  if (text.contains(QRegExp("^\\S+$")))
+  {
+    QString fullName = QString("%1//%2.pcd").arg(path).arg(text);
+    QFile file(fullName);
+    if(file.exists())
+    {
+      outputCloud2->setStyleSheet("QLineEdit{background: red;}");
+      buttonBox->setEnabled(false);
+    }
+    else
+    {
+      outputCloud2->setStyleSheet("QLineEdit{background: white;}");
+      output2Bool= true;
+    }
+  }
+  else
+  {
+    buttonBox->setEnabled(false);
+    output2Bool= false;
+  }
+}
+void InputDialog::validate(QString text)
+{
+  if(isOC1 == true && isOC2 == true && isII1 == true)
+  {
+    if (intInputBool == true  && output1Bool == true && output2Bool==true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == true && isOC2 == true && isII1 == false)
+  {
+    if (output1Bool == true && output2Bool==true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == true && isOC2 == false && isII1 == true)
+  {
+    if (output1Bool == true && intInputBool == true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == false && isOC2 == true && isII1 == true)
+  {
+    if (output2Bool == true && intInputBool == true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == false && isOC2 == false && isII1 == true)
+  {
+    if (intInputBool == true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == true && isOC2 == false && isII1 == false)
+  {
+    if (output1Bool == true )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+  else if(isOC1 == false && isOC2 == true && isII1 == false)
+  {
+    if (output2Bool == true  )
+    {
+      buttonBox->setEnabled(true);
+    }
+    else { buttonBox->setEnabled(false);}
+  }
+//  else if(isOC1 == false && isOC2 == false && isII1 == false && isIC1 == true)
+//  {
+//    if (input1Bool == true  )
+//    {
+//      buttonBox->setEnabled(true);
+//    }
+//    else { buttonBox->setEnabled(false);}
+//  }
+}
+
+QString InputDialog::get_inputCloud1()
+{
+  return input_cloud1;
+}
+QString InputDialog::get_inputCloud2()
+{
+  return input_cloud2;
+}
+QString InputDialog::get_inputCloud3()
+{
+  return input_cloud3;
+}
+QString InputDialog::get_outputCloud1()
+{
+  return output_cloud1;
+}
+QString InputDialog::get_outputCloud2()
+{
+  return output_cloud2;
+}
+int InputDialog::get_intValue()
+{
+  return int_value1;
+}
 
 
-////MAin Window
+////MainWindow
 
  MainWindow::MainWindow()
  : m_cloud(new Cloud()),
@@ -115,6 +452,7 @@ Visualizer::Visualizer(QString name)
  m_vis (new Visualizer ("3D Viewer")),
  Proj (new Project())
 {
+  setWindowTitle ( QString("3D Forest - Forest lidar data processing tool") );
 //QVTK widget - visualizer
   qvtkwidget = new QVTKWidget;
   vtkSmartPointer<vtkRenderWindow> renderWindow = m_vis->getRenderWindow();
@@ -145,8 +483,6 @@ Visualizer::Visualizer(QString name)
   createMenus();
   createToolBars();
   createStatusBar();
-
-  m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
 }
 
 //PROJECT methods
@@ -512,53 +848,45 @@ void MainWindow::importtxt2()
     return;
   }
 
-  std::vector<QString> names;
-  for(int i=0;i<ls.size(); i++)
+  for(int i=0; i<=ls.size()-1; i++)
   {
     QString fileName = ls.at(i);
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    QFile file (fileName);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QTextStream in(&file);
-    while(!in.atEnd())
+    if( !fileName.isEmpty())
     {
-      QString line = in.readLine();
-      QStringList coords = line.split(" ");
-      if(coords.size() >1)
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+      QFile file (fileName);
+      file.open(QIODevice::ReadOnly | QIODevice::Text);
+      QTextStream in(&file);
+      while(!in.atEnd())
       {
-        pcl::PointXYZI data;
+        QString line = in.readLine();
+        QStringList coords = line.split(" ");
+        if(coords.size() >1)
+        {
+          pcl::PointXYZI data;
 
-        data.x = coords.at(0).toDouble()+Proj->get_Xtransform();
-        data.y = coords.at(1).toDouble()+Proj->get_Ytransform();
-        data.z = coords.at(2).toFloat();
-        data.intensity=coords.at(3).toFloat();
-        cloud->points.push_back(data);
+          data.x = coords.at(0).toDouble()+Proj->get_Xtransform();
+          data.y = coords.at(1).toDouble()+Proj->get_Ytransform();
+          data.z = coords.at(2).toFloat();
+          data.intensity=1;//coords.at(3).toFloat();
+          cloud->points.push_back(data);
+        }
       }
+      file.close();
+      //in.~QTextStream();
+      cloud->width = cloud->points.size();
+      cloud->is_dense=true;
+      cloud->height=1;
+
+      QStringList Fname = fileName.split("\\");
+      QStringList name = Fname.back().split(".");
+
+      Proj->save_newCloud("cloud",name.at(0),cloud);
+
+      QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+      openCloudFile(fullname);
     }
-    file.close();
-    in.~QTextStream();
-    cloud->width = cloud->points.size();
-    cloud->is_dense=true;
-    cloud->height=1;
-
-    QStringList Fname = fileName.split("\\");
-    QStringList name = Fname.back().split(".");
-
-    Cloud *c =new Cloud(cloud,name.at(0));
-
-    Proj->save_newCloud("cloud",name.at(0),cloud);
-
-    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-    names.push_back(fullname);
-    QMessageBox::information(this,("tt"),fullname);
   }
-  for(int j; j < ls.size();j++)
-  {
-    //open new file
-    openCloudFile(names.at(j));
-  }
-  QMessageBox::information(this,("tt"),("konec"));
 }
 void MainWindow::importtxt()
 {
@@ -585,7 +913,7 @@ void MainWindow::importtxt()
         data.x = coords.at(0).toDouble()+Proj->get_Xtransform();
         data.y = coords.at(1).toDouble()+Proj->get_Ytransform();
         data.z = coords.at(2).toFloat();
-        data.intensity=0;
+        data.intensity=1;//coords.at(3).toFloat();
         cloud->points.push_back(data);
       }
     }
@@ -603,7 +931,6 @@ void MainWindow::importtxt()
     QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
 //open new file
     openCloudFile(fullname);
-
   }
 }
 void MainWindow::importlas()
@@ -739,6 +1066,7 @@ void MainWindow::exportCloud()
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
   *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
+
 //vybrat jmeno noveho souboru
   QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.txt)"));
 //zapisovat jednotlive radky
@@ -755,6 +1083,37 @@ void MainWindow::exportCloud()
   }
   file.close();
 }
+void MainWindow::plysave()
+{
+  //vybrat cloud
+  QStringList names;
+  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
+  {
+    names << Proj->get_TerrainCloud(i).get_name();
+  }
+  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
+  {
+    names << Proj->get_VegeCloud(i).get_name();
+  }
+  for(int i = 0; i< Proj->get_sizeostCV(); i++)
+  {
+    names << Proj->get_ostCloud(i).get_name();
+  }
+  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
+  {
+    names << Proj->get_TreeCloud(i).get_name();
+  }
+  QString cloudName = QInputDialog::getItem(this,("select cloud"),("name of cloud for export:"),names);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+
+  *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
+//vybrat jmeno noveho souboru
+  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.ply)"));
+  //zapisovat jednotlive radky
+
+  pcl::io::savePLYFileASCII(newFile.toUtf8().constData(),*cloud);
+
+}
 //EXIT method
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -764,45 +1123,39 @@ void MainWindow::closeEvent(QCloseEvent *event)
 //TEREN methods
 void MainWindow::voxelgrid()
 {
- QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizebaseCV(); i++)
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Terrain voxel");
+  in->set_path(Proj->get_Path());
+  in->set_description("Terrain is derived from voxels. Input point cloud is reduced into centroid of voxels and only those with lowest z coordinate anre selected as a ground.");
+  in->set_inputCloud1("Input cloud:",get_baseNames());
+  in->set_outputCloud1("Output cloud of ground:","voxel-terrain");
+  in->set_outputCloud2("Output cloud of non-ground:","voxel-vegetation");
+  in->set_inputInt("Resolution in cm:","50");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
   {
-    names << Proj->get_baseCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select base cloud"), tr("cloud name:"), names, 0, false, &ok);
+      float res = in->get_intValue()/100.0;
 
-  if (ok && !item.isEmpty())
-  {
-    float res = QInputDialog::getDouble(this, tr("Voxel resolution"), tr("Enter size of voxel in m: "), 0.5,0,1000,5);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::VoxelGrid<pcl::PointXYZI> vox;
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::VoxelGrid<pcl::PointXYZI> vox;
 
-    vox.setInputCloud (Proj->get_Cloud(item).get_Cloud());
-    vox.setLeafSize (res, res, res/2);
-    vox.filter (*cloud_filtered);
+      vox.setInputCloud (Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+      vox.setLeafSize (res, res, res/2);
+      vox.filter (*cloud_filtered);
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  //vybrat jen spodni voxely
-    cloud = lowPoints(cloud_filtered,res/2, true);
-
-
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+  //only lowest points
+      cloud = lowPoints(cloud_filtered,res/2, true);
 
 //save dem cloud
-    QString nameT = QInputDialog::getText(this, tr("Name of Terrain File"),tr("e.g. terrain-vox"));
-    if(!nameT.isEmpty())
-    {
-      Proj->save_newCloud("teren",nameT,cloud);
-      QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(nameT);
+      Proj->save_newCloud("teren",in->get_outputCloud1(),cloud);
+      QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
       openTerrainFile(fullnameT);
-    }
-    else
-    {
-      QMessageBox::warning(this, tr("warning"),tr("terrain points will not be saved into file"));
-    }
-
-
 
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vege (new pcl::PointCloud<pcl::PointXYZI>);
@@ -810,40 +1163,33 @@ void MainWindow::voxelgrid()
     pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
     kdtree.setInputCloud (cloud);
 
-  for(int i=0; i < cloud_filtered->points.size();i++)
-  {
-    pcl::PointXYZI searchPointV;
-    searchPointV=cloud_filtered->points.at(i);
-    std::vector<int> pointIDv;
-    std::vector<float> pointSDv;
-
-    if(kdtree.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) < 1)
+    for(int i=0; i < cloud_filtered->points.size();i++)
     {
-      pcl::PointXYZI in;
-      in.x = searchPointV.x;
-      in.y = searchPointV.y;
-      in.z = searchPointV.z;
-      in.intensity = searchPointV.intensity;
-      cloud_vege->points.push_back(in);
+      pcl::PointXYZI searchPointV;
+      searchPointV=cloud_filtered->points.at(i);
+      std::vector<int> pointIDv;
+      std::vector<float> pointSDv;
+
+      if(kdtree.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) < 1)
+      {
+        pcl::PointXYZI in;
+        in.x = searchPointV.x;
+        in.y = searchPointV.y;
+        in.z = searchPointV.z;
+        in.intensity = searchPointV.intensity;
+        cloud_vege->points.push_back(in);
       }
     }
 
-    //save vege cloud
-    QString nameV = QInputDialog::getText(this, tr("Name of Vegetation File"),tr("vege-vox"));
-    if(!nameV.isEmpty())
-    {
+//save vege cloud
       cloud_vege->width = cloud_vege->points.size ();
       cloud_vege->is_dense=true;
       cloud_vege->height=1;
 
-      Proj->save_newCloud("vege",nameV,cloud_vege);
-      QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(nameV);
+      Proj->save_newCloud("vege",in->get_outputCloud2(),cloud_vege);
+      QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud2());
       openVegeFile(fullnameV);
-    }
-    else
-    {
-      QMessageBox::warning(this, tr("warning"),tr("Vegetation points will not be saved into file"));
-    }
+
   }
 }
 void MainWindow::voxelstat()
@@ -928,67 +1274,75 @@ void MainWindow::octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input, p
 }
 void MainWindow::octreeSlot()
 {
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizebaseCV(); i++)
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Terrain created with octree ");
+  in->set_path(Proj->get_Path());
+  in->set_description("Input point cloud is divided into cubes with given resolution and from all cubes, which  contains points are selected lowest."
+                        " Output cloud contains point from selected cubes. ");
+  in->set_inputCloud1("Input cloud:",get_baseNames());
+  in->set_outputCloud1("Output cloud of ground:","Octree-terrain");
+  in->set_outputCloud2("Output cloud of non-ground:","Octree-vegetation");
+  in->set_inputInt("Resolution","10");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
   {
-    names << Proj->get_baseCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select base cloud"), tr("cloud name:"), names, 0, false, &ok);
-  if (ok && !item.isEmpty())
-  {
-    float res = QInputDialog::getDouble(this, tr("zadat rozliseni"), tr("velikost rozliseni octree v m:"), 0.1,0,1000000,3);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vege (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ground (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp2(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp3(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp4(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp5(new pcl::PointCloud<pcl::PointXYZI>);
 
-//velky cyklus
-    octree(res*10,Proj->get_Cloud(item).get_Cloud(),cloud_vege, cloud_tmp);
-    octree(res/2,cloud_tmp,cloud_vege, cloud_tmp2);
+      float res = in->get_intValue()/100.0;
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vege (new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ground (new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp2(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp3(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp4(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp5(new pcl::PointCloud<pcl::PointXYZI>);
 
-//maly cyklus
-    octree(res,Proj->get_Cloud(item).get_Cloud(),cloud_vege, cloud_tmp3);
+      //velky cyklus
+      octree(res*10,Proj->get_Cloud(in->get_inputCloud1()).get_Cloud(),cloud_vege, cloud_tmp);
+      octree(res/2,cloud_tmp,cloud_vege, cloud_tmp2);
 
-//najdi nejblizsi bod v mezi dvema cykly a pokud jsou body od sebe do 0,001 vyber ho a uloz do cloud_tmp6
+    //maly cyklus
+      octree(res,Proj->get_Cloud(in->get_inputCloud1()).get_Cloud(),cloud_vege, cloud_tmp3);
 
-    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
-    kdtree.setInputCloud (cloud_tmp3);
+      //najdi nejblizsi bod v mezi dvema cykly a pokud jsou body od sebe do 0,001 vyber ho a uloz do cloud_tmp6
 
-    for(int i=0; i < cloud_tmp2->points.size();i++)
-    {
-      pcl::PointXYZI searchPointV;
-      searchPointV=cloud_tmp2->points.at(i);
-      std::vector<int> pointIDv;
-      std::vector<float> pointSDv;
+      pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+      kdtree.setInputCloud (cloud_tmp3);
 
-      if(kdtree.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) > 0)
+      for(int i=0; i < cloud_tmp2->points.size();i++)
       {
-        pcl::PointXYZI in;
-        in.x = searchPointV.x;
-        in.y = searchPointV.y;
-        in.z = searchPointV.z;
-        in.intensity = searchPointV.intensity;
-        cloud_tmp5->points.push_back(in);
+        pcl::PointXYZI searchPointV;
+        searchPointV=cloud_tmp2->points.at(i);
+        std::vector<int> pointIDv;
+        std::vector<float> pointSDv;
+
+        if(kdtree.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) > 0)
+        {
+          pcl::PointXYZI in;cloud_vege
+          in.x = searchPointV.x;
+          in.y = searchPointV.y;
+          in.z = searchPointV.z;
+          in.intensity = searchPointV.intensity;
+          cloud_tmp5->points.push_back(in);
+        }
       }
-    }
-    cloud_tmp5->width = cloud_tmp5->points.size ();
-    cloud_tmp5->is_dense=true;
-    cloud_tmp5->height=1;
+      cloud_tmp5->width = cloud_tmp5->points.size ();
+      cloud_tmp5->is_dense=true;
+      cloud_tmp5->height=1;
 
 //VEGE CLOUD
     pcl::KdTreeFLANN<pcl::PointXYZI> kdtre;
     kdtre.setInputCloud (cloud_tmp5);
     std::vector<int> pointIDv;
 
-    for(int i=0; i < Proj->get_Cloud(item).get_Cloud()->points.size();i++)
+    for(int i=0; i < Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.size();i++)
     {
       pcl::PointXYZI searchPointV;
-      searchPointV=Proj->get_Cloud(item).get_Cloud()->points.at(i);
+      searchPointV=Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.at(i);
       std::vector<int> pointIDv;
       std::vector<float> pointSDv;
 
@@ -1002,225 +1356,140 @@ void MainWindow::octreeSlot()
         cloud_vege->points.push_back(in);
       }
     }
+    cloud_vege->width = cloud_vege->points.size ();
+    cloud_vege->is_dense=true;
+    cloud_vege->height=1;
 
-
-// SAVE CLOUDS
-    QString nameT = QInputDialog::getText(this, tr("Name of Terrain File"),tr("e.g. terrain"));
-    if(!nameT.isEmpty())
-    {
-      Proj->save_newCloud("teren",nameT,cloud_tmp5);
-      QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(nameT);
-      openTerrainFile(fullnameT);
-    }
-    else
-    {
-      QMessageBox::warning(this, tr("warning"),tr("terrain points will not be saved into file"));
-    }
-
-    QString nameV = QInputDialog::getText(this, tr("Name of Vegetation File"),tr("vege.pcd"));
-    if(!nameV.isEmpty())
-    {
-      Cloud *cV = new Cloud(cloud_vege,nameV);
-      Proj->set_VegeCloud(*cV);
-      cloud_vege->width = cloud_vege->points.size ();
-      cloud_vege->is_dense=true;
-      cloud_vege->height=1;
-      Proj->save_newCloud("vege",nameV,cloud_vege);
-      QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(nameV);
-      openVegeFile(fullnameV);
-    }
-    else
-    {
-      QMessageBox::warning(this, tr("warning"),tr("Vegetation points will not be saved into file"));
-    }
+//SAVE
+//Terrain
+      Cloud *cT = new Cloud(cloud_tmp5,in->get_outputCloud1());
+      saveTerrainCloud(cT);
+    //vegetation
+      Cloud *cV = new Cloud(cloud_vege,in->get_outputCloud2());
+      saveVegeCloud(cV);
   }
 }
 void MainWindow::manualAdjust()
 {
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
+
+  InputDialog *in = new InputDialog(this);
+  in->set_path(Proj->get_Path());
+  in->set_title("Manual adjustment of terrain cloud");
+  in->set_description("Manual editing of point cloud representing terrain. For editing please press key 'x' and outline rectangle."
+                        " Selected points will be deleted. and saved in output cloud ");
+  in->set_inputCloud1("Input terrain cloud:",get_terrainNames());
+  in->set_outputCloud1("Output cloud of deleted points:","terrain-rest");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
   {
-    names << Proj->get_TerrainCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select terrain cloud"), tr("cloud name:"), names, 0, false, &ok);
-  if (ok && !item.isEmpty())
-  {
-    m_cloud->get_Cloud()->clear();
     //zkopirovat do m_cloud
-    Cloud *c = new Cloud(Proj->get_Cloud(item).get_Cloud(),Proj->get_Cloud(item).get_name());
-    m_cloud = c;
-    m_cloud->set_Psize(Proj->get_Cloud(item).get_Psize());
+    m_cloud->get_Cloud()->clear();
+    m_cloud->set_name(in->get_inputCloud1());
+    m_cloud->set_Cloud(Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+    m_cloud->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //zkopirovat do m_cloud1
     m_cloud1->get_Cloud()->clear();
-    pcl::PointCloud<pcl::PointXYZI>::Ptr h_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    h_cloud->clear();
-    Cloud *cl = new Cloud(h_cloud,Proj->get_Cloud(item).get_name());
-    m_cloud1 = cl;
-    m_cloud1->set_Psize(Proj->get_Cloud(item).get_Psize());
+    m_cloud1->set_name(in->get_outputCloud1());
+    m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //spustit editacni listu
     editBar = new QToolBar(tr("edit bar"),this);
     this->addToolBar(editBar);
     QAction *stopE = editBar->addAction("Stop EDIT");
     connect(stopE,SIGNAL(triggered()),this,SLOT(manualAdjustStop()) );
+    QAction *undoAct = editBar->addAction("undo");
+    connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
 
-    //connect areapicking event
-   // m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    undopoint.clear();
     m_vis->removeAllPointClouds();
     treeWidget->allItemOFF();
     dispCloud(*m_cloud,220,220,0);
+    area = m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    m_vis->resetCamera();
+    qvtkwidget->update();
   }
 }
 void MainWindow::manualAdjustStop()
 {
-   //save m_cloud1 as vege or add to existing cloud
-  QMessageBox *msgBox =  new QMessageBox(this);
-	msgBox->setText("Saving deleted parts");
-	msgBox->setInformativeText("Do you want to save deleted parts as new file?");
-	msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	msgBox->setDefaultButton(QMessageBox::Yes);
+  //save m_cloud1 into ost cloud
+  saveOstCloud(m_cloud1);
+//save m_cloud into old file
+  QString path_out = QString ("%1\\%2").arg(Proj->get_Path()).arg(m_cloud->get_name());
+  pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *m_cloud->get_Cloud());
 
-  m_vis->removeAllPointClouds();
-
-	 if(msgBox->exec() == QMessageBox::Yes)
-    {
-      QString name = QInputDialog::getText(this, tr("Name of new File"),tr("e.g. other_cloud"));
-      if(!name.isEmpty())
-      {
-        Cloud *c = new Cloud();
-        *m_cloud1 = *c;
-        Proj->set_OstCloud(*c);
-        Proj->save_newCloud("ost",name,m_cloud1->get_Cloud());
-        QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
-        openCloudFile(fullnameT);
-        delete editBar;
-        m_cloud->get_Cloud()->clear();
-        m_cloud1->get_Cloud()->clear();
-      }
-      else
-      {
-        QMessageBox::warning(this,tr("error"),tr("You forget to fill name of new cloud."));
-        manualAdjustStop();
-        return;
-      }
-    }
-    else
-    {
-  // get names of all clouds into QStringList and make selection from it
-      QStringList names;
-      //vegeCloud
-      for(int i = 0; i< Proj->get_sizevegeCV(); i++)
-      {
-        names << Proj->get_VegeCloud(i).get_name();
-      }
-      for(int i = 0; i< Proj->get_sizebaseCV(); i++)
-      {
-        names << Proj->get_baseCloud(i).get_name();
-      }
-      //terrainCloud
-      for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
-      {
-        names << Proj->get_TerrainCloud(i).get_name();
-      }
-
-      //treeCloud
-       for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-      {
-        names << Proj->get_TreeCloud(i).get_name();
-      }
-      //ostCloud
-       for(int i = 0; i< Proj->get_sizeostCV(); i++)
-      {
-        names << Proj->get_ostCloud(i).get_name();
-      }
-
-      bool ok;
-      QString item = QInputDialog::getItem(this, tr("Select cloud for join"), tr("cloud name:"), names, 0, false, &ok);
-      if (ok && !item.isEmpty())
-      {
-        // contencate cloud
-        Cloud *c = new Cloud(Proj->get_Cloud(item));
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI> ());
-        *cloud = *c->get_Cloud() + *m_cloud1->get_Cloud();
-        c->set_Cloud(cloud);
-
-        //delete item save new file open file
-        QString path_out = QString ("%1\\%2").arg(Proj->get_Path()).arg(c->get_name());
-        pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *c->get_Cloud());
-        treeWidget->itemdelete(c->get_name());
-      //opencloud
-        openCloudFile(path_out);
-      }
-   //save m_cloud into old file
-    QString path_out = QString ("%1\\%2").arg(Proj->get_Path()).arg(m_cloud->get_name());
-    pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *m_cloud->get_Cloud());
-    treeWidget->itemdelete(m_cloud->get_name());
+  Proj->get_Cloud(m_cloud->get_name()).set_Cloud(m_cloud->get_Cloud());
+  treeWidget->itemON(m_cloud->get_name());
+  dispCloud(m_cloud->get_name());
   //opencloud
-    openCloudFile(path_out);
-    delete editBar;
-    m_cloud->get_Cloud()->clear();
-    m_cloud1->get_Cloud()->clear();
-  }
+  //openCloudFile(path_out);
+  delete editBar;
+  m_cloud->get_Cloud()->clear();
+  m_cloud1->get_Cloud()->clear();
+  undopoint.clear();
+  area.disconnect();
 }
 
 //VEGETATION
 void MainWindow::manualSelect()
 {
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
-  {
-    names << Proj->get_VegeCloud(i).get_name();
-  }
-  for(int i = 0; i< Proj->get_sizeostCV(); i++)
-  {
-    names << Proj->get_ostCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select vegetation cloud for tree extraction"), tr("cloud name:"), names, 0, false, &ok);
-  if (ok && !item.isEmpty())
+  QStringList names ;
+  names << get_vegetationNames() << get_ostNames();
+
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Manual selection of trees");
+  in->set_path(Proj->get_Path());
+  in->set_description("Manual editing of point cloud representing vegetation. For editing please press key 'x' and outline rectangle."
+                        " Selected points will be deleted. After selection you can choose if you want edit more or you want to close it.");
+  in->set_inputCloud1("Input Vegetation cloud:",names);
+  in->set_outputCloud1("Output cloud of deleted points:","vegetation-rest");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
   {
     //zkopirovat do m_cloud
-    Cloud *c = new Cloud(Proj->get_Cloud(item).get_Cloud(),Proj->get_Cloud(item).get_name());
-    m_cloud = c;
-    m_cloud->set_Psize(Proj->get_Cloud(item).get_Psize());
+    m_cloud->get_Cloud()->clear();
+    m_cloud->set_name(in->get_inputCloud1());
+    m_cloud->set_Cloud(Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+    m_cloud->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //zkopirovat do m_cloud1
-    pcl::PointCloud<pcl::PointXYZI>::Ptr h_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    Cloud *cl = new Cloud(h_cloud,Proj->get_Cloud(item).get_name());
-    m_cloud1 = cl;
-    m_cloud1->set_Psize(Proj->get_Cloud(item).get_Psize());
+    m_cloud1->get_Cloud()->clear();
+    m_cloud1->set_name(in->get_outputCloud1());
+    m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //spustit editacni listu
 
     editBar = new QToolBar(tr("edit bar"),this);
     this->addToolBar(editBar);
     QAction *stopEd = editBar->addAction("Stop EDIT");
-
     connect(stopEd,SIGNAL(triggered()),this,SLOT(manualSelectStop()) );
 
-    //connect areapicking event
-   // m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    QAction *undoAct = editBar->addAction("undo");
+    connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
+    undopoint.clear();
 
+    area = m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
     m_vis->removeAllPointClouds();
-// naradit za displcloud
     treeWidget->allItemOFF();
     dispCloud(*m_cloud,220,220,0);
+    m_vis->resetCamera();
+    qvtkwidget->update();
   }
 }
 void MainWindow::manualSelectStop()
 {
 // save m_cloud as new tree
   saveTreeCloud(m_cloud->get_Cloud());
-
-  //tmp file
-  QString pathTMP = QString("%1/cloud_tmp.pcd").arg(Proj->get_Path());
-  pcl::io::savePCDFileBinaryCompressed(pathTMP.toUtf8().constData(),*m_cloud1->get_Cloud());
-  //treeWidget->allItemOFF();
-
 //ask if continue
   QMessageBox *msgBox =  new QMessageBox(this);
 	msgBox->setText("Continue editting?");
@@ -1230,6 +1499,7 @@ void MainWindow::manualSelectStop()
 
   if(msgBox->exec() == QMessageBox::Yes)
   {
+    treeWidget->allItemOFF();
     m_cloud->get_Cloud()->clear();
     pcl::PointCloud<pcl::PointXYZI>::Ptr h_cloud (new pcl::PointCloud<pcl::PointXYZI>);
     *h_cloud += *m_cloud1->get_Cloud();
@@ -1240,12 +1510,14 @@ void MainWindow::manualSelectStop()
   }
   else
   {
-
-    m_vis->removeAllPointClouds();
-    saveOstCloud(m_cloud1->get_Cloud());
+    treeWidget->allItemOFF();
+    saveVegeCloud(m_cloud1);
+    removeCloud(m_cloud1->get_name());
+    removeCloud(m_cloud->get_name());
     m_cloud->get_Cloud()->clear();
     m_cloud1->get_Cloud()->clear();
     delete editBar;
+    area.disconnect();
   }
 }
 void MainWindow::seg_dist()
@@ -1411,69 +1683,139 @@ void MainWindow::seg_dist()
 }
 
 //TREE ATRIBUTES methods
-
-void MainWindow::dbhCloudEdit()
+void MainWindow::treeEdit()
 {
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Manual editing of trees");
+  in->set_path(Proj->get_Path());
+  in->set_description("Manual editing of point cloud representing single tree. For editing please press key 'x' and outline rectangle."
+                        " Selected points will be deleted. After selection you can choose if you want edit more or you want to close it.");
+  in->set_inputCloud1("Input Tree cloud:",get_treeNames());
+  in->set_outputCloud1("Output cloud of deleted points:","tree-rest");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
   {
-    names << Proj->get_TreeCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select tree cloud"), tr("cloud name:"), names, 0, false, &ok);
-  if (ok && !item.isEmpty())
-  {
-    int i = names.indexOf(item);
     //zkopirovat do m_cloud
-    Cloud *c = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud().get_Cloud(), Proj->get_TreeCloud(i).get_name());
-    m_cloud = c;
-    m_cloud->set_Psize(Proj->get_TreeCloud(i).get_Psize());
+    m_cloud->get_Cloud()->clear();
+    m_cloud->set_name(in->get_inputCloud1());
+    m_cloud->set_Cloud(Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+    m_cloud->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //zkopirovat do m_cloud1
-    pcl::PointCloud<pcl::PointXYZI>::Ptr h_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    Cloud *cl = new Cloud(h_cloud,Proj->get_TreeCloud(i).get_name());
-    m_cloud1 = cl;
-    m_cloud1->set_Psize(Proj->get_TreeCloud(i).get_Psize());
+    m_cloud1->get_Cloud()->clear();
+    m_cloud1->set_name(in->get_outputCloud1());
+    m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
 
     //spustit editacni listu
     editBar = new QToolBar(tr("edit bar"),this);
     this->addToolBar(editBar);
     QAction *stopTE = editBar->addAction("Stop EDIT");
+    connect(stopTE,SIGNAL(triggered()),this,SLOT(treeEditStop()) );
+    QAction *undoAct = editBar->addAction("undo");
+    connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
+    undopoint.clear();
+
+    treeWidget->allItemOFF();
+    m_vis->removeAllPointClouds();
+    dispCloud(*m_cloud,220,220,0);
+    area = m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    m_vis->resetCamera();
+    qvtkwidget->update();
+  }
+}
+void MainWindow::treeEditStop()
+{
+  // save m_cloud as new tree - zmenit ulozeni
+  if(m_cloud->get_Cloud()->points.size() > 1)
+  {
+    treeWidget->itemON(m_cloud->get_name());
+    QStringList name = m_cloud->get_name().split(".");
+    saveTreeCloud(m_cloud->get_Cloud(),name.at(0),true);
+    Proj->get_TreeCloud(m_cloud->get_name()).set_Cloud(m_cloud->get_Cloud());
+    dispCloud(Proj->get_TreeCloud(m_cloud->get_name()));
+  }
+
+  if(m_cloud1->get_Cloud()->points.size() > 1)
+  {
+    saveOstCloud(m_cloud1);
+  }
+  removeCloud(m_cloud1->get_name());
+  removeCloud(m_cloud->get_name());
+  dispCloud(Proj->get_TreeCloud(m_cloud->get_name()));
+  m_cloud->get_Cloud()->clear();
+  m_cloud1->get_Cloud()->clear();
+  delete editBar;
+  area.disconnect();
+}
+
+void MainWindow::dbhCloudEdit()
+{
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Manual edit of trees");
+  in->set_path(Proj->get_Path());
+  in->set_description("Manual editing of point cloud representing tree point for DBH computation. For editing please press key 'x' and outline rectangle."
+                        " Selected points will be deleted. after editing cloud will be saved.");
+  in->set_inputCloud1("Input Tree cloud:",get_treeNames());
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    //zkopirovat do m_cloud
+    m_cloud->get_Cloud()->clear();
+    m_cloud->set_name(in->get_inputCloud1());
+    m_cloud->set_Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud());
+    m_cloud->set_Psize(Proj->get_TreeCloud(in->get_inputCloud1()).get_Psize());
+
+    //zkopirovat do m_cloud1
+    m_cloud1->get_Cloud()->clear();
+    m_cloud1->set_name("rest");
+    m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
+
+
+    //spustit editacni listu
+    editBar = new QToolBar(tr("edit bar"),this);
+    this->addToolBar(editBar);
+    QAction *stopTE = editBar->addAction("Stop EDIT");
+    QAction *undoAct = editBar->addAction("undo");
+    connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
+    undopoint.clear();
 
     connect(stopTE,SIGNAL(triggered()),this,SLOT(dbhCloudStopEdit()) );
-    //connect areapicking event
-    //m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    treeWidget->allItemOFF();
     m_vis->removeAllPointClouds();
     m_vis->removeAllShapes();
     dispCloud(*m_cloud,220,220,0);
+    area = m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
+    m_vis->resetCamera();
+    qvtkwidget->update();
   }
 }
 void MainWindow::dbhCloudStopEdit()
 {
-  //get the Strom
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
+  // save m_cloud as new tree_dbh -
+  if(m_cloud->get_Cloud()->points.size() > 1)
   {
-    names << Proj->get_TreeCloud(i).get_dbhCloud().get_name();
+    Proj->set_dbhCloud(m_cloud->get_name(),m_cloud->get_Cloud());
   }
+  removeCloud(m_cloud1->get_name());
+  removeCloud(m_cloud->get_name());
 
-  int j;
-  for(int i = 0; i< names.size(); i++)
-  {
-    if( names.at(i) == m_cloud->get_name())
-      j = i;
-  }
-  // save m_cloud as old tree
-  stred x = Proj->get_TreeCloud(j).set_dbhLSRALG(m_cloud->get_Cloud());
-  stred xx = Proj->get_TreeCloud(j).set_dbhLSRGEOM(x,m_cloud->get_Cloud());
-  Proj->set_treedbh(j,xx);
 
+  //dispCloud(Proj->get_TreeCloud(m_cloud->get_name()).get_dbhCloud(), 255,0,0);
   m_cloud->get_Cloud()->clear();
   m_cloud1->get_Cloud()->clear();
   delete editBar;
+  area.disconnect();
 }
 void MainWindow::treeAtributes()
 {
@@ -1554,7 +1896,9 @@ void MainWindow::treeAtributesRead()
     {
 // DBH
       //displ dbhCloud
-      dispCloud(Proj->get_TreeCloud(i).get_dbhCloud(),255, 0, 0);
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
 
       //Coeff
       pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
@@ -1640,7 +1984,11 @@ void MainWindow::cylinderSeg()
     std::stringstream name ;
     name << c->get_name().toUtf8().constData() << "cyl";
     m_vis->addCylinder(*coef,name.str());
-    dispCloud(c->get_dbhCloud(),255,0,0);
+    //dispCloud(c->get_dbhCloud(),255,0,0);
+    //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
   }
   if(ok && item == "all")
   {
@@ -1662,7 +2010,10 @@ void MainWindow::cylinderSeg()
       std::stringstream name ;
       name << c->get_name().toUtf8().constData() << "cyl";
       m_vis->addCylinder(*coef,name.str());
-      dispCloud(c->get_dbhCloud(),255,0,0);
+      //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(j).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(j).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
     }
   }
 }
@@ -1801,10 +2152,13 @@ void MainWindow::dbh()
     Tree *c = new Tree(Proj->get_TreeCloud(i));
 
     //set dbh()
-    c->set_dbh();
+    //c->set_dbh();
 
     //displ dbhCloud
-    dispCloud(c->get_dbhCloud(),255, 0, 0);
+    //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
 
     //addcylinder
     stred x = c->get_dbh();
@@ -1836,10 +2190,13 @@ void MainWindow::dbh()
       // set as strom
       Tree *c = new Tree(Proj->get_TreeCloud(j));
 
-      c->set_dbh();
+     // c->set_dbh();
       //c->set_position();
     //displ dbhCloud
-      dispCloud(c->get_dbhCloud(),255, 0, 0);
+      //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(j).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(j).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
 
     //addcylinder
       stred x = c->get_dbh();
@@ -1896,7 +2253,10 @@ void MainWindow::dbhLSR()
     else
     {
       //displ dbhCloud
-      dispCloud(c->get_dbhCloud(),255, 0, 0);
+      //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
         //Coeff
       pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
       coef->values.push_back((float)x.a);
@@ -1939,7 +2299,10 @@ void MainWindow::dbhLSR()
       }
       else
       {
-        dispCloud(c->get_dbhCloud(),255, 0, 0);
+        //displ dbhCloud
+      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(j).get_name());
+      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(j).get_dbhCloud(),cl_name ) ;
+      dispCloud(*cl_,255, 0, 0);
         //Coeff
         pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
         coef->values.push_back((float)x.a);
@@ -2122,129 +2485,9 @@ void MainWindow::position()
     }
   }
 }
-void MainWindow::treeEdit()
-{
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-  {
-    names << Proj->get_TreeCloud(i).get_name();
-  }
-  bool ok;
-  QString item = QInputDialog::getItem(this, tr("select tree cloud"), tr("cloud name:"), names, 0, false, &ok);
-  if (ok && !item.isEmpty())
-  {
-    int i = names.indexOf(item);
-    //zkopirovat do m_cloud
-    Cloud *c = new Cloud(Proj->get_TreeCloud(i).get_Cloud(),Proj->get_TreeCloud(i).get_name());
-    m_cloud = c;
-    m_cloud->set_Psize(Proj->get_TreeCloud(i).get_Psize());
-
-    //zkopirovat do m_cloud1
-    pcl::PointCloud<pcl::PointXYZI>::Ptr h_cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    Cloud *cl = new Cloud(h_cloud,Proj->get_TreeCloud(i).get_name());
-    m_cloud1 = cl;
-    m_cloud1->set_Psize(Proj->get_TreeCloud(i).get_Psize());
-
-
-    //spustit editacni listu
-    editBar = new QToolBar(tr("edit bar"),this);
-    this->addToolBar(editBar);
-    QAction *stopTE = editBar->addAction("Stop EDIT");
-
-    connect(stopTE,SIGNAL(triggered()),this,SLOT(treeEditStop()) );
-    //connect areapicking event
-    //m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent, *this );
-    m_vis->removeAllPointClouds();
-    dispCloud(*m_cloud,220,220,0);
-  }
-}
-void MainWindow::treeEditStop()
-{
-  // save m_cloud as old tree
-  Cloud *c = new Cloud(m_cloud->get_Cloud(),m_cloud->get_name());
-
-  //get the Strom
-  QStringList names;
-  // vybrat cloud terenu
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-  {
-    names << Proj->get_TreeCloud(i).get_name();
-  }
-
-  int j;
-  for(int i = 0; i< names.size(); i++)
-  {
-    if( names.at(i) == m_cloud->get_name())
-      j= i;
-  }
-  //set as a cloud
-  Proj->get_TreeCloud(j).set_Cloud(c->get_Cloud());
-
-  //Save into file
-  QString pathT = QString("%1\\%2").arg(Proj->get_Path()).arg(m_cloud->get_name());
-  pcl::io::savePCDFileBinaryCompressed(pathT.toUtf8().constData(),*m_cloud->get_Cloud());
-
-
-  //save the rest
-  QMessageBox *msgBox =  new QMessageBox(this);
-	msgBox->setText("Save the deleted parts");
-	msgBox->setInformativeText("Do you want to save deleted parts as new file?");
-	msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	msgBox->setDefaultButton(QMessageBox::Yes);
-
-  if(msgBox->exec() == QMessageBox::Yes)
-  {
-
-    saveOstCloud(m_cloud1->get_Cloud());
-  }
-  else
-  {
-    //save and contencate with existing file
-    QStringList names;
-      //terrainCloud
-      for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
-      {
-        names << Proj->get_TerrainCloud(i).get_name();
-      }
-      //vegeCloud
-       for(int i = 0; i< Proj->get_sizevegeCV(); i++)
-      {
-        names << Proj->get_VegeCloud(i).get_name();
-      }
-      //treeCloud
-       for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-      {
-        names << Proj->get_TreeCloud(i).get_name();
-      }
-      //ostCloud
-       for(int i = 0; i< Proj->get_sizeostCV(); i++)
-      {
-        names << Proj->get_ostCloud(i).get_name();
-      }
-
-      bool ok;
-      QString item = QInputDialog::getItem(this, tr("select cloud for join"), tr("cloud name:"), names, 0, false, &ok);
-      if (ok && !item.isEmpty())
-      {
-        // contencate clouds
-        Cloud *c = new Cloud(Proj->get_Cloud(item));
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI> ());
-        cloud = c->get_Cloud();
-        *cloud += *m_cloud1->get_Cloud();
-        Proj->get_Cloud(item).set_Cloud(cloud);
-      }
-
-  }
-  m_cloud->get_Cloud()->points.erase(m_cloud->get_Cloud()->points.begin(),m_cloud->get_Cloud()->points.end());
-  m_cloud1->get_Cloud()->points.erase(m_cloud1->get_Cloud()->points.begin(),m_cloud1->get_Cloud()->points.end());
-  m_vis->removeAllPointClouds();
-  delete editBar;
-}
 void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
 {
   QString name = QInputDialog::getText(this, tr("Name of new tree File"),tr("e.g. strom"));
-
 
   if(name.isEmpty())
   {
@@ -2253,18 +2496,17 @@ void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
   }
   else
   {
-    Cloud *c = new Cloud(tree_cloud,name);
-    Proj->set_OstCloud(*c);
-    QString pathT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
-    QFile file(pathT);
+    QString name2 =QString("%1.pcd").arg(name);
+    QString path = QString("%1\\%2").arg(Proj->get_Path()).arg(name2);
+    QFile file(path);
     if(file.exists())
     {
       //do you wish to rewrite existing file?
-      QMessageBox::StandardButton rewrite = QMessageBox::question(this,tr("overwrite file?"),tr("File with given name exist. Do you wish to overwrite file?"),QMessageBox::Yes|QMessageBox::No);
+      QMessageBox::StandardButton rewrite = QMessageBox::question(this,tr("Overwrite file?"),tr("File with given name exist. Do you wish to overwrite file?"),QMessageBox::Yes|QMessageBox::No);
       if(rewrite == QMessageBox::Yes)
       {
-        Proj->save_newCloud("strom",name,tree_cloud);
-        openTreeFile(pathT);
+        Cloud *c = new Cloud(tree_cloud,name2);
+        saveTreeCloud(c);
       }
       else
       {
@@ -2273,8 +2515,8 @@ void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
     }
     else
     {
-      Proj->save_newCloud("strom",name,tree_cloud);
-      openTreeFile(pathT);
+      Cloud *c = new Cloud(tree_cloud,name2);
+      saveTreeCloud(c);
     }
   }
 }
@@ -2286,8 +2528,8 @@ void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, 
   QFile file(pathT);
   if(overwrt== true)
   {
-    Proj->save_newCloud("strom",name,tree_cloud);
-    openTreeFile(pathT);
+    Proj->save_Cloud(name,tree_cloud);
+    //openTreeFile(pathT);
   }
   else
   {
@@ -2315,25 +2557,61 @@ void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, 
 void MainWindow::saveOstCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr s_cloud)
 {
   QString name = QInputDialog::getText(this, tr("Name of new File"),tr("e.g. rest"));
-    if(name.isEmpty())
-    {
-      QMessageBox::warning(this,tr("error"),tr("You forget fill name of new cloud."));
-      saveOstCloud(s_cloud);
-      return;
-    }
-    else
-    {
-      Cloud *cR = new Cloud(s_cloud,name);
-      Proj->set_OstCloud(*cR);
-      Proj->save_newCloud("ost",name,s_cloud);
-      QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
-      openOstFile(path);
-    }
+  if(name.isEmpty())
+  {
+    QMessageBox::warning(this,tr("error"),tr("You forget fill name of new cloud."));
+    saveOstCloud(s_cloud);
+    return;
+  }
+  else
+  {
+    Cloud *cR = new Cloud(s_cloud,name);
+    Proj->set_OstCloud(*cR);
+    Proj->save_newCloud("ost",name,s_cloud);
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
+    openOstFile(path);
+  }
+}
+void MainWindow::saveTreeCloud(Cloud *s_cloud)
+{
+  if(s_cloud->get_Cloud()->points.size() > 1)
+  {
+    Proj->save_newCloud("strom",s_cloud->get_name(),s_cloud->get_Cloud());
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(s_cloud->get_name());
+    openTreeFile(path);
+  }
+}
+void MainWindow::saveOstCloud(Cloud *s_cloud)
+{
+  if(s_cloud->get_Cloud()->points.size() > 1)
+  {
+    Proj->save_newCloud("ost",s_cloud->get_name(),s_cloud->get_Cloud());
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(s_cloud->get_name());
+    openOstFile(path);
+  }
+}
+void MainWindow::saveVegeCloud(Cloud *s_cloud)
+{
+  if(s_cloud->get_Cloud()->points.size() > 1)
+  {
+    Proj->save_newCloud("vege",s_cloud->get_name(),s_cloud->get_Cloud());
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(s_cloud->get_name());
+    openVegeFile(path);
+  }
+}
+void MainWindow::saveTerrainCloud(Cloud *s_cloud)
+{
+  if(s_cloud->get_Cloud()->points.size() > 1)
+  {
+    Proj->save_newCloud("teren",s_cloud->get_name(),s_cloud->get_Cloud());
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(s_cloud->get_name());
+    openTerrainFile(path);
+  }
 }
 
 void MainWindow::skeleton()
 {
-QStringList names;
+  QStringList names;
   // vybrat cloud terenu
   for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
   {
@@ -2409,97 +2687,62 @@ QStringList names;
 //MISCELLANEOUS
 void MainWindow::plusCloud()
 {
-  QStringList names;
-  //basecloud
-  for(int i = 0; i< Proj->get_sizebaseCV(); i++)
-  {
-    names << Proj->get_baseCloud(i).get_name();
-  }
-  //teren
-  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
-  {
-    names << Proj->get_TerrainCloud(i).get_name();
-  }
-  //vege
-  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
-  {
-    names << Proj->get_VegeCloud(i).get_name();
-  }
-  //ost
-  for(int i = 0; i< Proj->get_sizeostCV(); i++)
-  {
-    names << Proj->get_ostCloud(i).get_name();
-  }
-  //tree
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-  {
-    names << Proj->get_TreeCloud(i).get_name();
-  }
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Cloud join");
+  in->set_path(Proj->get_Path());
+  in->set_description("Join of two clouds which create  new third one.");
+  in->set_inputCloud1("1. input cloud:",get_allNames());
+  in->set_inputCloud2("2. input cloud:",get_allNames());
+  in->set_outputCloud1("Output cloud :","cloud");
+  in->set_stretch();
+  int dl = in->exec();
 
-  PlusDialog *plusD = new PlusDialog( names,this);
-  plusD->exec();
-  if(plusD->get_names().isEmpty())
-    return;
-  plusCloud(plusD->get_names(), "strom");
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    plusCloud(in->get_inputCloud1(),in->get_inputCloud2(),in->get_outputCloud1(), "strom" );
   //pridat do stromu
-  QString filen= QString ("%1\\%2.pcd").arg(Proj->get_Path()).arg(plusD->get_names().at(2));
-  openOstFile(filen);
+    QString filen= QString ("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+    openOstFile(filen);
+  }
 }
-void MainWindow::plusCloud(QStringList names, QString typ = "ost")
+void MainWindow::plusCloud(QString input1, QString input2,QString output, QString typ = "ost")
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr cl (new pcl::PointCloud<pcl::PointXYZI>);
-  *cl = *Proj->get_Cloud(names.at(0)).get_Cloud() + *Proj->get_Cloud(names.at(1)).get_Cloud();
-//  m_cloud->set_Cloud(cl);
-  Proj->save_newCloud(typ,names.at(2),cl);
+  *cl = *Proj->get_Cloud(input1).get_Cloud() + *Proj->get_Cloud(input2).get_Cloud();
+  Proj->save_newCloud(typ,output,cl);
 }
 void MainWindow::voxelize()
 {
-  QStringList names;
-  //basecloud
-  //names<< Proj->get_baseCloud().get_name();
-  //teren
-  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
-  {
-    names << Proj->get_TerrainCloud(i).get_name();
-  }
-  //vege
-  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
-  {
-    names << Proj->get_VegeCloud(i).get_name();
-  }
-  //ost
-  for(int i = 0; i< Proj->get_sizeostCV(); i++)
-  {
-    names << Proj->get_ostCloud(i).get_name();
-  }
-  //tree
-  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
-  {
-    names << Proj->get_TreeCloud(i).get_name();
-  }
-  bool ok;
-  QString cl = QInputDialog::getItem(this,("Select cloud for voxelization"),("name of cloud:"),names,0, false, &ok);
-  if(ok== true)
-  {
-    float res =QInputDialog::getDouble(this,("insert resolution"),("resolution in m:"),0.1,0.01,100000,3);
 
-    pcl::VoxelGrid<pcl::PointXYZI> vox;
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Cloud join");
+  in->set_path(Proj->get_Path());
+  in->set_description("Make voxelized cloud. Resulting cloud has point only in centroids of boxex with resolution where was present at least one point. ");
+  in->set_inputCloud1("Input cloud:",get_allNames());
+  in->set_outputCloud1("Output cloud name:","voxel");
+  in->set_inputInt("Resolution in cm:","10");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    float res =in->get_intValue()/100.0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
-    vox.setInputCloud (Proj->get_Cloud(cl).get_Cloud());
+    pcl::VoxelGrid<pcl::PointXYZI> vox;
+
+    vox.setInputCloud (Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
     vox.setLeafSize (res, res, res);
     vox.filter (*cloud_filtered);
 
-    QStringList clo = cl.split(".");
-    int res_cm = std::ceil(res*100);
-
-    QString it = QString("voxel_%1cm_%2").arg(res_cm).arg(clo.at(0));
-    Proj->save_newCloud("ost",it,cloud_filtered);
-    QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(it);
+    Proj->save_newCloud("ost",in->get_outputCloud1(),cloud_filtered);
+    QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
     openOstFile(fullnameV);
-  }
-  else
-  {
-    return;
   }
 }
 void MainWindow::backgroundColor()
@@ -2518,7 +2761,257 @@ void MainWindow::backgroundColor()
     qvtkwidget->show();
   }
 }
+QString MainWindow::get_path()
+{
+  return Proj->get_Path();
+}
+void MainWindow::IDW()
+{
+   //inputDialog
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Terrain voxel");
+  in->set_path(Proj->get_Path());
+  in->set_description("Special function only for aligment of shifted data.");
+  in->set_inputCloud1("Input reference cloud:",get_allNames());
+  in->set_inputCloud2("Input ground cloud:",get_allNames());
+  in->set_inputCloud3("Input original cloud:",get_allNames());
+  in->set_outputCloud1("Output cloud of ground:","idw-");
+  in->set_stretch();
+  int dl = in->exec();
 
+  if(dl == QDialog::Rejected)
+  { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+      // vypocet vyskoveho rozdilu jeho ulozeni do intensity
+      //pro kazdy bod v ground_points najdi nejblissi bod v reference_cloud uloz ho do cloud_vyr
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vyr (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_idw (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtreee;
+    kdtreee.setInputCloud (Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+
+    for(int i=0; i < Proj->get_Cloud(in->get_inputCloud2()).get_Cloud()->points.size();i++)
+    {
+      std::vector<int> pointIDv;
+      std::vector<float> pointSDv;
+      pcl::PointXYZI searchPointV;
+      searchPointV=Proj->get_Cloud(in->get_inputCloud2()).get_Cloud()->points.at(i);
+
+      if(kdtreee.nearestKSearch(searchPointV,1,pointIDv,pointSDv) >0)
+      {
+        float z = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.at( pointIDv.at(0) ).z;
+
+        pcl::PointXYZI in;
+        in.x = searchPointV.x;
+        in.y = searchPointV.y;
+        in.z = searchPointV.z;
+        in.intensity = searchPointV.z - z;
+        //ulozit jako novy cloud
+        //#pragma omp critical
+        cloud_vyr->points.push_back(in);
+      }
+    }
+    cloud_vyr->width = cloud_vyr->points.size ();
+    cloud_vyr->is_dense=true;
+    cloud_vyr->height=1;
+
+// tady začíná IDW
+    // pro kazdy bod v m_cloud najdi 10 nejblizsich bodu z cloud_vyr:
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+    std::vector<int> pointIv;
+    std::vector<float> pointSv;
+    pcl::PointXYZI searchPointVV;
+    kdtree.setInputCloud (cloud_vyr);
+    //#pragma omp parallel for
+    for(int j=0; j < Proj->get_Cloud(in->get_inputCloud3()).get_Cloud()->points.size();j++)
+    {
+      searchPointVV=Proj->get_Cloud(in->get_inputCloud3()).get_Cloud()->points.at(j);
+      if(kdtree.nearestKSearch(searchPointVV,10,pointIv,pointSv) >0)
+      {
+        float max_dist = 0;
+        float w_sum = 0;
+        float idw_sum = 0;
+        //max distance
+        for(int k =0; k < pointSv.size();k++)
+        {
+          if(sqrt(pointSv.at(k)) > max_dist)
+            max_dist = sqrt(pointSv.at(k));
+        }
+      //w_sum
+        for(int l =0; l < pointSv.size();l++)
+        {
+          float dist = sqrt(pointSv.at(l));
+          float w;
+          if(dist == 0)
+            { w=0.0000000000001;}
+          else
+            { w = pow((max_dist - dist)/(max_dist*dist),2);}
+          w_sum += w;
+        }
+      //idw_sum
+        for(int m =0; m < pointSv.size();m++)
+        {
+          float dist = sqrt(pointSv.at(m));
+          float w;
+          if(dist == 0)
+            { w=0.0000000000001;}
+          else
+            {w = pow((max_dist - dist)/(max_dist*dist),2)/w_sum;}
+          float f =   cloud_vyr->points.at(pointIv.at(m)).intensity;
+          float idw = f*w;
+          idw_sum+=idw;
+        }
+      pcl::PointXYZI bod;
+      bod.x= searchPointVV.x;
+      bod.y= searchPointVV.y;
+      bod.z= searchPointVV.z - idw_sum;
+      //#pragma omp critical
+      cloud_idw->points.push_back(bod);
+      }
+    }
+    cloud_idw->width = cloud_idw->points.size ();
+    cloud_idw->is_dense=true;
+    cloud_idw->height=1;
+
+    // export do pcd
+    Proj->save_newCloud("ost",in->get_outputCloud1(),cloud_idw);
+    QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+    openVegeFile(fullnameV);
+  }
+}
+void MainWindow::clip()
+{
+//inputDialog
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Clip");
+  in->set_path(Proj->get_Path());
+  in->set_description("Special function only for selectoin of ground points.");
+  in->set_inputCloud1("Input reference cloud:",get_allNames());
+  in->set_inputCloud2("Input original cloud:",get_allNames());
+  in->set_inputInt("set width of strip:","100");
+  in->set_outputCloud1("Output cloud of ground:","cliped-ground");
+  in->set_stretch();
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+  { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    m_width=0;
+    m_res = in->get_intValue();
+    //  orginal
+    m_cloud->get_Cloud()->clear();
+    m_cloud->set_name(in->get_inputCloud1());
+    m_cloud->set_Cloud(Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+    m_cloud->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
+
+    // reference
+    m_cloud1->get_Cloud()->clear();
+    m_cloud1->set_name(in->get_inputCloud2());
+    m_cloud1->set_Cloud(Proj->get_Cloud(in->get_inputCloud2()).get_Cloud());
+    m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud2()).get_Psize());
+
+    //ground
+    m_cloud2 = new Cloud();
+    m_cloud2->get_Cloud()->clear();
+    m_cloud2->set_name(in->get_outputCloud1());
+    m_cloud2->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
+
+
+    area = m_vis->registerAreaPickingCallback (&MainWindow::AreaEvent2, *this );
+
+    //spustit editacni listu
+    editBar = new QToolBar(tr("edit bar"),this);
+    this->addToolBar(editBar);
+    QAction *stopTE = editBar->addAction("Stop EDIT");
+    connect(stopTE,SIGNAL(triggered()),this,SLOT(clipStop()) );
+    //QAction *undoAct = editBar->addAction("undo");
+    //connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
+    clipAct = new QAction("clip",this);
+    editBar->addAction(clipAct);
+    connect(clipAct,SIGNAL(triggered()),this,SLOT(clipped()) );
+    undopoint.clear();
+
+    treeWidget->allItemOFF();
+    m_vis->removeAllPointClouds();
+
+    clip(Proj->get_Cloud(m_cloud->get_name()),Proj->get_Cloud(m_cloud1->get_name()), m_res);//nastavi pasy
+  }
+}
+
+void MainWindow::clip(Cloud cl, Cloud cl2, int res)
+{
+//vyčistit m_cloud a m_cloud2
+  m_cloud->get_Cloud()->points.clear(); //  original
+  m_cloud1->get_Cloud()->points.clear(); //reference
+
+
+//zjistit min a max  original cloudu
+  pcl::PointXYZI min3D,max3D;
+	pcl::getMinMax3D(*cl2.get_Cloud(),min3D,max3D);
+
+  //original cloud strip
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZI>);
+  for(int i=0; i < cl2.get_Cloud()->points.size();i++)
+  {
+    if(cl2.get_Cloud()->points.at(i).x > (min3D.x +m_width)&& cl2.get_Cloud()->points.at(i).x < (min3D.x +m_width + res) && cl2.get_Cloud()->points.at(i).y > (min3D.y -10) &&  cl2.get_Cloud()->points.at(i).y < (max3D.y +10))
+      cloud1->points.push_back(cl2.get_Cloud()->points.at(i));
+  }
+  m_cloud->set_Cloud(cloud1);
+
+  //reference terain strip
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZI>);
+  for(int i=0; i < cl.get_Cloud()->points.size();i++)
+  {
+    if(cl.get_Cloud()->points.at(i).x > (min3D.x +m_width) && cl.get_Cloud()->points.at(i).x < (min3D.x +m_width + res))
+      cloud2->points.push_back(cl.get_Cloud()->points.at(i));
+  }
+  m_cloud1->set_Cloud(cloud2);
+
+
+  //dipslay clouds
+  m_vis->removeAllPointClouds();
+  dispCloud(*m_cloud1,0,220,0); //reference
+  dispCloud(*m_cloud,220,220,0); //original
+
+  //m_vis->resetCamera();
+  qvtkwidget->update();
+
+  m_width = m_width + res;
+  //kontrola posledniho pasu
+  if ((min3D.x +m_width)> max3D.x)
+  {
+    QMessageBox::information(this,"Warning","last strip");
+    disconnect(clipAct,SIGNAL(triggered()),this,SLOT(clipped()) );
+    editBar->removeAction(clipAct);
+  }
+}
+void MainWindow::clipped()
+{
+  *m_cloud2->get_Cloud() += *m_cloud->get_Cloud();
+  m_cloud->get_Cloud()->clear();
+  m_cloud1->get_Cloud()->clear();
+  clip(Proj->get_Cloud(m_cloud->get_name()),Proj->get_Cloud(m_cloud1->get_name()), m_res);//nastavi pasy
+}
+void MainWindow::clipStop()
+{
+  if(m_cloud2->get_Cloud()->points.size() >1)
+  {
+    m_vis->removeAllPointClouds();
+  // ulozit m_cloud2 do vystupniho souboru
+    Proj->save_newCloud("ost",m_cloud2->get_name(),m_cloud2->get_Cloud());
+    QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(m_cloud2->get_name());
+    openCloudFile(fullnameT);
+    delete editBar;
+    m_cloud->get_Cloud()->clear();
+    m_cloud1->get_Cloud()->clear();
+    m_cloud2->get_Cloud()->clear();
+    undopoint.clear();
+  }
+  area.disconnect();
+}
 //ACTION and MENUS
 void MainWindow::createActions()
 {
@@ -2540,7 +3033,7 @@ void MainWindow::createActions()
   connect(importTXTAct, SIGNAL(triggered()), this, SLOT(importtxt2()));
 
   importLASAct = new QAction( tr("&Import LAS"), this);
-  importTXTAct->setStatusTip(tr("Import of las file"));
+  importLASAct->setStatusTip(tr("Import of las file"));
   connect(importLASAct, SIGNAL(triggered()), this, SLOT(importlas()));
 
   importPCDAct = new QAction(tr("&Import basic cloud (PCD)"), this);
@@ -2562,6 +3055,10 @@ void MainWindow::createActions()
   exportTXTAct = new QAction(tr("&Export file (txt)"), this);
   exportTXTAct->setStatusTip(tr("Export cloud into txt file"));
   connect(exportTXTAct, SIGNAL(triggered()), this, SLOT(exportCloud()));
+
+  exportPLYAct = new QAction(tr("&Export file (ply)"), this);
+  exportPLYAct->setStatusTip(tr("Export cloud into ply file"));
+  connect(exportPLYAct, SIGNAL(triggered()), this, SLOT(plysave()));
 
   exitAct = new QAction(tr("E&xit"), this);
   exitAct->setShortcuts(QKeySequence::Quit);
@@ -2657,6 +3154,14 @@ void MainWindow::createActions()
   voxAct->setStatusTip(tr("voxels from cloud"));
   connect(voxAct, SIGNAL(triggered()), this, SLOT(voxelize()));
 
+  IDWAct = new QAction(tr("IDW "), this);
+  IDWAct->setStatusTip(tr("IDW of clouds. Only for special purpose"));
+  connect(IDWAct, SIGNAL(triggered()), this, SLOT(IDW()));
+
+  clipedAct = new QAction(tr("clip "), this);
+  clipedAct->setStatusTip(tr("cliped clouds. Only for special purpose"));
+  connect(clipedAct, SIGNAL(triggered()), this, SLOT(clip()));
+
 
   backgrdColAct = new QAction(tr("Color backgroung"), this);
   backgrdColAct->setStatusTip(tr("background color"));
@@ -2696,6 +3201,7 @@ void MainWindow::createMenus()
   importMenu->addAction(importTreeAct);
   fileMenu->addSeparator();
   fileMenu->addAction(exportTXTAct);
+  fileMenu->addAction(exportPLYAct);
   fileMenu->addSeparator();
   fileMenu->addAction(exitAct);
 
@@ -2729,8 +3235,9 @@ void MainWindow::createMenus()
 //MISC
   miscMenu = menuBar()->addMenu(tr("Other features"));
   miscMenu->addAction(plusAct);
-  miscMenu->addAction(voxAct);backgrdColAct;
- // miscMenu->addAction(backgrdColAct);
+  miscMenu->addAction(voxAct);//backgrdColAct;
+  miscMenu->addAction(IDWAct);
+  miscMenu->addAction(clipedAct);
 //ABOUT
   helpMenu = menuBar()->addMenu(tr("&About"));
   helpMenu->addAction(aboutAct);
@@ -2748,7 +3255,42 @@ void MainWindow::createTreeView()
 {
   treeWidget->resizeColumnToContents(1);
 }
+void MainWindow::undo()
+{
+  if(!undopoint.empty())
+  {
+     // z posledniho prvku ve ktoru undopoint vzit cislo
+    int num = undopoint.at(undopoint.size()-1);
 
+    // num = pocet bodu od konce v m_cloudu1
+    //vytvorit novy cloud s temito body
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    for(int y = m_cloud1->get_Cloud()->points.size() - num; y< m_cloud1->get_Cloud()->points.size(); y++)
+    {
+      pcl::PointXYZI bod;
+      bod = m_cloud1->get_Cloud()->points.at(y);
+      cloud->points.push_back(bod);
+    }
+
+    // kopirovat cloud k m_cloud
+    int s = m_cloud->get_Cloud()->points.size();
+    *m_cloud->get_Cloud() += *cloud;
+
+    // smazat poslednich "x" bodu z m_cloud1
+    *m_cloud1->get_Cloud()->points.erase(m_cloud1->get_Cloud()->points.end() - num, m_cloud1->get_Cloud()->points.end());
+    // smazat posledni zaznam v undopoint
+    undopoint.pop_back();
+    //zobrazit
+    m_vis->removeAllPointClouds();
+    dispCloud(*m_cloud,220,220,0);
+  }
+  else
+  {
+    QMessageBox::information(this,("empty"), ("no more points to put back"));
+
+  return;
+  }
+}
 //QVTKWIDGET
 void MainWindow::ShowContextMenu(const QPoint& pos)
 {
@@ -2772,6 +3314,7 @@ void MainWindow::AreaEvent(const pcl::visualization::AreaPickingEvent& event, vo
 
   if(m_cloud->get_Cloud()->points.size() > 1)
   {
+    undopoint.push_back(inl->indices.size());
     pcl::ExtractIndices<pcl::PointXYZI> extract;
     extract.setInputCloud (m_cloud->get_Cloud());
     extract.setIndices (inl);
@@ -2788,7 +3331,44 @@ void MainWindow::AreaEvent(const pcl::visualization::AreaPickingEvent& event, vo
   }
   return;
 }
+void MainWindow::AreaEvent2(const pcl::visualization::AreaPickingEvent& event, void* )
+{
+  pcl::PointIndices::Ptr inl (new pcl::PointIndices ());
+  pcl::PointIndices::Ptr in (new pcl::PointIndices ());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2 (new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZI>);
 
+  if (event.getPointsIndices (inl->indices))
+  {
+    for(int a = 0; a < inl->indices.size();a++)
+    {
+      if (inl->indices.at(a) < m_cloud->get_Cloud()->points.size())
+          in->indices.push_back(inl->indices.at(a));
+    }
+    if(m_cloud->get_Cloud()->points.size() > 1)
+    {
+    //undopoint.push_back(inl->indices.size());
+      pcl::ExtractIndices<pcl::PointXYZI> extract;
+      extract.setInputCloud (m_cloud->get_Cloud());
+      extract.setIndices (in);
+      extract.setNegative (true); // true = vse co neni vybrano
+      extract.filter (*cloud1);
+    // vse co je vybrano patri  znicit
+      extract.setNegative (false); //false = vse co je vybrano
+      extract.filter (*cloud2);
+    // vse co neni vybrano ulozit do m_cloud1
+      m_cloud->set_Cloud(cloud1);
+      m_vis->removeAllPointClouds();
+      dispCloud(*m_cloud1,0,220,0); //reference
+      dispCloud(*m_cloud,220,220,0); //original
+    }
+    return;
+  }
+  else
+  {
+    return;
+  }
+}
 void MainWindow::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void* )
 {
     if (event.keyDown () && event.getKeyCode() == '+')
@@ -2836,23 +3416,93 @@ void MainWindow::dispCloud(Cloud cloud, int red, int green, int blue)
 void MainWindow::removeCloud(QString name)
 {
   m_vis->removePointCloud(name.toUtf8().constData());
-//  std::stringstream namep,name_dbh,name_h,name_dbhcloud;
-//  name_dbh <<name.toUtf8().constData() << "cylinder";
-//
-//  m_vis->removeShape(name_dbh.str());
-//  name_h << name.toUtf8().constData() << "line";
-//  m_vis->removeShape(name_h.str());
-//
-//  namep << name.toUtf8().constData() << "_sphere";
-//  m_vis->removeShape(namep.str());
-//  name_dbhcloud << name.toUtf8().constData() << "_dbh";
-//  m_vis->removePointCloud(name_dbhcloud.str());
 
   qvtkwidget->update();
 }
 void MainWindow::removeCloud()
 {
   m_vis->removePointCloud(treeWidget->name.toUtf8().constData());
+}
+//NAmes
+QStringList MainWindow::get_allNames()
+{
+  QStringList names;
+  //basecloud
+  for(int i = 0; i< Proj->get_sizebaseCV(); i++)
+  {
+    names << Proj->get_baseCloud(i).get_name();
+  }
+  //teren
+  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
+  {
+    names << Proj->get_TerrainCloud(i).get_name();
+  }
+  //vege
+  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
+  {
+    names << Proj->get_VegeCloud(i).get_name();
+  }
+  //tree
+  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
+  {
+    names << Proj->get_TreeCloud(i).get_name();
+  }
+  //ost
+  for(int i = 0; i< Proj->get_sizeostCV(); i++)
+  {
+    names << Proj->get_ostCloud(i).get_name();
+  }
+return names;
+}
+QStringList MainWindow::get_treeNames()
+{
+  QStringList names;
+    //tree
+  for(int i = 0; i< Proj->get_sizeTreeCV(); i++)
+  {
+    names << Proj->get_TreeCloud(i).get_name();
+  }
+return names;
+}
+QStringList MainWindow::get_terrainNames()
+{
+  QStringList names;
+    //teren
+  for(int i = 0; i< Proj->get_sizeTerainCV(); i++)
+  {
+    names << Proj->get_TerrainCloud(i).get_name();
+  }
+return names;
+}
+QStringList MainWindow::get_vegetationNames()
+{
+  QStringList names;
+  //vege
+  for(int i = 0; i< Proj->get_sizevegeCV(); i++)
+  {
+    names << Proj->get_VegeCloud(i).get_name();
+  }
+  return names;
+}
+QStringList MainWindow::get_ostNames()
+{
+  QStringList names;
+  //ost
+  for(int i = 0; i< Proj->get_sizeostCV(); i++)
+  {
+    names << Proj->get_ostCloud(i).get_name();
+  }
+return names;
+}
+QStringList MainWindow::get_baseNames()
+{
+  QStringList names;
+  //basecloud
+  for(int i = 0; i< Proj->get_sizebaseCV(); i++)
+  {
+    names << Proj->get_baseCloud(i).get_name();
+  }
+return names;
 }
 
 //TREEWIDGET
@@ -3105,82 +3755,8 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr cld_v (new pcl::PointCloud<pcl::PointXYZI>)
     return cld_v;
 }
 
-////PLUSDIALOG
 
-PlusDialog::PlusDialog(QStringList items, QWidget *parent)
- : QDialog(parent)
-{
-  combo1 = new QComboBox(this);
-  combo2 = new QComboBox(this);
-  combo1->addItems(items);
-  combo2->addItems(items);
-
-  name = new QLineEdit(this);
-  name->setMaxLength(15);
-
-  label1 = new QLabel(this);
-  label1->setText("Cloud 1  \t+");
-
-  label2 = new QLabel(this);
-  label2->setText("Cloud 2  \t=");
-
-  label3 = new QLabel(this);
-  label3->setText("new Cloud");
-
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-
-  QGridLayout *layout = new QGridLayout;
-  layout->setColumnStretch(1, 1);
-  layout->setColumnMinimumWidth(0, 20);
-  layout->setColumnMinimumWidth(1, 20);
-  layout->setColumnMinimumWidth(2, 20);
-
-     //header
-  layout->addWidget(label1, 0, 0);
-  layout->addWidget(label2, 0, 1);
-  layout->addWidget(label3, 0, 2);
-  layout->addWidget(combo1, 1, 0);
-  layout->addWidget(combo2, 1, 1);
-  layout->addWidget(name, 1, 2);
-  layout->addWidget(buttonBox, 2, 1);
-
-  setLayout(layout);
-
-  connect(combo1, SIGNAL(currentIndexChanged(QString)), this, SLOT(setCloud1(QString)));
-  connect(combo2, SIGNAL(currentIndexChanged(QString)), this, SLOT(setCloud2(QString)));
-  connect(name, SIGNAL(textChanged(QString)), this, SLOT(setCloud3(QString)));
-  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
-}
-void PlusDialog::reject()
-{
-  emit rejecte();
-  this->hide();
-}
-void PlusDialog::accept()
-{
-  result << cloud1 << cloud2 << cloud3;
-
-  emit pluscloud(result);
-  this->close();
-}
-void PlusDialog::setCloud1(QString name)
-{
-cloud1 = name;
-}
-void PlusDialog::setCloud2(QString name)
-{
-cloud2 = name;
-}
-void PlusDialog::setCloud3(QString name)
-{
-cloud3 = name;
-}
-QStringList PlusDialog::get_names()
-{
-return result;
-}
-  ////MYTREE
+////MYTREE
 MyTree::MyTree(QWidget *parent)
   : QTreeWidget(parent)
 {
@@ -3354,3 +3930,18 @@ void MyTree::allItemOFF()
   }
 
 }
+void MyTree::itemON(QString name)
+{
+QTreeWidgetItemIterator it(this);
+  while (*it)
+  {
+    QTreeWidgetItem *item = (*it);
+    if (name == item->text(1))
+    {
+      item->setCheckState(0,Qt::Checked);
+      emit checkedOFF(name);
+    }
+    it++;
+  }
+}
+
