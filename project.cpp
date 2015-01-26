@@ -96,7 +96,8 @@ Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col,
 
   QString a = QString("%1_dbh").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
-  m_dbhCloud = new Cloud(cloud_, a);
+  set_dbhCloud();
+  //m_dbhCloud = new Cloud(cloud_, a);
 }
 Tree::Tree (Cloud cloud)
 : Cloud(cloud)
@@ -105,8 +106,9 @@ Tree::Tree (Cloud cloud)
   pcl::getMinMax3D(*get_Cloud(),m_minp,m_maxp);
   QString a = QString("%1_dbh").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
-  m_dbhCloud = new Cloud(cloud_, a);
-  set_dbh(c);
+  set_dbhCloud();
+  //m_dbhCloud = new Cloud(cloud_, a);
+  //set_dbh(c);
 }
 Tree Tree::operator=(Tree &kopie)
 {
@@ -158,104 +160,210 @@ void Tree::set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   m_dbhCloud->set_Cloud(cloud);
 }
-void Tree::set_dbhHT()
+stred Tree::get_dbhHT()
 {
-
   if(!m_dbhCloud->get_Cloud()->points.empty())
   {
     //VOXELIZATION
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_fil (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::VoxelGrid<pcl::PointXYZI> sor;
-    sor.setInputCloud (m_dbhCloud->get_Cloud());
-    sor.setLeafSize (0.01f, 0.01f, 0.01f);
-    sor.filter (*cloud_fil);
+    cloud_fil = get_dbhCloud();
+    int max_it = 100;
+    std::vector<float> acc_x(max_it,0);
+    std::vector<int> acc_xc(max_it,0);
+    std::vector<float> acc_y(max_it,0);
+    std::vector<int> acc_yc(max_it,0);
+    std::vector<int> acc_r(max_it,0);
+    std::vector<int> acc_rc(max_it,0);
+    int max_bod = cloud_fil->points.size()-5;
 
 
-    // select 20 random points
-    // pro kazdou dvojici bodu  urcit
-      //polovinu vzdalenosti mezi nimi
-      //normalovy vektor
-      // urcit rovnici primky  z normaloveho vektoru ulozit
-    // spocitat pruseciky primek a urcit nejpocetnejsi - stred
-    // urcit prumernu vzdalenost bodu od stredu - DBh, procento uspechu
-
-
-
-
-
-
-
-
-
-    //HOUGH TRANSFORM
-    std::vector<stred> maxima;
-    for(int r=2; r < 55; r++)
+    for(int xa = 0; xa < max_it; xa++)
     {
-      int RR = 0, RRR=0;
-      int DD = 0, DDD=0;
-      std::vector<stred> stredy;
-      for(int j=0; j < cloud_fil->points.size();j++)
+      //std::srand(std::time(0));
+      int a= (rand() %max_bod)+2;
+      int b= (rand() %max_bod)+4;
+      int c= (rand() %max_bod);
+
+      // vybrat nahodne tri body
+      pcl::PointXYZI p1,p2,p3;
+      p1 =cloud_fil->points.at(a);
+      p2 =cloud_fil->points.at(b);
+      p3 =cloud_fil->points.at(c);
+
+
+// m1 - bod uprostřed (p1,p2), osa ním prochází
+      float f1 = (p2.x - p1.x) / (p1.y - p2.y);
+      float m1x = (p1.x + p2.x)/2;
+      float m1y = (p1.y + p2.y)/2;
+      float g1 = m1y - f1*m1x;
+
+      float f2 = (p3.x - p2.x) / (p2.y - p3.y);
+      float m2x = (p2.x + p3.x)/2;
+      float m2y = (p2.y + p3.y)/2;
+      float g2 = m2y - f2*m2x;
+
+   // ošetření degenerovaných případů
+   // - tři body na přímce
+      float retx,rety;
+      int radius;
+      if     (f1 == f2)
+        continue;
+      else if(p1.y == p2.y)
       {
-        std::vector<stred> st (720);
-        std::vector<stred> str;
-        pcl::PointXYZI ith = cloud_fil->points.at(j);
-        for(int uhel =0; uhel <720; uhel ++)
-        {
-          float A,B;
-          A = ith.x - ((float)r/100) * cos((float)uhel*M_PI/(180*2));
-          B = ith.y - ((float)r/100) * sin((float)uhel*M_PI/(180*2));
-
-          float AA = ceilf(A * 1000) / 1000; //zaokrouhleni
-          float BB = ceilf(B * 1000) / 1000; //zaokrouhleni
-
-          int s = 0;
-          float z = ith.z;
-          stred T={AA,BB,z,s,r};
-          st.at(uhel) = T; //celkem 720 stredu
-        }
-        str.push_back(st.at(0));
-
-        for(int i=0; i < st.size(); i++)
-        {
-          bool used = false;
-          stred x = st.at(i);
-          #pragma omp parallel for
-          for(int k=0; k < str.size(); k++)
-          {
-            stred y = str.at(k);
-            if(x.a- y.a <0.005 && y.a-x.a < 0.005 && x.b -y.b < 0.005 && y.b-x.b < 0.005) // pokud je v rozmezi 1 cm okolo
-              used = true;
-          }
-          if(used == false)
-          {
-            stredy.push_back(x);
-            str.push_back(x);
-          }
-        }
+        retx = m1x;
+        rety = f1*retx + g1;
+        radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100);
       }
-//ACCUULATOR
-      for(int i =0; i< stredy.size();i++)
+      else if(p2.y == p3.y)
       {
-        int m=0;
-        stred q=stredy.at(i);
-        #pragma omp parallel for
-        for(int j =0; j< stredy.size();j++)
-        {
-          stred w=stredy.at(j);
-      //pokud se shoduje poloha aneni to ten samy bod
-          if ((w.a - q.a) < 0.005 &&  (q.a - w.a) < 0.005 && (w.b - q.b) < 0.005 &&  (q.b - w.b) < 0.005)
-          {
-            #pragma omp atomic
-            m++;
-          }
-        }
-        stredy.at(i).i = m;
+        retx = m2x;
+        rety = f1*retx + g1;
+        radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100);
       }
-      sort(stredy.begin(),stredy.end());
-      maxima.push_back(stredy.back());
-      sort(maxima.begin(),maxima.end());
+      else
+      {
+        retx = (g2-g1) / (f1 - f2);
+        rety = f1*retx + g1;
+        radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100);
+      }
+      //jen ulozit
+      acc_x.at(xa) = retx;
+      acc_y.at(xa)=rety;
+      acc_r.at(xa)=radius;
     }
-    m_dbh = maxima.back();
+
+
+//ACCUULATOR x
+
+    for(int i =0; i < acc_x.size();i++)
+    {
+      int m=0;
+      float qq = acc_x.at(i);
+
+      //#pragma omp parallel for
+      for(int j =0; j < acc_x.size();j++)
+      {
+        float ww = acc_x.at(j);
+
+        if( std::fabs(ww) - std::fabs(qq) >-0.005 && std::fabs(ww) - std::fabs(qq) < 0.005)
+        {
+          m++;
+        }
+      }
+
+      acc_xc.at(i) = m;
+    }
+
+    int pos_x=0;
+    int nej_x = 0;
+    for(int k = 0; k < acc_xc.size(); k++)
+    {
+      int ma = acc_xc.at(k);
+      if( ma > nej_x)
+      {
+        nej_x = ma;
+        pos_x = k;
+      }
+    }
+//ACCUULATOR y
+
+    for(int i =0; i < acc_y.size();i++)
+    {//ACCUULATOR x
+
+    for(int i =0; i < acc_x.size();i++)
+    {
+      int m=0;
+      float qq = acc_x.at(i);
+
+      //#pragma omp parallel for
+      for(int j =0; j < acc_x.size();j++)
+      {
+        float ww = acc_x.at(j);
+
+        if( std::fabs(ww) - std::fabs(qq) >-0.005 && std::fabs(ww) - std::fabs(qq) < 0.005)
+        {
+          m++;
+        }
+      }
+
+      acc_xc.at(i) = m;
+    }
+
+    int pos_m=0;
+    int nej_m = 0;
+    for(int k = 0; k < acc_xc.size(); k++)
+    {
+      int ma = acc_xc.at(k);
+      if( ma > nej_m)
+      {
+        nej_m = ma;
+        pos_m = k;
+      }
+    }
+      int m=0;
+      float qq = acc_y.at(i);
+
+      //#pragma omp parallel for
+      for(int j =0; j < acc_y.size();j++)
+      {
+        float ww = acc_y.at(j);
+
+        if( std::fabs(ww) - std::fabs(qq) >-0.005 && std::fabs(ww) - std::fabs(qq) < 0.005)
+        {
+          m++;
+        }
+      }
+
+      acc_yc.at(i) = m;
+    }
+
+    int pos_y=0;
+    int nej_y = 0;
+    for(int k = 0; k < acc_yc.size(); k++)
+    {
+      int ma = acc_yc.at(k);
+      if( ma > nej_y)
+      {
+        nej_y = ma;
+        pos_y = k;
+      }
+    }
+//ACCUULATOR radius
+
+    for(int i =0; i < acc_r.size();i++)
+    {
+      int m=0;
+      float qq = acc_r.at(i);
+
+      //#pragma omp parallel for
+      for(int j =0; j < acc_r.size();j++)
+      {
+        float ww = acc_r.at(j);
+
+        if( std::fabs(ww) - std::fabs(qq) >-0.005 && std::fabs(ww) - std::fabs(qq) < 0.005)
+        {
+          m++;
+        }
+      }
+
+      acc_rc.at(i) = m;
+    }
+
+    int pos_r=0;
+    int nej_r = 0;
+    for(int k = 0; k < acc_rc.size(); k++)
+    {
+      int ma = acc_rc.at(k);
+      if( ma > nej_r)
+      {
+        nej_r = ma;
+        pos_r = k;
+      }
+    }
+    stred c = {acc_x.at(pos_x),acc_y.at(pos_y),cloud_fil->points.at(0).z,1,acc_r.at(pos_r)};
+    QString rev = QString("celkem stred: x: %1 y: %2 radius: %3").arg(c.a).arg(c.b).arg(c.r);
+    QMessageBox::information(0,("dd"),rev);
+    return c;
   }
 }
 void Tree::set_dbhLSR()

@@ -115,6 +115,7 @@ class InputDialog :public QDialog
     QVBoxLayout *mainLayout;
 };
 
+
 class MyTree :public QTreeWidget
 {
   Q_OBJECT
@@ -180,11 +181,8 @@ class MainWindow : public QMainWindow
   void importCloud();
   void importVegeCloud();
   void importTreeCloud();
-  void importpts();
-  void importptx();
   //EXPORT
   void exportCloud();
-  void exporttopts();
   //EXIT
   void closeEvent(QCloseEvent *event);
 
@@ -203,6 +201,7 @@ class MainWindow : public QMainWindow
   void cylinderSeg();   //show best selected cylinders on each tree
   int dbh (pcl::PointCloud<pcl::PointXYZI>::Ptr input);
   void dbh();           //show cylinder computed by Hough Transform with graph of accumulated sum
+  void dbhHT();
   void dbhLSR();        //least sqweare regression for circle
   void height();        //show line connecting lowest and highest point in tree cloud
   void position();      //show sphere at tree position
@@ -277,14 +276,11 @@ class MainWindow : public QMainWindow
     QAction *importTXTAct;
     QAction *importLASAct;
     QAction *importPCDAct;
-    QAction *importPTSAct;
-    QAction *importPTXAct;
     QAction *importTerenAct;
     QAction *importVegeAct;
     QAction *importTreeAct;
     QAction *exportTXTAct;
     QAction *exportPLYAct;
-    QAction *exportPTSAct;
     QAction *exitAct;
   //TEREN ACTIONS
     QAction *voxelAct;
@@ -296,6 +292,7 @@ class MainWindow : public QMainWindow
     QAction *tAReadAct;
     QAction *cylinderAct;
     QAction *dbhAct;
+    QAction *dbhHTAct;
     QAction *dbhLSRAct;
     QAction *heightAct;
     QAction *posAct;
