@@ -2299,9 +2299,7 @@ void MainWindow::dbhLSR()
     int i = names.indexOf(item);
   // set c as Strom
     Tree *c = new Tree(Proj->get_TreeCloud(i));
-        //set dbh()
-    if(c->get_dbh().r < 1)
-      c->set_dbhLSR();
+    c->set_dbhLSR();
     //addcylinder
     stred x = c->get_dbh();
     if(x.r > 150)
@@ -2345,9 +2343,6 @@ void MainWindow::dbhLSR()
     {
       // set as strom
       Tree *c = new Tree(Proj->get_TreeCloud(j));
-
-        //set dbh()
-      if(c->get_dbh().r < 1)
         c->set_dbhLSR();
 
     //addcylinder
