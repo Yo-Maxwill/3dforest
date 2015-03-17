@@ -48,13 +48,11 @@
 
 ////MainWindow
  MainWindow::MainWindow()
+ :m_vis (new Visualizer ("3D Viewer"))
 {
 
   Q_INIT_RESOURCE(3dforest);
   setWindowTitle ( QString("3D Forest - Forest lidar data processing tool") );
-
-  boost::shared_ptr<Visualizer> m_vis (new Visualizer ("3D Viewer"));
-  //m_vis (new Visualizer ("3D Viewer"));
   m_cloud1 = new Cloud();
   m_cloud = new Cloud();
   Proj = new Project();
@@ -94,7 +92,7 @@ void MainWindow::newProject()
   wiz->setStartId(1);
   if(wiz->exec() == 1)
   {
-    QString filename = QString("%1\\%2\\proj.3df").arg(wiz->field("projectPath").toString()).arg(wiz->field("projectName").toString());
+    QString filename = QString("%1\\%2\\%3.3df").arg(wiz->field("projectPath").toString()).arg(wiz->field("projectName").toString()).arg(wiz->field("projectName").toString());
     closeProject();
     openProject(filename);
   }
@@ -102,10 +100,9 @@ void MainWindow::newProject()
 void MainWindow::openProject()
 {
 //SET 3DF FILE
-  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.3df)"));
+  QString fileName = QFileDialog::getOpenFileName(this,tr("Open project file"),"",tr("files (*.3df)"));
   if (fileName.isEmpty())
     return;
-
   closeProject();
   openProject(fileName);
 }
@@ -119,6 +116,7 @@ void MainWindow::openProject(QString path)
   while(!in.atEnd())
   {
     QString lines = in.readLine();
+
     QStringList coords = lines.split(" ");
 //READ FIRST LINE
 
@@ -143,7 +141,6 @@ void MainWindow::openProject(QString path)
 //READ REST OF FILE
     else
     {
-
       if(coords.at(0)=="cloud")
       {
         if(coords.size() >3)
@@ -197,19 +194,20 @@ void MainWindow::openProject(QString path)
     }
   }
   file.close();
-  m_vis->resetCamera();
+  //m_vis->resetCamera();
 }
 void MainWindow::closeProject()
 {
   //clean project
   Proj->cleanAll();
-
   //clean treewidget
   treeWidget->cleanAll();
   //clean qvtwidget
   m_vis->removeAllPointClouds();
   m_vis->removeAllShapes();
+
   qvtkwidget->update();
+
 }
 void MainWindow::importProject()
 {
@@ -217,7 +215,7 @@ void MainWindow::importProject()
   wiz->setStartId(3);
   if(wiz->exec() == 1)
   {
-    QString filename = QString("%1\\%2\\proj.3df").arg(wiz->field("newprojectPath").toString()).arg(wiz->field("newprojectname").toString());
+    QString filename = QString("%1\\%2\\%2.3df").arg(wiz->field("newprojectPath").toString()).arg(wiz->field("newprojectname").toString());
     closeProject();
     openProject(filename);
   }
@@ -473,7 +471,6 @@ void MainWindow::importCloud()
     QMessageBox::warning(this,"ERROR","No file selected");
     return;
   }
-
   for(int i=0;i<ls.size(); i++)
   {
     QString fileName = ls.at(i);
@@ -594,7 +591,7 @@ void MainWindow::openCloudFile(QString file)
   //Proj->save_color(coords.back(),col);
   dispCloud(*c);
   addTreeItem(c->get_name());
-  m_vis->resetCamera();
+m_vis->resetCamera();
 }
 void MainWindow::openTerrainFile(QString file, QColor col)
 {
@@ -1319,8 +1316,8 @@ void MainWindow::treeAtributes()
 {
 //TODO: volit ktere parametry budou zapsany
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   ExportAttr *exdialog = new ExportAttr (this);
   exdialog->set_description(" Export of tree attributes. You can select which atributes you want to export into text file.");
@@ -1484,9 +1481,9 @@ void MainWindow::treeAtributes()
 }
 void MainWindow::convexhull()
 {
-    QStringList names;
-  names << get_treeNames();
+  QStringList names;
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute concave hull of tree.");
@@ -1532,8 +1529,8 @@ void MainWindow::convexhull()
 void MainWindow::concavehull()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute concave hull of tree.");
@@ -1583,8 +1580,8 @@ void MainWindow::concavehull()
 void MainWindow::dbhHT()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree DBH using randomized hough transform (RHT) for circle detection.");
@@ -1683,8 +1680,8 @@ void MainWindow::dbhHT()
 void MainWindow::dbhLSR()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree DBH using Least square regression (LSR) for circle detection.");
@@ -1798,9 +1795,9 @@ void MainWindow::dbhLSR()
 }
 void MainWindow::height()
 {
-   QStringList names;
-  names << get_treeNames();
+  QStringList names;
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree height.");
@@ -1890,8 +1887,8 @@ void MainWindow::height()
 void MainWindow::lenght()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute length of the cloud.");
@@ -1950,8 +1947,8 @@ void MainWindow::lenght()
 void MainWindow::position()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree position using lowest points of tree cloud.");
@@ -2020,8 +2017,8 @@ void MainWindow::position()
 void MainWindow::skeleton()
 {
   QStringList names;
-  names << get_treeNames();
   names <<"All_trees";
+  names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
   in->set_title("Tree skeleton");
