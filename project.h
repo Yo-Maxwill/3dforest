@@ -22,461 +22,192 @@
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
-
-struct stred {
-				float a;
-				float b;
-				float z;
-        float i;
-        float r;
-   bool operator < (const stred& str) const
-    {return (i < str.i);}
-				};
-struct stredLSR {
-				float a;
-				float b;
-				float r;
-        float s;
-        float i;
-        float j;
-        float g;
-   bool operator < (const stred& str) const
-    {return (i < str.i);}
-				};
-
-struct vert{
-		double x;
-		double y;
-		double z;
-		float intensity;
-		};
-
-struct item{
-    QString name;
-    double x;
-    double y;
-    };
-
-struct coef{
-    float x;
-    float y;
-    float z;
-    float r;
-    };
-struct matrix3x3{
-    float a;
-    float b;
-    float c;
-    float d;
-    float e;
-    float f;
-    float g;
-    float h;
-    float i;
-    };
-
-struct median{
-    float x;
-    float y;
-    float z;
-    std::vector<int> pi;
-    float alfa;
-    float alf_sum;
-    };
+#include "skeleton.h"
+#include "cloud.h"
 
 
-class Cloud
-{
-protected:
-  pcl::PointCloud<pcl::PointXYZI>::Ptr m_Cloud;
-  QString m_name;
-  QColor m_color;
-  int m_PointSize;
-
-public:
-    Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name,QColor col);
-    Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
-    Cloud();
-    Cloud operator=(Cloud &kopie);
-
-    void set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    void set_name(QString name);
-    void set_color (QColor col);
-    void set_Psize (int p);
-
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr get_Cloud();
-    QString get_name();
-    QColor get_color();
-    int get_Psize();
-};
-
-class Tree : public Cloud
-{
-  Cloud *m_dbhCloud; //cloud s doby v dbh bude mít jenom pár bodů
-  stred m_dbh; //dbh
-  float m_height; //tree height
-  float m_lenght;
-  pcl::PointXYZI m_minp,m_maxp, m_pose, m_lmax, m_lmin; //boundary box, tree position
-
-public:
-    Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s);
-    Tree (Cloud cloud);
-    Tree operator=(Tree &kopie);
-    void set_dbhCloud();
-    void set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    stred get_dbhHT(); //Hough transform
-    void set_dbhLSR(); //Least Square Regression
-    stred set_dbhLSRALG(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    stred set_dbhLSRGEOM(stred circ, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    float Sigma(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle);
-    void set_dbh(stred s);
-    void set_height();
-    void set_position(Cloud teren);
-    void set_lenght();
-
-
-    //skeletizace
-    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton();
-    median median_(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-
-    median wlopInit(median med,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud );
-    std::vector<median> iterate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, std::vector<median> med);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, double h);
-    matrix3x3 jacobi(matrix3x3 in);
-    matrix3x3 covariance(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr c);
-    float alfa (float a, float b, float h=0.2);
-    float beta (float a, float b, float h=0.2);
-    float sigma(matrix3x3);
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr get_dbhCloud();
-    float get_height();
-    stred get_dbh();
-    pcl::PointXYZI get_pose();
-    float get_lenght();
-    pcl::PointXYZI get_lpoint(bool);
-};
-
+  //! Basic class representing pointCloud data.
+  /*! Basic structure for holding point cloud data. Class consist of pointcloud, name of pointcloud, color and pointsize. */
+  //! Class for storing cloud data in one place .
+  /*! Base class for data handling. */
 class Project
 {
-    double m_x,m_y; //coordinate system transform matrix
-    QString m_projectName; //project name
-    QString m_path;
+  double m_x, m_y, m_z;                 /**< Transformation matrix values */
+  QString m_projectName;                /**< Project name */
+  QString m_path;                       /**< Path to the project */
 
-    std::vector<Cloud> m_baseCloud;// clouds containing all
-    std::vector<Cloud> m_terrainCloud; //only terrain cloud
-    std::vector<Cloud> m_vegeCloud; // only vegetation cloud
-    std::vector<Cloud> m_ostCloud; // only the rest
-    std::vector<Tree> m_stromy;// vector of trees
+  std::vector<Cloud> m_baseCloud;       /**< Vector of base clouds */
+  std::vector<Cloud> m_terrainCloud;    /**< Vector of terrain clouds */
+  std::vector<Cloud> m_vegeCloud;       /**< Vector of vegetation clouds */
+  std::vector<Cloud> m_ostCloud;        /**< Vector of ost clouds */
+  std::vector<Tree> m_stromy;           /**< Vector of Tree clouds */
 
-  public:
-    Project();
-    ~Project();
-    Project( QString name);
-    Project(double x, double y, QString name);
+public:
+    //! Constructor.
+    /*! Costructor of empty project. */
+  Project();
+    //! Destructor.
+    /*! Destructor of project. */
+  ~Project();
+    //! Constructor.
+    /*! Costructor of Project. \param name project name  */
+  Project( QString name);
+    //! Constructor.
+    /*! Costructor of Project. Only for old versions of projects. \param x transformation matrix  value of X coordinate \param y transformation matrix  value of X coordinate
+     \param name project name  */
+  Project(double x, double y, QString name);
+    //! Constructor.
+    /*! Costructor of Project. \param x transformation matrix  value of X coordinate \param y transformation matrix  value of Y coordinate
+     \param z transformation matrix  value of Z coordinate  \param name project name  */
+  Project(double x, double y,double z, QString name);
 
 //SET
-    void set_xTransform(double x);
-    void set_yTransform(double y);
-    void set_path(QString path);
+    //! Set transformation matrix value.
+    /*! Setting X value of the transformation matrix \param x transformation matrix  value of X coordinate  */
+  void set_xTransform(double x);
+    //! Set transformation matrix value.
+    /*! Setting Y value of the transformation matrix \param y transformation matrix  value of Y coordinate  */
+  void set_yTransform(double y);
+    //! Set transformation matrix value.
+    /*! Setting Z value of the transformation matrix \param z transformation matrix  value of Z coordinate  */
+  void set_zTransform(double z);
+    //! Set project path.
+    /*! Setting project path to the folder of project \param path path to the proj file.  */
+  void set_path(QString path);
 
-    void save_newCloud(QString type, QString name);
-    void save_newCloud(QString type, QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c );
-    QString save_Cloud(QString path);
-    QString save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c);
-    void save_color(QString, QColor);
-    void set_color(QString name, QColor col);
-    void set_PointSize(QString name, int p);
-    void cleanAll();
-    void readAtrs();
-    void delete_Cloud(QString name);
-    void set_Psize(QString name, int p);
+    //! Save new cloud in project.
+    /*! Save copy old file into project folder and add record in proj file \param type tape of the cloud \param path path to old file */
+  void save_newCloud(QString type, QString path);
+    //! Save new cloud in project.
+    /*! Save new cloud in file and in proj file \param type type of the cloud \param name name of the cloud  \param c new pointCloud*/
+  void save_newCloud(QString type, QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c );
+    //! Save old pcd file in project.
+    /*! Save copy old file into project folder \param path path to old file  \return path to the new file*/
+  QString save_Cloud(QString path);
+    //! Save new pointCloud into file .
+    /*! Save new pointCloud into file with given name and save it into pcd file in project folder .
+     \param name name of the pointCloud  \param c pointCloud \return path to newly created file */
+  QString save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c);
+    //! Save color of the cloud into proj file.
+    /*! Save color values of the given cloud to proj file. \param name name of the Cloud  \param  col color values */
+  void save_color(QString name, QColor col);
+    //! Set color to the cloud.
+    /*! Save color values to the given cloud. \param name name of the Cloud  \param  col color values */
+  void set_color(QString name, QColor col);
+    //! Set point size to the cloud.
+    /*! Save point size to the given cloud. \param name name of the Cloud  \param  p point size value */
+  void set_PointSize(QString name, int p);
+    //! Clear all vectors of clouds.
+    /*! Clear all vectors of cloud in project  */
+  void cleanAll();
+    //! delete cloud from project.
+    /*! Delete given cloud from project vector, proj file and from the folder \param name cloud name */
+  void delete_Cloud(QString name);
+
 
 
     //GET
-    double get_Xtransform();
-    double get_Ytransform();
-    QString get_Jmeno_Projektu();
-    QString get_Path();
-    Cloud get_Cloud(QString name);
+    //! Get X value of tranformation matrix.
+    /*! \return value of X transformation matrix  */
+  double get_Xtransform();
+    //! Get Y value of tranformation matrix.
+    /*! \return value of Y transformation matrix  */
+  double get_Ytransform();
+    //! Get Z value of tranformation matrix.
+    /*! \return value of Z transformation matrix  */
+  double get_Ztransform();
+    //! Get project name.
+    /*! \return project name  */
+  QString get_Jmeno_Projektu();
+    //! Get project path.
+    /*! \return project path  */
+  QString get_Path();
+    //! Get cloud.
+    /*! \param name name of the cloud \return cloud with given name  */
+  Cloud get_Cloud(QString name);
+    //! Check if cloud exist in project.
+    /*! \param name name of the cloud \return bool value if cloud exist in project  */
+  bool cloud_exists(QString name);
 
 //BASECLOUD
-    void set_baseCloud(Cloud cloud);
-    Cloud get_baseCloud(int i);
-    int get_sizebaseCV();
+    //! Set new base cloud.
+    /*! \param cloud cloud of new base cloud  */
+  void set_baseCloud(Cloud cloud);
+    //! Get base cloud.
+    /*! \param i get base cloud on ith position in vector \return cloud on given position  */
+  Cloud get_baseCloud(int i);
+    //! Get size of base cloud vector.
+    /*! \return size of vector containing base clouds */
+  int get_sizebaseCV();
 
 //TERRAINCLOUD
-    void set_TerrainCloud(Cloud cloud);
-    void set_TerrainCloudat(int,Cloud);
-    void set_TreeCloudat(int,Cloud);
-    Cloud get_TerrainCloud(int i);
-    int get_sizeTerainCV();
+    //! Set new terrain cloud.
+    /*! \param cloud cloud of new terrain cloud  */
+  void set_TerrainCloud(Cloud cloud);
+    //! Set new terrain cloud.
+    /*! \param i set new cloud at ith position of vector \param cloud cloud of new terrain cloud  */
+  void set_TerrainCloudat(int,Cloud);
+    //! Get terrain cloud.
+    /*! \param i get terrain cloud on ith position in vector \return cloud on given position  */
+  Cloud get_TerrainCloud(int i);
+    //! Get size of terrain cloud vector.
+    /*! \return size of vector containing terrain clouds */
+  int get_sizeTerainCV();
 
 //VEGECLOUD
-    void set_VegeCloud(Cloud cloud);
-    Cloud get_VegeCloud(int i);
-    int get_sizevegeCV();
+    //! Set new vegetation cloud.
+    /*! \param cloud cloud of new vegetation cloud  */
+  void set_VegeCloud(Cloud cloud);
+    //! Get vegetation cloud.
+    /*! \param i get vegetation cloud on ith position in vector \return cloud on given position  */
+  Cloud get_VegeCloud(int i);
+    //! Get size of vegetation cloud vector.
+    /*! \return size of vector containing vegetation clouds */
+  int get_sizevegeCV();
 
 //TREECLOUD
-    void set_Tree(Cloud cloud);
-    Tree get_TreeCloud(int i);
-    Tree get_TreeCloud(QString name);
-    int get_sizeTreeCV();
-    void set_treedbh(int i, stred x);
+    //! Set new tree cloud.
+    /*! \param cloud cloud of new tree cloud  */
+  void set_Tree(Cloud cloud);
+    //! Set new tree cloud.
+    /*! \param i set new cloud at ith position of vector \param cloud cloud of new tree cloud  */
+  void set_TreeCloudat(int,Cloud);
+    //! Get tree cloud.
+    /*! \param i get tree cloud on ith position in vector \return Tree on given position  */
+  Tree get_TreeCloud(int i);
+    //! Get tree cloud.
+    /*! \param name name of the tree \return Tree with given name  */
+  Tree get_TreeCloud(QString name);
+    //! Get size of tree cloud vector.
+    /*! \return size of vector containing tree clouds */
+  int get_sizeTreeCV();
+    //! Set tree DBH_pointCloud.
+    /*! \param name tree name \param cloud pointCloud representing points for DBH estimation  */
     void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Set convex hull pointCloud.
+    /*! \param name tree name \param cloud pointCloud representing points of convex hull  */
+    void set_treeConvexCloud(QString name);
+    //! Set concave hull pointCloud.
+    /*! \param name tree name \param cloud pointCloud representing points of concave hull  */
+    void set_treeConcaveCloud(QString name,float edge);
+    void set_treePosition(QString name);
+    void set_treeDBHCloud(QString name);
+//OSTCLOUDset_dbhCloud(cl);
+    //! Set new ost cloud.
+    /*! \param cloud cloud of new ost cloud  */
+  void set_OstCloud(Cloud cloud);
+    //! Get ost cloud.
+    /*! \param i get tree cloud on ith position in vector \return Cloud on given position of vector  */
+  Cloud get_ostCloud(int i);
+    //! Get size of ost cloud vector.
+    /*! \return size of vector containing ost clouds */
+  int get_sizeostCV();
 
-//OSTCLOUD
-    void set_OstCloud(Cloud cloud);
-    Cloud get_ostCloud(int i);
-    int get_sizeostCV();
-
-  private:
+private:
+    //! Delete file from disc.
+    /*!  Function ask user if wants to delete this cloud from disc \param name name of the cloud */
     void remove_file(QString name);
 
   //jeste pridat mazani ze souboru proj.3df a podobne funkce
-
 };
-
-
-#endif // PROJECT_H_INCLUDED
-//  3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifndef PROJECT_H_INCLUDED
-#define PROJECT_H_INCLUDED
-
-#include <QtGui/QtGui>
-//include BASE
-#include <string>
-#include <pcl/pcl_base.h>
-#include <pcl/point_types.h>
-#include <pcl/common/common_headers.h>
-
-struct stred {
-				float a;
-				float b;
-				float z;
-        float i;
-        float r;
-   bool operator < (const stred& str) const
-    {return (i < str.i);}
-				};
-struct stredLSR {
-				float a;
-				float b;
-				float r;
-        float s;
-        float i;
-        float j;
-        float g;
-   bool operator < (const stred& str) const
-    {return (i < str.i);}
-				};
-
-struct vert{
-		double x;
-		double y;
-		double z;
-		float intensity;
-		};
-
-struct item{
-    QString name;
-    double x;
-    double y;
-    };
-
-struct coef{
-    float x;
-    float y;
-    float z;
-    float r;
-    };
-struct matrix3x3{
-    float a;
-    float b;
-    float c;
-    float d;
-    float e;
-    float f;
-    float g;
-    float h;
-    float i;
-    };
-
-struct median{
-    float x;
-    float y;
-    float z;
-    std::vector<int> pi;
-    float alfa;
-    float alf_sum;
-    };
-
-
-class Cloud
-{
-protected:
-  pcl::PointCloud<pcl::PointXYZI>::Ptr m_Cloud;
-  QString m_name;
-  QColor m_color;
-  int m_PointSize;
-
-public:
-    Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name,QColor col);
-    Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
-    Cloud();
-    Cloud operator=(Cloud &kopie);
-
-    void set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    void set_name(QString name);
-    void set_color (QColor col);
-    void set_Psize (int p);
-
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr get_Cloud();
-    QString get_name();
-    QColor get_color();
-    int get_Psize();
-};
-
-class Tree : public Cloud
-{
-  Cloud *m_dbhCloud; //cloud s doby v dbh bude mít jenom pár bodů
-  stred m_dbh; //dbh
-  float m_height; //tree height
-  float m_lenght;
-  pcl::PointXYZI m_minp,m_maxp, m_pose, m_lmax, m_lmin; //boundary box, tree position
-
-public:
-    Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s);
-    Tree (Cloud cloud);
-    Tree operator=(Tree &kopie);
-    void set_dbhCloud();
-    void set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    void set_dbhHT(); //Hough transform
-    void set_dbhLSR(); //Least Square Regression
-    stred set_dbhLSRALG(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    stred set_dbhLSRGEOM(stred circ, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    float Sigma(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle);
-    void set_dbh(stred s);
-    void set_height();
-    void set_position(Cloud teren);
-    void set_lenght();
-
-
-    //skeletizace
-    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton();
-    median median_(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-
-    median wlopInit(median med,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud );
-    std::vector<median> iterate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, std::vector<median> med);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, double h);
-    matrix3x3 jacobi(matrix3x3 in);
-    matrix3x3 covariance(pcl::PointXYZI input,pcl::PointCloud<pcl::PointXYZI>::Ptr c);
-    float alfa (float a, float b, float h=0.2);
-    float beta (float a, float b, float h=0.2);
-    float sigma(matrix3x3);
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr get_dbhCloud();
-    float get_height();
-    stred get_dbh();
-    pcl::PointXYZI get_pose();
-    float get_lenght();
-    pcl::PointXYZI get_lpoint(bool);
-};
-
-class Project
-{
-    double m_x,m_y; //coordinate system transform matrix
-    QString m_projectName; //project name
-    QString m_path;
-
-    std::vector<Cloud> m_baseCloud;// clouds containing all
-    std::vector<Cloud> m_terrainCloud; //only terrain cloud
-    std::vector<Cloud> m_vegeCloud; // only vegetation cloud
-    std::vector<Cloud> m_ostCloud; // only the rest
-    std::vector<Tree> m_stromy;// vector of trees
-
-  public:
-    Project();
-    ~Project();
-    Project( QString name);
-    Project(double x, double y, QString name);
-
-//SET
-    void set_xTransform(double x);
-    void set_yTransform(double y);
-    void set_path(QString path);
-
-    void save_newCloud(QString type, QString name);
-    void save_newCloud(QString type, QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c );
-    QString save_Cloud(QString path);
-    QString save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c);
-    void save_color(QString, QColor);
-    void set_color(QString name, QColor col);
-    void set_PointSize(QString name, int p);
-    void cleanAll();
-    void readAtrs();
-    void delete_Cloud(QString name);
-    void set_Psize(QString name, int p);
-
-
-    //GET
-    double get_Xtransform();
-    double get_Ytransform();
-    QString get_Jmeno_Projektu();
-    QString get_Path();
-    Cloud get_Cloud(QString name);
-
-//BASECLOUD
-    void set_baseCloud(Cloud cloud);
-    Cloud get_baseCloud(int i);
-    int get_sizebaseCV();
-
-//TERRAINCLOUD
-    void set_TerrainCloud(Cloud cloud);
-    void set_TerrainCloudat(int,Cloud);
-    void set_TreeCloudat(int,Cloud);
-    Cloud get_TerrainCloud(int i);
-    int get_sizeTerainCV();
-
-//VEGECLOUD
-    void set_VegeCloud(Cloud cloud);
-    Cloud get_VegeCloud(int i);
-    int get_sizevegeCV();
-
-//TREECLOUD
-    void set_Tree(Cloud cloud);
-    Tree get_TreeCloud(int i);
-    Tree get_TreeCloud(QString name);
-    int get_sizeTreeCV();
-    void set_treedbh(int i, stred x);
-    void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-
-//OSTCLOUD
-    void set_OstCloud(Cloud cloud);
-    Cloud get_ostCloud(int i);
-    int get_sizeostCV();
-
-  private:
-    void remove_file(QString name);
-
-  //jeste pridat mazani ze souboru proj.3df a podobne funkce
-
-};
-
-
 #endif // PROJECT_H_INCLUDED
