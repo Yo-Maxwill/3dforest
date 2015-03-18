@@ -194,7 +194,7 @@ void MainWindow::openProject(QString path)
     }
   }
   file.close();
-  //m_vis->resetCamera();
+  m_vis->resetCamera();
 }
 void MainWindow::closeProject()
 {
@@ -474,8 +474,19 @@ void MainWindow::importCloud()
   for(int i=0;i<ls.size(); i++)
   {
     QString fileName = ls.at(i);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::io::loadPCDFile(fileName.toUtf8().constData(),*cloud);
+    cloud->width = cloud->points.size();
+    cloud->is_dense=true;
+    cloud->height=1;
+
+    QStringList Fname = fileName.split("\\");
+    QStringList name = Fname.back().split(".");
+
+    Proj->save_newCloud("cloud",name.at(0),cloud);
+
+    QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
     openCloudFile(fileName);
-    Proj->save_newCloud("cloud",fileName);
   }
 }
 void MainWindow::importVegeCloud()
@@ -591,7 +602,7 @@ void MainWindow::openCloudFile(QString file)
   //Proj->save_color(coords.back(),col);
   dispCloud(*c);
   addTreeItem(c->get_name());
-m_vis->resetCamera();
+  m_vis->resetCamera();
 }
 void MainWindow::openTerrainFile(QString file, QColor col)
 {
@@ -849,10 +860,9 @@ void MainWindow::voxelgrid()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
-    if(in->get_inputCloud1().isEmpty())
-      return;
+
     float res = in->get_intValue()/100.0;
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
@@ -924,10 +934,9 @@ void MainWindow::octreeSlot()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
-    if(in->get_inputCloud1().isEmpty())
-      return;
+
     float res = in->get_intValue()/100.0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vege (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ground (new pcl::PointCloud<pcl::PointXYZI>);
@@ -1020,7 +1029,7 @@ void MainWindow::manualAdjust()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
     //zkopirovat do m_cloud
     m_cloud->get_Cloud()->clear();
@@ -1093,7 +1102,7 @@ void MainWindow::manualSelect()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
     //zkopirovat do m_cloud
     m_cloud->get_Cloud()->clear();
@@ -1189,7 +1198,7 @@ void MainWindow::treeEdit()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
     //zkopirovat do m_cloud
     m_cloud->get_Cloud()->clear();
@@ -1261,7 +1270,7 @@ void MainWindow::dbhCloudEdit()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
     //zkopirovat do m_cloud
     m_cloud->get_Cloud()->clear();
@@ -1610,32 +1619,41 @@ void MainWindow::dbhHT()
         Proj->get_TreeCloud(i).set_dbhHT();
         x = Proj->get_TreeCloud(i).get_dbhHT();
     // zobrazit cylinder a hodnotu
+        if(x.r < 5000 && x.r > 0.5)
+        {
+          QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+          Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+          dispCloud(*cl_,255, 0, 0);
+          //Coeff
+          pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+          coef->values.push_back((float)x.a);
+          coef->values.push_back((float)x.b);
+          coef->values.push_back((float)x.z);
+          coef->values.push_back((float)0);
+          coef->values.push_back((float)0);
+          coef->values.push_back((float)0.1);
+          coef->values.push_back((float)x.r/100);
+          std::stringstream name ;
+          name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_HT";
+          m_vis->addCylinder(*coef,name.str());
 
-        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
-        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
-        dispCloud(*cl_,255, 0, 0);
-        //Coeff
-        pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-        coef->values.push_back((float)x.a);
-        coef->values.push_back((float)x.b);
-        coef->values.push_back((float)x.z);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0.1);
-        coef->values.push_back((float)x.r/100);
-        std::stringstream name ;
-        name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_HT";
-        m_vis->addCylinder(*coef,name.str());
+      //addtext3D with R
+          pcl::PointXYZ bod;
+          bod.x=x.a+(float)x.r/100;
+          bod.y=x.b;
+          bod.z=x.z+0.1;
+          QString h= QString("%1").arg(x.r*2.0);
+          std::stringstream name2 ;
+          name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_HT";
+          m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+        }
+        else
+        {
+          QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
+                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
+          QMessageBox::information(0,("Warning"),m);
 
-    //addtext3D with R
-        pcl::PointXYZ bod;
-        bod.x=x.a+(float)x.r/100;
-        bod.y=x.b;
-        bod.z=x.z+0.1;
-        QString h= QString("%1").arg(x.r*2.0);
-        std::stringstream name2 ;
-        name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_HT";
-        m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+        }
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
@@ -1645,32 +1663,41 @@ void MainWindow::dbhHT()
       //urcit dbh
       Proj->get_TreeCloud(in->get_inputCloud1()).set_dbhHT();
       stred x = Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhHT();
+      if(x.r < 5000 && x.r > 0.5)
+      {
     // zobrazit cylinder a hodnotu
-      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
-      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
-      dispCloud(*cl_,255, 0, 0);
-        //Coeff
-      pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-      coef->values.push_back((float)x.a);
-      coef->values.push_back((float)x.b);
-      coef->values.push_back((float)x.z);
-      coef->values.push_back((float)0);
-      coef->values.push_back((float)0);
-      coef->values.push_back((float)0.1);
-      coef->values.push_back((float)x.r/100);
-      std::stringstream name ;
-      name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_HT";
-      m_vis->addCylinder(*coef,name.str());
+        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
+        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
+        dispCloud(*cl_,255, 0, 0);
+          //Coeff
+        pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+        coef->values.push_back((float)x.a);
+        coef->values.push_back((float)x.b);
+        coef->values.push_back((float)x.z);
+        coef->values.push_back((float)0);
+        coef->values.push_back((float)0);
+        coef->values.push_back((float)0.1);
+        coef->values.push_back((float)x.r/100);
+        std::stringstream name ;
+        name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_HT";
+        m_vis->addCylinder(*coef,name.str());
 
-    //addtext3D with R
-      pcl::PointXYZ bod;
-      bod.x=x.a+(float)x.r/100;
-      bod.y=x.b;
-      bod.z=x.z+0.1;
-      QString h= QString("%1").arg(x.r*2.0);
-      std::stringstream name2 ;
-      name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_HT";
-      m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+      //addtext3D with R
+        pcl::PointXYZ bod;
+        bod.x=x.a+(float)x.r/100;
+        bod.y=x.b;
+        bod.z=x.z+0.1;
+        QString h= QString("%1").arg(x.r*2.0);
+        std::stringstream name2 ;
+        name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_HT";
+        m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+      }
+      else
+      {
+        QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
+                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
+        QMessageBox::information(0,("Warning"),m);
+      }
       pBar->setValue(100);
       pBar->update();
     }
@@ -1716,14 +1743,63 @@ void MainWindow::dbhLSR()
         float dbhLSRz = c->get_dbhLSR().z;
         float dbhLSR = c->get_dbhLSR().r;
 
-        if(dbhLSR > 5000)
-          continue;
+        if(dbhLSR < 5000 && dbhLSR > 0.5)
+        {
 
     // zobrazit cylinder a hodnotu
-        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
-        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+          QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
+          Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
+          dispCloud(*cl_,255, 0, 0);
+          //Coeff
+          pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+          coef->values.push_back(dbhLSRx);
+          coef->values.push_back(dbhLSRy);
+          coef->values.push_back(dbhLSRz);
+          coef->values.push_back((float)0);
+          coef->values.push_back((float)0);
+          coef->values.push_back((float)0.1);
+          coef->values.push_back(dbhLSR/100);
+          std::stringstream name ;
+          name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_LSR";
+          m_vis->addCylinder(*coef,name.str());
+
+      //addtext3D with R
+          pcl::PointXYZ bod;
+          bod.x=dbhLSRx;
+          bod.y=dbhLSRy+dbhLSR/100;
+          bod.z=dbhLSRz+0.1;
+          QString h= QString("%1").arg(dbhLSR*2.0);
+          std::stringstream name2 ;
+          name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_LSR";
+          m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
+        }
+        else
+        {
+          QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
+                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
+          QMessageBox::information(0,("Warning"),m);
+        }
+        pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+        pBar->update();
+      }
+    }
+    else
+    {
+      Tree *c = new Tree(Proj->get_TreeCloud(in->get_inputCloud1()));
+      //DBH_Least square regression
+      c->set_dbhLSR();
+      float dbhLSRx = c->get_dbhLSR().a;
+      float dbhLSRy = c->get_dbhLSR().b;
+      float dbhLSRz = c->get_dbhLSR().z;
+      float dbhLSR = c->get_dbhLSR().r;
+
+      if(dbhLSR < 5000 && dbhLSR > 0.5)
+      {
+    // zobrazit cylinder a hodnotu
+        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
+        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
         dispCloud(*cl_,255, 0, 0);
-        //Coeff
+          //Coeff
         pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
         coef->values.push_back(dbhLSRx);
         coef->values.push_back(dbhLSRy);
@@ -1733,60 +1809,25 @@ void MainWindow::dbhLSR()
         coef->values.push_back((float)0.1);
         coef->values.push_back(dbhLSR/100);
         std::stringstream name ;
-        name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_LSR";
+        name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_LSR";
         m_vis->addCylinder(*coef,name.str());
 
-    //addtext3D with R
+      //addtext3D with R
         pcl::PointXYZ bod;
         bod.x=dbhLSRx;
         bod.y=dbhLSRy+dbhLSR/100;
         bod.z=dbhLSRz+0.1;
         QString h= QString("%1").arg(dbhLSR*2.0);
         std::stringstream name2 ;
-        name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_LSR";
+        name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_LSR";
         m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
-        pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
-        pBar->update();
       }
-    }
-    else
-    {
-      Tree *c = new Tree(Proj->get_TreeCloud(in->get_inputCloud1()));
-      //DBH_Least square regression
-        c->set_dbhLSR();
-        float dbhLSRx = c->get_dbhLSR().a;
-        float dbhLSRy = c->get_dbhLSR().b;
-        float dbhLSRz = c->get_dbhLSR().z;
-        float dbhLSR = c->get_dbhLSR().r;
-
-        if(dbhLSR > 5000)
-          return;
-    // zobrazit cylinder a hodnotu
-      QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
-      Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
-      dispCloud(*cl_,255, 0, 0);
-        //Coeff
-      pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-      coef->values.push_back(dbhLSRx);
-      coef->values.push_back(dbhLSRy);
-      coef->values.push_back(dbhLSRz);
-      coef->values.push_back((float)0);
-      coef->values.push_back((float)0);
-      coef->values.push_back((float)0.1);
-      coef->values.push_back(dbhLSR/100);
-      std::stringstream name ;
-      name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_LSR";
-      m_vis->addCylinder(*coef,name.str());
-
-    //addtext3D with R
-      pcl::PointXYZ bod;
-      bod.x=dbhLSRx;
-      bod.y=dbhLSRy+dbhLSR/100;
-      bod.z=dbhLSRz+0.1;
-      QString h= QString("%1").arg(dbhLSR*2.0);
-      std::stringstream name2 ;
-      name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_LSR";
-      m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
+      else
+      {
+        QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
+                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
+        QMessageBox::information(0,("Warning"),m);
+      }
       pBar->setValue(100);
       pBar->update();
     }
@@ -2415,7 +2456,7 @@ void MainWindow::plusCloud()
   if(dl == QDialog::Rejected)
     { return; }
 
-  if(dl == QDialog::Accepted)
+  if(dl == QDialog::Accepted && !in->get_inputCloud1().isEmpty())
   {
     QString type;
     if(in->get_outputType() == "Base cloud")
