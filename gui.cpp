@@ -741,7 +741,7 @@ NewProjectPage::NewProjectPage(QWidget *parent)
                            " In that case please change name of the project or path to the project folder."));
   topLabel->setWordWrap(true);
 
-  nameLabel = new QLabel(tr("Project name name(do not use spaces in name):"));
+  nameLabel = new QLabel(tr("Project name name (please do not use spaces in name):"));
   nameEdit = new QLineEdit;
   nameLabel->setBuddy(nameEdit);
   registerField("projectName*", nameEdit);
@@ -754,7 +754,7 @@ NewProjectPage::NewProjectPage(QWidget *parent)
   pathLabel->setBuddy(pathEdit);
   registerField("projectPath*", pathEdit);
 
-  directoryButton = new QPushButton(tr("Browse"));
+  directoryButton = new QPushButton(QPixmap(":/images/browse.png"),("Browse"));
 
   QHBoxLayout *layoutPath = new QHBoxLayout;
   layoutPath->addWidget(pathEdit);
@@ -949,7 +949,7 @@ int TransformPage::nextId() const
 
   // create proj file
   QString pathDir = QString("%1\\%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
-  QString fileN =QString("%1\\proj.3df").arg(pathDir);
+  QString fileN =QString("%1\\%2.3df").arg(pathDir).arg(field("projectName").toString());
   QFile file (fileN);
   file.open(QIODevice::WriteOnly);
   // write header of proj file
@@ -1074,7 +1074,7 @@ ImportPage::ImportPage(QWidget *parent)
   oldLabel->setBuddy(oldpathEdit);
   registerField("oldprojectPath*", oldpathEdit);
 
-  oldButton = new QPushButton(tr("Browse"));
+  oldButton = new QPushButton(QPixmap(":/images/browse.png"),("Browse"));
 
   projLabel = new QLabel(tr("Name of new project"));
   projEdit = new QLineEdit;
@@ -1088,7 +1088,7 @@ ImportPage::ImportPage(QWidget *parent)
   newLabel->setBuddy(newpathEdit);
   registerField("newprojectPath*", newpathEdit);
 
-  newButton = new QPushButton(tr("Browse"));
+  newButton = new QPushButton(QPixmap(":/images/browse.png"),("Browse"));
   removeCheckBox = new QCheckBox ( tr("remove old project?"),this);
 
   QGridLayout *layoutgrid = new QGridLayout;
@@ -1174,7 +1174,7 @@ int ImportPage::nextId() const
   if(!myDir.exists())
     myDir.mkpath(".");
 
-  QString fileN =QString("%1\\proj.3df").arg(pathDir);
+  QString fileN =QString("%1\\%2.3df").arg(pathDir).arg(field("newprojectname").toString());
   QFile filenew (fileN);
   filenew.open(QIODevice::WriteOnly| QIODevice::Text);
   QTextStream out(&filenew);

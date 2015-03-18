@@ -137,18 +137,33 @@ private slots:
     /*! Compute DBH for given tree with method of Randomized Hough Transform for circle detection. User can select single tree or all_trees.
         Result is displayed as a cylinder in 1,3 m from position with green value of estimated DBH. */
   void dbhHT();
+    //! display DBH computed by hough transform.
+    /*! Compute DBH for given tree with method of Randomized Hough Transform for circle detection. User can select single tree or all_trees.
+        Result is displayed as a cylinder in 1,3 m from position with green value of estimated DBH. */
+  void dbhHTDisplay(QString name);
+  void dbhHT_DisplayAll();
+  void dbhHT_HideAll();
     //! Compute DBH using Least Square Regression.
     /*! Compute DBH for given tree with method of Least Square Regression for circle fitting. User can select single tree or all_trees.
         Result is displayed as a cylinder in 1,3 m from position with beige value of estimated DBH.*/
   void dbhLSR();
+  void dbhLSRDisplay(QString name);
+  void dbhLSR_DisplayAll();
+  void dbhLSR_HideAll();
     //! Compute tree height.
     /*! Compute height for given tree as as diff of Z coordinate between highest point of tree and Z coordinate of input terrain point closest to the tree position.
         Lenght is displayed as a line connection those two points and beige value of height. */
   void height();
+  void heightDisplay(QString name);
+  void height_DisplayAll();
+  void height_HideAll();
     //! Compute tree position.
     /*! Compute tree position using median coordinate of all point that are up to given height above lowest point of cloud.
         Position is displayed as a sphere with centre at position and radius of 10 cm. */
   void position();
+  void positionDisplay(QString name);
+  void position_DisplayAll();
+  void position_HideAll();
     //! Compute cloud lenght.
     /*! Compute hlenght for given tree as as diff of coordinates of two selected points.
         it select axis with biggest value range. On this range select extreme points and compute distance between those points.
@@ -238,6 +253,9 @@ private:
     //! Create treeview
     /*! Create main window widget Treeview on left side of application window. */
   void createTreeView();
+  //! Create toolbars
+    /*! Create toolbars for display/hide tree parameters.  */
+  void createToolbars();
 
 //opening methods
     //! Open project file
@@ -464,6 +482,12 @@ private:
   QAction *aboutAct;          /**< About application Act */
   QAction *aboutQtAct;        /**< About Qt Act */
   QAction *IDWAct;            /**< IDW Act */
+
+  //Treebar actions
+  QAction *dbhthT;            /**< display/hide cylinders and text associated to dbhHT. Used in treeBar */
+  QAction *dbhlsrT;            /**< display/hide cylinders and text associated to dbhLSR. Used in treeBar */
+  QAction *heightT;            /**< display/hide  line and text associated to height. Used in treeBar */
+  QAction *positionT;           /**< display/hide  sphere in tree position. Used in treeBar */
 
   Project *Proj;                /**< Project definition */
   Cloud *m_cloud;               /**< temporary cloud serves mainly in editing mode */

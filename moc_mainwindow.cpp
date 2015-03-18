@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created: Wed 18. Mar 08:14:46 2015
+** Created: Wed 18. Mar 15:57:02 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_MainWindow[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      52,   14, // methods
+      64,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -59,30 +59,42 @@ static const uint qt_meta_data_MainWindow[] = {
      396,   11,   11,   11, 0x08,
      411,   11,   11,   11, 0x08,
      427,   11,   11,   11, 0x08,
-     435,   11,   11,   11, 0x08,
-     444,   11,   11,   11, 0x08,
-     453,   11,   11,   11, 0x08,
-     464,   11,   11,   11, 0x08,
-     473,   11,   11,   11, 0x08,
-     484,   11,   11,   11, 0x08,
+     440,  435,   11,   11, 0x08,
+     462,   11,   11,   11, 0x08,
+     481,   11,   11,   11, 0x08,
      497,   11,   11,   11, 0x08,
-     511,   11,   11,   11, 0x08,
-     526,   11,   11,   11, 0x08,
-     545,   11,   11,   11, 0x08,
-     557,   11,   11,   11, 0x08,
-     570,   11,   11,   11, 0x08,
-     581,   11,   11,   11, 0x08,
-     587,   11,   11,   11, 0x08,
-     594,   11,   11,   11, 0x08,
-     604,   11,   11,   11, 0x08,
-     615,   11,   11,   11, 0x08,
-     628,  623,   11,   11, 0x08,
-     647,  623,   11,   11, 0x08,
-     668,  623,   11,   11, 0x08,
-     689,  623,   11,   11, 0x08,
-     709,  623,   11,   11, 0x08,
-     734,  623,   11,   11, 0x08,
-     753,   11,   11,   11, 0x08,
+     506,  435,   11,   11, 0x08,
+     529,   11,   11,   11, 0x08,
+     549,   11,   11,   11, 0x08,
+     566,   11,   11,   11, 0x08,
+     575,  435,   11,   11, 0x08,
+     598,   11,   11,   11, 0x08,
+     618,   11,   11,   11, 0x08,
+     635,   11,   11,   11, 0x08,
+     646,  435,   11,   11, 0x08,
+     671,   11,   11,   11, 0x08,
+     693,   11,   11,   11, 0x08,
+     712,   11,   11,   11, 0x08,
+     721,   11,   11,   11, 0x08,
+     732,   11,   11,   11, 0x08,
+     745,   11,   11,   11, 0x08,
+     759,   11,   11,   11, 0x08,
+     774,   11,   11,   11, 0x08,
+     793,   11,   11,   11, 0x08,
+     805,   11,   11,   11, 0x08,
+     818,   11,   11,   11, 0x08,
+     829,   11,   11,   11, 0x08,
+     835,   11,   11,   11, 0x08,
+     842,   11,   11,   11, 0x08,
+     852,   11,   11,   11, 0x08,
+     863,   11,   11,   11, 0x08,
+     871,  435,   11,   11, 0x08,
+     890,  435,   11,   11, 0x08,
+     911,  435,   11,   11, 0x08,
+     932,  435,   11,   11, 0x08,
+     952,  435,   11,   11, 0x08,
+     977,  435,   11,   11, 0x08,
+     996,   11,   11,   11, 0x08,
 
        0        // eod
 };
@@ -101,15 +113,23 @@ static const char qt_meta_stringdata_MainWindow[] = {
     "manualAdjustStop()\0manualSelect()\0"
     "manualSelectStop()\0treeEdit()\0"
     "treeEditStop()\0treeAtributes()\0dbhHT()\0"
-    "dbhLSR()\0height()\0position()\0lenght()\0"
-    "skeleton()\0convexhull()\0concavehull()\0"
-    "dbhCloudEdit()\0dbhCloudStopEdit()\0"
-    "plusCloud()\0minusCloud()\0voxelize()\0"
-    "IDW()\0clip()\0clipped()\0clipStop()\0"
-    "about()\0name\0dispCloud(QString)\0"
-    "removeCloud(QString)\0deleteCloud(QString)\0"
-    "colorCloud(QString)\0colorCloudField(QString)\0"
-    "PointSize(QString)\0undo()\0"
+    "name\0dbhHTDisplay(QString)\0"
+    "dbhHT_DisplayAll()\0dbhHT_HideAll()\0"
+    "dbhLSR()\0dbhLSRDisplay(QString)\0"
+    "dbhLSR_DisplayAll()\0dbhLSR_HideAll()\0"
+    "height()\0heightDisplay(QString)\0"
+    "height_DisplayAll()\0height_HideAll()\0"
+    "position()\0positionDisplay(QString)\0"
+    "position_DisplayAll()\0position_HideAll()\0"
+    "lenght()\0skeleton()\0convexhull()\0"
+    "concavehull()\0dbhCloudEdit()\0"
+    "dbhCloudStopEdit()\0plusCloud()\0"
+    "minusCloud()\0voxelize()\0IDW()\0clip()\0"
+    "clipped()\0clipStop()\0about()\0"
+    "dispCloud(QString)\0removeCloud(QString)\0"
+    "deleteCloud(QString)\0colorCloud(QString)\0"
+    "colorCloudField(QString)\0PointSize(QString)\0"
+    "undo()\0"
 };
 
 void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -146,30 +166,42 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 25: _t->treeEditStop(); break;
         case 26: _t->treeAtributes(); break;
         case 27: _t->dbhHT(); break;
-        case 28: _t->dbhLSR(); break;
-        case 29: _t->height(); break;
-        case 30: _t->position(); break;
-        case 31: _t->lenght(); break;
-        case 32: _t->skeleton(); break;
-        case 33: _t->convexhull(); break;
-        case 34: _t->concavehull(); break;
-        case 35: _t->dbhCloudEdit(); break;
-        case 36: _t->dbhCloudStopEdit(); break;
-        case 37: _t->plusCloud(); break;
-        case 38: _t->minusCloud(); break;
-        case 39: _t->voxelize(); break;
-        case 40: _t->IDW(); break;
-        case 41: _t->clip(); break;
-        case 42: _t->clipped(); break;
-        case 43: _t->clipStop(); break;
-        case 44: _t->about(); break;
-        case 45: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 46: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 47: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 48: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 49: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 50: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 51: _t->undo(); break;
+        case 28: _t->dbhHTDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 29: _t->dbhHT_DisplayAll(); break;
+        case 30: _t->dbhHT_HideAll(); break;
+        case 31: _t->dbhLSR(); break;
+        case 32: _t->dbhLSRDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 33: _t->dbhLSR_DisplayAll(); break;
+        case 34: _t->dbhLSR_HideAll(); break;
+        case 35: _t->height(); break;
+        case 36: _t->heightDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 37: _t->height_DisplayAll(); break;
+        case 38: _t->height_HideAll(); break;
+        case 39: _t->position(); break;
+        case 40: _t->positionDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 41: _t->position_DisplayAll(); break;
+        case 42: _t->position_HideAll(); break;
+        case 43: _t->lenght(); break;
+        case 44: _t->skeleton(); break;
+        case 45: _t->convexhull(); break;
+        case 46: _t->concavehull(); break;
+        case 47: _t->dbhCloudEdit(); break;
+        case 48: _t->dbhCloudStopEdit(); break;
+        case 49: _t->plusCloud(); break;
+        case 50: _t->minusCloud(); break;
+        case 51: _t->voxelize(); break;
+        case 52: _t->IDW(); break;
+        case 53: _t->clip(); break;
+        case 54: _t->clipped(); break;
+        case 55: _t->clipStop(); break;
+        case 56: _t->about(); break;
+        case 57: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 58: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 59: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 60: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 61: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 62: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 63: _t->undo(); break;
         default: ;
         }
     }
@@ -207,9 +239,9 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 52)
+        if (_id < 64)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 52;
+        _id -= 64;
     }
     return _id;
 }

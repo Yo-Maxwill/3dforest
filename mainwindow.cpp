@@ -80,6 +80,7 @@
 
   createActions();
   createMenus();
+  createToolbars();
 
   statusBar()->showMessage(tr("3D FOREST Ready"));
   point_ev = m_vis->registerPointPickingCallback (&MainWindow::pointEvent, *this );
@@ -205,6 +206,11 @@ void MainWindow::closeProject()
   //clean qvtwidget
   m_vis->removeAllPointClouds();
   m_vis->removeAllShapes();
+
+  disconnect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_HideAll()));
+  connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
+  disconnect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_HideAll()));
+  connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
 
   qvtkwidget->update();
 
@@ -1045,10 +1051,11 @@ void MainWindow::manualAdjust()
 
     //spustit editacni listu
     editBar = new QToolBar(tr("edit bar"),this);
+    editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
-    QAction *stopE = editBar->addAction("Stop EDIT");
-    connect(stopE,SIGNAL(triggered()),this,SLOT(manualAdjustStop()) );
-    QAction *undoAct = editBar->addAction("undo");
+    QAction *stopE = editBar->addAction(QPixmap(":/images/stopEdit.png"),"Stop EDIT");
+    connect(stopE,SIGNAL(triggered()),this,SLOT(manualAdjustStop()));
+    QAction *undoAct = editBar->addAction(QPixmap(":/images/undo.png"),"undo");
     connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
 
     undopoint.clear();
@@ -1118,11 +1125,12 @@ void MainWindow::manualSelect()
     //spustit editacni listu
 
     editBar = new QToolBar(tr("edit bar"),this);
+    editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
-    QAction *stopEd = editBar->addAction("Stop EDIT");
+    QAction *stopEd = editBar->addAction(QPixmap(":/images/stopEdit.png"),"Stop EDIT");
     connect(stopEd,SIGNAL(triggered()),this,SLOT(manualSelectStop()) );
 
-    QAction *undoAct = editBar->addAction("undo");
+    QAction *undoAct = editBar->addAction(QPixmap(":/images/undo.png"),"undo");
     connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
     undopoint.clear();
 
@@ -1215,10 +1223,11 @@ void MainWindow::treeEdit()
 
     //spustit editacni listu
     editBar = new QToolBar(tr("edit bar"),this);
+    editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
-    QAction *stopTE = editBar->addAction("Stop EDIT");
+    QAction *stopTE = editBar->addAction(QPixmap(":/images/stopEdit.png"),"Stop EDIT");
     connect(stopTE,SIGNAL(triggered()),this,SLOT(treeEditStop()) );
-    QAction *undoAct = editBar->addAction("undo");
+    QAction *undoAct = editBar->addAction(QPixmap(":/images/undo.png"),"undo");
     connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
     undopoint.clear();
 
@@ -1288,8 +1297,9 @@ void MainWindow::dbhCloudEdit()
     //spustit editacni listu
     editBar = new QToolBar(tr("edit bar"),this);
     this->addToolBar(editBar);
-    QAction *stopTE = editBar->addAction("Stop EDIT");
-    QAction *undoAct = editBar->addAction("undo");
+    editBar->setIconSize(QSize(16,16));
+    QAction *stopTE = editBar->addAction(QPixmap(":/images/stopEdit.png"),"Stop EDIT");
+    QAction *undoAct = editBar->addAction(QPixmap(":/images/undo.png"),"undo");
     connect(undoAct,SIGNAL(triggered()),this,SLOT(undo()) );
     undopoint.clear();
 
@@ -1509,7 +1519,7 @@ void MainWindow::convexhull()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme rightProj->get_TreeCloud(in->get_inputCloud1())
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -1558,7 +1568,7 @@ void MainWindow::concavehull()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme right
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -1607,7 +1617,7 @@ void MainWindow::dbhHT()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme right
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -1615,45 +1625,9 @@ void MainWindow::dbhHT()
     {
       for(int i = 0; i < (names.size() - 1); i++ )
       {
-        stred x;
         Proj->get_TreeCloud(i).set_dbhHT();
-        x = Proj->get_TreeCloud(i).get_dbhHT();
-    // zobrazit cylinder a hodnotu
-        if(x.r < 5000 && x.r > 0.5)
-        {
-          QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
-          Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
-          dispCloud(*cl_,255, 0, 0);
-          //Coeff
-          pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-          coef->values.push_back((float)x.a);
-          coef->values.push_back((float)x.b);
-          coef->values.push_back((float)x.z);
-          coef->values.push_back((float)0);
-          coef->values.push_back((float)0);
-          coef->values.push_back((float)0.1);
-          coef->values.push_back((float)x.r/100);
-          std::stringstream name ;
-          name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_HT";
-          m_vis->addCylinder(*coef,name.str());
+        dbhHTDisplay(Proj->get_TreeCloud(i).get_name());
 
-      //addtext3D with R
-          pcl::PointXYZ bod;
-          bod.x=x.a+(float)x.r/100;
-          bod.y=x.b;
-          bod.z=x.z+0.1;
-          QString h= QString("%1").arg(x.r*2.0);
-          std::stringstream name2 ;
-          name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_HT";
-          m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
-        }
-        else
-        {
-          QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
-                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
-          QMessageBox::information(0,("Warning"),m);
-
-        }
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
@@ -1662,47 +1636,97 @@ void MainWindow::dbhHT()
     {
       //urcit dbh
       Proj->get_TreeCloud(in->get_inputCloud1()).set_dbhHT();
-      stred x = Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhHT();
-      if(x.r < 5000 && x.r > 0.5)
-      {
-    // zobrazit cylinder a hodnotu
-        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
-        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
-        dispCloud(*cl_,255, 0, 0);
-          //Coeff
-        pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-        coef->values.push_back((float)x.a);
-        coef->values.push_back((float)x.b);
-        coef->values.push_back((float)x.z);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0.1);
-        coef->values.push_back((float)x.r/100);
-        std::stringstream name ;
-        name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_HT";
-        m_vis->addCylinder(*coef,name.str());
-
-      //addtext3D with R
-        pcl::PointXYZ bod;
-        bod.x=x.a+(float)x.r/100;
-        bod.y=x.b;
-        bod.z=x.z+0.1;
-        QString h= QString("%1").arg(x.r*2.0);
-        std::stringstream name2 ;
-        name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_HT";
-        m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
-      }
-      else
-      {
-        QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
-                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
-        QMessageBox::information(0,("Warning"),m);
-      }
+      dbhHTDisplay(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
+}
+void MainWindow::dbhHTDisplay(QString name)
+{
+  stred x;
+  x = Proj->get_TreeCloud(name).get_dbhHT();
+    // zobrazit cylinder a hodnotu
+  if(x.r < 5000 && x.r > 0.5)
+  {
+    QString cl_name = QString ("%1_dbh").arg(name);
+    Cloud *cl_ = new Cloud(Proj->get_TreeCloud(name).get_dbhCloud(),cl_name ) ;
+    dispCloud(*cl_,255, 0, 0);
+          //Coeff
+    pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+    coef->values.push_back((float)x.a);
+    coef->values.push_back((float)x.b);
+    coef->values.push_back((float)x.z);
+    coef->values.push_back((float)0);
+    coef->values.push_back((float)0);
+    coef->values.push_back((float)0.1);
+    coef->values.push_back((float)x.r/100);
+    std::stringstream Cname ;
+    Cname << name.toUtf8().constData() << "_cylinder_HT";
+    m_vis->addCylinder(*coef,Cname.str());
+
+      //addtext3D with R
+    pcl::PointXYZ bod;
+    bod.x=x.a+(float)x.r/100;
+    bod.y=x.b;
+    bod.z=x.z+0.1;
+    QString h= QString("%1").arg(x.r*2.0);
+    std::stringstream name2 ;
+    name2 << name.toUtf8().constData() << "_value_HT";
+    m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+  }
+  else
+  {
+    QString m = QString("Computed DBH  for tree '%1' is out of range 0 - 50m.\n"
+                        "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(name);
+    QMessageBox::information(0,("Warning"),m);
+  }
+  //disconnect and connect different for treebar
+  disconnect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
+  connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_HideAll()));
+}
+void MainWindow::dbhHT_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    dbhHTDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::dbhHT_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove cylinder
+    std::stringstream Cname ;
+    Cname << names.at(i).toUtf8().constData() << "_cylinder_HT";
+    m_vis->removeShape (Cname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname << names.at(i).toUtf8().constData() << "_value_HT";
+    m_vis->removeText3D (Tname.str());
+
+    //remove dbhCloud
+    std::stringstream Clname ;
+    Clname  << names.at(i).toUtf8().constData() << "_dbh";
+    m_vis->removePointCloud(Clname.str());
+  }
+  disconnect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_HideAll()));
+  connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::dbhLSR()
 {
@@ -1726,7 +1750,7 @@ void MainWindow::dbhLSR()
   {
 
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme right
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -1734,105 +1758,106 @@ void MainWindow::dbhLSR()
     {
       for(int i = 0; i < (names.size()-1); i++ )
       {
-
-        Tree *c = new Tree(Proj->get_TreeCloud(i));
-      //DBH_Least square regression
-        c->set_dbhLSR();
-        float dbhLSRx = c->get_dbhLSR().a;
-        float dbhLSRy = c->get_dbhLSR().b;
-        float dbhLSRz = c->get_dbhLSR().z;
-        float dbhLSR = c->get_dbhLSR().r;
-
-        if(dbhLSR < 5000 && dbhLSR > 0.5)
-        {
-
-    // zobrazit cylinder a hodnotu
-          QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(i).get_name());
-          Cloud *cl_ = new Cloud(Proj->get_TreeCloud(i).get_dbhCloud(),cl_name ) ;
-          dispCloud(*cl_,255, 0, 0);
-          //Coeff
-          pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-          coef->values.push_back(dbhLSRx);
-          coef->values.push_back(dbhLSRy);
-          coef->values.push_back(dbhLSRz);
-          coef->values.push_back((float)0);
-          coef->values.push_back((float)0);
-          coef->values.push_back((float)0.1);
-          coef->values.push_back(dbhLSR/100);
-          std::stringstream name ;
-          name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_cylinder_LSR";
-          m_vis->addCylinder(*coef,name.str());
-
-      //addtext3D with R
-          pcl::PointXYZ bod;
-          bod.x=dbhLSRx;
-          bod.y=dbhLSRy+dbhLSR/100;
-          bod.z=dbhLSRz+0.1;
-          QString h= QString("%1").arg(dbhLSR*2.0);
-          std::stringstream name2 ;
-          name2 << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_value_LSR";
-          m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
-        }
-        else
-        {
-          QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
-                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
-          QMessageBox::information(0,("Warning"),m);
-        }
+        Proj->get_TreeCloud(i).set_dbhLSR();
+        dbhLSRDisplay(Proj->get_TreeCloud(i).get_name());
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
     }
     else
     {
-      Tree *c = new Tree(Proj->get_TreeCloud(in->get_inputCloud1()));
-      //DBH_Least square regression
-      c->set_dbhLSR();
-      float dbhLSRx = c->get_dbhLSR().a;
-      float dbhLSRy = c->get_dbhLSR().b;
-      float dbhLSRz = c->get_dbhLSR().z;
-      float dbhLSR = c->get_dbhLSR().r;
-
-      if(dbhLSR < 5000 && dbhLSR > 0.5)
-      {
-    // zobrazit cylinder a hodnotu
-        QString cl_name = QString ("%1_dbh").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
-        Cloud *cl_ = new Cloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_dbhCloud(),cl_name ) ;
-        dispCloud(*cl_,255, 0, 0);
-          //Coeff
-        pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-        coef->values.push_back(dbhLSRx);
-        coef->values.push_back(dbhLSRy);
-        coef->values.push_back(dbhLSRz);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0);
-        coef->values.push_back((float)0.1);
-        coef->values.push_back(dbhLSR/100);
-        std::stringstream name ;
-        name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_cylinder_LSR";
-        m_vis->addCylinder(*coef,name.str());
-
-      //addtext3D with R
-        pcl::PointXYZ bod;
-        bod.x=dbhLSRx;
-        bod.y=dbhLSRy+dbhLSR/100;
-        bod.z=dbhLSRz+0.1;
-        QString h= QString("%1").arg(dbhLSR*2.0);
-        std::stringstream name2 ;
-        name2 << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_value_LSR";
-        m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
-      }
-      else
-      {
-        QString m = QString("Computed DBH  for tree %1'is out of range 0 - 50m.\n"
-                            "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(Proj->get_TreeCloud(i).get_name());
-        QMessageBox::information(0,("Warning"),m);
-      }
+      Proj->get_TreeCloud(in->get_inputCloud1()).set_dbhLSR();
+      dbhLSRDisplay(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
+}
+void MainWindow::dbhLSRDisplay(QString name)
+{
+  stred x;
+  x = Proj->get_TreeCloud(name).get_dbhLSR();
+    // zobrazit cylinder a hodnotu
+  if(x.r < 5000 && x.r > 0.5)
+  {
+    QString cl_name = QString ("%1_dbh").arg(name);
+    Cloud *cl_ = new Cloud(Proj->get_TreeCloud(name).get_dbhCloud(),cl_name ) ;
+    dispCloud(*cl_,255, 0, 0);
+          //Coeff
+    pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+    coef->values.push_back((float)x.a);
+    coef->values.push_back((float)x.b);
+    coef->values.push_back((float)x.z);
+    coef->values.push_back((float)0);
+    coef->values.push_back((float)0);
+    coef->values.push_back((float)0.1);
+    coef->values.push_back((float)x.r/100);
+    std::stringstream Cname ;
+    Cname << name.toUtf8().constData() << "_cylinder_LSR";
+    m_vis->addCylinder(*coef,Cname.str());
+
+      //addtext3D with R
+    pcl::PointXYZ bod;
+    bod.x=x.a+(float)x.r/100;
+    bod.y=x.b;
+    bod.z=x.z+0.1;
+    QString h= QString("%1").arg(x.r*2.0);
+    std::stringstream name2 ;
+    name2 << name.toUtf8().constData() << "_value_LSR";
+    m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
+  }
+  else
+  {
+    QString m = QString("Computed DBH  for tree '%1' is out of range 0 - 50m.\n"
+                        "Please check tree DBH Cloud and if needed edit points using DBHCloud Edit tool.").arg(name);
+    QMessageBox::information(0,("Warning"),m);
+  }
+  //disconnect and connect different for treebar
+  disconnect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
+  connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_HideAll()));
+}
+void MainWindow::dbhLSR_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+
+  for(int i = 0; i < names.size(); i++)
+  {
+    dbhLSRDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::dbhLSR_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove cylinder
+    std::stringstream Cname ;
+    Cname << names.at(i).toUtf8().constData() << "_cylinder_LSR";
+    m_vis->removeShape (Cname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname << names.at(i).toUtf8().constData() << "_value_LSR";
+    m_vis->removeText3D (Tname.str());
+
+    //remove dbhCloud
+    std::stringstream Clname ;
+    Clname  << names.at(i).toUtf8().constData() << "_dbh";
+    m_vis->removePointCloud(Clname.str());
+  }
+  disconnect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_HideAll()));
+  connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::height()
 {
@@ -1863,30 +1888,7 @@ void MainWindow::height()
       for(int i = 0; i < names.size()-1; i++ )
       {
         Proj->get_TreeCloud(i).set_height();
-
-
-        pcl::PointXYZI maxp,minp;
-        maxp.z=0;
-        minp.z=60000;
-
-        for(int j = 0; j < Proj->get_TreeCloud(i).get_Cloud()->points.size();j++)
-        {
-          pcl::PointXYZI bod = Proj->get_TreeCloud(i).get_Cloud()->points.at(j);
-
-          if(bod.z > maxp.z)
-            maxp = bod;
-
-          if(bod.z < minp.z)
-            minp = bod;
-        }
-
-        std::stringstream name ;
-        name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_height";
-        m_vis->addLine(Proj->get_TreeCloud(i).get_pose(),maxp,name.str());
-        QString h= QString("%1").arg(Proj->get_TreeCloud(i).get_height());
-        m_vis->addText3D(h.toUtf8().constData(),maxp,0.6,0.6,0.5,0);
-
-
+        heightDisplay(names.at(i));
 
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
@@ -1894,36 +1896,74 @@ void MainWindow::height()
     }
     else
     {
-      if(Proj->get_sizeTerainCV() > 0)
-        Proj->get_TreeCloud(in->get_inputCloud1()).set_position(Proj->get_TerrainCloud(0));
 
       Proj->get_TreeCloud(in->get_inputCloud1()).set_height();
 
-      pcl::PointXYZI maxp,minp;
-        maxp.z=0;
-        minp.z=60000;
-
-        for(int j = 0; j < Proj->get_TreeCloud(in->get_inputCloud1()).get_Cloud()->points.size();j++)
-        {
-          pcl::PointXYZI bod = Proj->get_TreeCloud(in->get_inputCloud1()).get_Cloud()->points.at(j);
-
-          if(bod.z > maxp.z)
-            maxp = bod;
-
-          if(bod.z < minp.z)
-            minp = bod;
-        }
-        std::stringstream name ;
-        name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_height";
-        m_vis->addLine(Proj->get_TreeCloud(in->get_inputCloud1()).get_pose(),maxp,name.str());
-        QString h= QString("%1").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_height());
-        m_vis->addText3D(h.toUtf8().constData(),maxp,0.6,0.6,0.5,0);
+      heightDisplay(in->get_inputCloud1());
 
         pBar->setValue(100);
         pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
+}
+void MainWindow::heightDisplay(QString name)
+{
+  std::stringstream Hname ;
+  Hname << name.toUtf8().constData() << "_heightline";
+  pcl::PointXYZI minp,maxp;
+  minp = Proj->get_TreeCloud(name).get_pose();
+  maxp.x = Proj->get_TreeCloud(name).get_pose().x;
+  maxp.y = Proj->get_TreeCloud(name).get_pose().y;
+  maxp.z = Proj->get_TreeCloud(name).get_pose().z + Proj->get_TreeCloud(name).get_height();
+  m_vis->addLine(minp,maxp,Hname.str());
+
+  std::stringstream name2 ;
+    name2 << name.toUtf8().constData() << "_heighttext";
+
+  QString h = QString("%1").arg(Proj->get_TreeCloud(name).get_height());
+  m_vis->addText3D(h.toUtf8().constData(),maxp,0.6,0.6,0.5,0,name2.str());
+
+  disconnect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
+  connect(heightT,SIGNAL(triggered()),this,SLOT(height_HideAll()));
+
+}
+void MainWindow::height_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    heightDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::height_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove line
+    std::stringstream Cname ;
+    Cname << names.at(i).toUtf8().constData() << "_heightline";
+    m_vis->removeShape (Cname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname << names.at(i).toUtf8().constData() << "_heighttext";
+    m_vis->removeText3D (Tname.str());
+
+  }
+  disconnect(heightT,SIGNAL(triggered()),this,SLOT(height_HideAll()));
+  connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::lenght()
 {
@@ -1946,7 +1986,7 @@ void MainWindow::lenght()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme right
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -2006,6 +2046,7 @@ void MainWindow::position()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
+    pBar->setMaximumSize(160,16);
     // position of progress bar should be extreme right
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
@@ -2014,21 +2055,7 @@ void MainWindow::position()
     {
       for(int i = 0; i < names.size()-1; i++ )
       {
-
-        //Tree *c = new Tree(Proj->get_TreeCloud(i));
-
-        pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-        coef->values.push_back((float)Proj->get_TreeCloud(i).get_pose().x); //x
-        coef->values.push_back((float)Proj->get_TreeCloud(i).get_pose().y); //y
-        coef->values.push_back((float)Proj->get_TreeCloud(i).get_pose().z); //z
-        coef->values.push_back((float)0.05);   //r
-        std::stringstream name;
-
-        name << Proj->get_TreeCloud(i).get_name().toUtf8().constData() << "_sphere";
-        m_vis->addSphere(*coef,name.str());
-
-        QString h= QString("%1").arg(Proj->get_TreeCloud(i).get_name());
-        m_vis->addText3D(h.toUtf8().constData(),Proj->get_TreeCloud(i).get_pose(),0.5,0.6,0.5,0.3);
+        positionDisplay(names.at(i));
 
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
@@ -2036,24 +2063,60 @@ void MainWindow::position()
     }
     else
     {
-      //Tree *c = new Tree(Proj->get_TreeCloud(in->get_inputCloud1()));
-
-      pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-      coef->values.push_back((float)Proj->get_TreeCloud(in->get_inputCloud1()).get_pose().x); //x
-      coef->values.push_back((float)Proj->get_TreeCloud(in->get_inputCloud1()).get_pose().y); //y
-      coef->values.push_back((float)Proj->get_TreeCloud(in->get_inputCloud1()).get_pose().z); //z
-      coef->values.push_back((float)0.05);   //r
-      std::stringstream name;
-
-      name << Proj->get_TreeCloud(in->get_inputCloud1()).get_name().toUtf8().constData() << "_sphere";
-      m_vis->addSphere(*coef,name.str());
-      QString h= QString("%1").arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
-        m_vis->addText3D(h.toUtf8().constData(),Proj->get_TreeCloud(in->get_inputCloud1()).get_pose(),0.5,0.6,0.5,0.3);
+      positionDisplay(in->get_inputCloud1());
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
+}
+void MainWindow::positionDisplay(QString name)
+{
+  pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
+  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().x); //x
+  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().y); //y
+  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().z); //z
+  coef->values.push_back((float)0.05);   //r
+  std::stringstream Sname;
+
+  Sname << name.toUtf8().constData() << "_sphere";
+  m_vis->addSphere(*coef,Sname.str());
+
+  disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+  connect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
+
+}
+void MainWindow::position_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    positionDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::position_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove sphere
+    std::stringstream Cname ;
+    Cname << names.at(i).toUtf8().constData() << "_sphere";
+    m_vis->removeShape (Cname.str());
+
+  }
+  disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
+  connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::skeleton()
 {
@@ -2078,7 +2141,7 @@ void MainWindow::skeleton()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
-    // position of progress bar should be extreme right
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -3083,7 +3146,45 @@ void MainWindow::createMenus()
   helpMenu = menuBar()->addMenu(tr("&About"));
   helpMenu->addAction(aboutAct);
  }
+void MainWindow::createToolbars()
+{
+//Project toolbar
+  QToolBar *Projectbar = addToolBar("Project toolbar");
+  Projectbar->setMaximumHeight(24);
+  Projectbar->setIconSize(QSize(16,16));
+  QAction *newProjectT = Projectbar->addAction(QPixmap(":/images/projectBar/new.png"),"New Project");
+  connect(newProjectT,SIGNAL(triggered()),this,SLOT(newProject()));
+  QAction *openProjectT = Projectbar->addAction(QPixmap(":/images/projectBar/open.png"),"Open Project");
+  connect(openProjectT,SIGNAL(triggered()),this,SLOT(openProject()));
+  QAction *closeProjectT = Projectbar->addAction(QPixmap(":/images/projectBar/close.png"),"Close Project");
+  connect(closeProjectT,SIGNAL(triggered()),this,SLOT(closeProject()));
+  QAction *importProjectT = Projectbar->addAction(QPixmap(":/images/projectBar/import.png"),"Import Project");
+  connect(importProjectT,SIGNAL(triggered()),this,SLOT(importProject()));
 
+
+// Tree toolbar
+  QToolBar *treeBar = addToolBar("Tree toolbar");
+  treeBar->setMaximumHeight(24);
+  treeBar->setIconSize(QSize(16,16));
+
+  dbhthT  = new QAction(QPixmap(":/images/treeBar/dbhHT.png"),"Display/Hide DBH Hough Transform",0);
+  treeBar->addAction(dbhthT);
+  connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
+
+  dbhlsrT  = new QAction(QPixmap(":/images/treeBar/dbhLSR.png"),"Display/Hide DBH Least Square Regression",0);
+  treeBar->addAction(dbhlsrT);
+  connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
+
+  heightT  = new QAction(QPixmap(":/images/treeBar/height.png"),"Display/Hide Tree height",0);
+  treeBar->addAction(heightT);
+  connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
+
+  positionT  = new QAction(QPixmap(":/images/treeBar/position.png"),"Display/Hide Tree position",0);
+  treeBar->addAction(positionT);
+  connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+
+
+}
 void MainWindow::createTreeView()
 {
   treeWidget->resizeColumnToContents(1);
@@ -3124,8 +3225,8 @@ void MainWindow::undo()
   return;
   }
 }
-//QVTKWIDGET
 
+//QVTKWIDGET
 void MainWindow::AreaEvent(const pcl::visualization::AreaPickingEvent& event, void* )
 {
 
