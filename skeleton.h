@@ -16,6 +16,7 @@
 #ifndef SKELETON_H_INCLUDED
 #define SKELETON_H_INCLUDED
 
+#include <QtGui/QtGui>
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
@@ -137,6 +138,7 @@ public:
     //! Compute cos of angle of three points.
     /*! Compute cos of angle between ab and ac.  */
   float cosAngle(pcl::PointXYZI a, pcl::PointXYZI b, pcl::PointXYZI c);
+  void save_skel(QString File);
 
 protected:
   pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud;     /**< Original pointCloud */

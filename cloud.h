@@ -104,12 +104,13 @@ class Tree : public Cloud
   Cloud *m_dbhCloud;          /**< pcl::pointcloud for points representing dbh_cloud */
   Cloud *m_convexhull;        /**< cloud of points representing convex hull of tree */
   Cloud *m_concavehull;       /**< cloud of points representing concave hull of tree */
+  Cloud *m_skeleton;          /**< cloud of points representing skeleton of tree */
   stred m_dbh_HT;             /**< stred of the DBH with radius computed by HT */
   stred m_dbh_LSR;            /**< stred of the DBH with radius computed by LSR*/
   float m_height;             /**< tree height */
   float m_lenght;             /**< tree length */
-  float m_areaconvex;               /**< Area of tree projection from top view */
-  float m_areaconcave;               /**< Area of tree projection from top view */
+  float m_areaconvex;         /**< Area of tree projection from top view */
+  float m_areaconcave;        /**< Area of tree projection from top view */
   pcl::PointXYZI m_pose;      /**< tree position */
   pcl::PointXYZI m_minp;      /**< tree point with lowest coordinates, corner of boundary box */
   pcl::PointXYZI m_maxp;      /**< tree point with highest coordinates, corner of boundary box  */
@@ -167,7 +168,7 @@ public:
   void set_position(Cloud teren);
     //! Set cloud length.
     /*! Compute and set tree cloud length. */
-  void set_lenght();
+  void set_length();
 
     //! Get tree dbh_pointCloud.
     /*! Get tree DBH_pointCLoud representing points for compute DBH \return pointCloud for DBh estimate. */
@@ -180,7 +181,7 @@ public:
     pcl::PointXYZI get_pose();
     //! Get cloud length.
     /*! Get tree cloud length.  \return value of tree cloud length*/
-    float get_lenght();
+    float get_length();
     //! Get lowest/highest point of tree.
     /*! \param low if true get lowest point else highest \return pcl::point representing lowest/highest point of tree cloud.*/
     pcl::PointXYZI get_lpoint(bool);
@@ -195,6 +196,10 @@ public:
     float get_areaconcave();
     Cloud get_vexhull();
     Cloud get_concavehull();
+
+    void set_skeleton();
+    void set_skeleton(Cloud c);
+    Cloud get_skeleton();
 };
 
 #endif // CLOUD_H_INCLUDED

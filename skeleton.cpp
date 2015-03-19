@@ -843,7 +843,33 @@ void Skeleton::graph_min_max()
   }
   m_nodes_stem.push_back(nod2);
 }
+void Skeleton::save_skel(QString File)
+{
 
+  QFile file (File);
+  file.open(QIODevice::WriteOnly | QIODevice::Text);
+  QTextStream out(&file);
+  out.setRealNumberNotation(QTextStream::FixedNotation);
+  out.setRealNumberPrecision(3);
+  for(int i = 0; i < get_start()->points.size(); i++)
+  {
+    pcl::PointXYZI it;
+    it = get_start()->points.at(i);
+
+    double x_start = it.x;
+    double y_start = it.y;
+    double z_start = it.z;
+
+    pcl::PointXYZI it2;
+    it2 = get_stop()->points.at(i);
+    double x_stop = it2.x;
+    double y_stop = it2.y;
+    double z_stop = it2.z ;
+
+    out << x_start << " " << y_start << " " << z_start << " " << x_stop << " " << y_stop << " " << z_stop<< "\n";
+  }
+  file.close();
+}
 class MyVisitor : public boost::default_dfs_visitor
 {
   public:

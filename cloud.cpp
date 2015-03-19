@@ -22,7 +22,7 @@ Cloud::Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
 {
   m_name = name;
   m_Cloud=cloud;
-  set_color( QColor( rand(), rand(), rand()));
+  set_color( QColor( rand()%255, rand()%255, rand()%255));
   m_PointSize=1;
 }
 Cloud::Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name,QColor col)
@@ -96,15 +96,20 @@ Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col,
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_2(new pcl::PointCloud<pcl::PointXYZI>);
   m_convexhull = new Cloud(cloud_2, aa);
 
-  QString aaa = QString("%1_convex").arg(m_name);
+  QString aaa = QString("%1_concave").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_3(new pcl::PointCloud<pcl::PointXYZI>);
   m_concavehull = new Cloud(cloud_3, aaa);
+
+  QString aaaa = QString("%1_skeleton").arg(m_name);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
+  m_skeleton = new Cloud(cloud_3, aaaa);
 
   set_position();
   set_height();
   set_dbhCloud();
   set_dbhHT();
   set_dbhLSR();
+  set_length();
 
 }
 Tree::Tree (Cloud cloud)
@@ -119,9 +124,13 @@ Tree::Tree (Cloud cloud)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_2(new pcl::PointCloud<pcl::PointXYZI>);
   m_convexhull = new Cloud(cloud_2, aa);
 
-  QString aaa = QString("%1_convex").arg(m_name);
+  QString aaa = QString("%1_concave").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_3(new pcl::PointCloud<pcl::PointXYZI>);
   m_concavehull = new Cloud(cloud_3, aaa);
+
+  QString aaaa = QString("%1_skeleton").arg(m_name);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
+  m_skeleton = new Cloud(cloud_3, aaaa);
 
   set_position();
   set_height();
@@ -788,7 +797,7 @@ float Tree::get_height()
   float AA = ceilf(m_height * 100) / 100; //zaokrouhleni
   return AA;
 }
-void Tree::set_lenght()
+void Tree::set_length()
 {
   pcl::PointXYZI pmin,pmax;
   m_lmin.x=9000000;
@@ -856,7 +865,7 @@ void Tree::set_lenght()
   //compute lenght
   m_lenght = sqrt((m_lmax.x - m_lmin.x)*(m_lmax.x - m_lmin.x) + (m_lmax.y - m_lmin.y)*(m_lmax.y - m_lmin.y) + (m_lmax.z - m_lmin.z)*(m_lmax.z - m_lmin.z));
 }
-float Tree::get_lenght()
+float Tree::get_length()
 {
   float AA = ceilf(m_lenght * 100) / 100; //zaokrouhleni
   return AA;
@@ -1006,7 +1015,7 @@ void Tree::set_convexhull()
   }
   while (k<100);
 
-  QString a = QString("%1_vex").arg(m_name);
+  QString a = QString("%1_convex").arg(m_name);
   QColor col = QColor(255,0,0);
   Cloud *cl = new Cloud(cloudb, a);
   m_convexhull = cl;
@@ -1155,7 +1164,7 @@ void Tree::set_concavehull(float maxEdgeLenght = 150)
         k++;
         }while (k<200);
 
-        QString a = QString("%1_vex").arg(m_name);
+        QString a = QString("%1_concave").arg(m_name);
         QColor col = QColor(255,0,0);
         Cloud *cl = new Cloud(cloudb, a);
         m_concavehull = cl;
@@ -1213,3 +1222,17 @@ float Tree::get_areaconcave()
 {
   return m_areaconcave;
 }
+
+void Tree::set_skeleton()
+{
+
+}
+void Tree::set_skeleton(Cloud c)
+{
+  m_skeleton->set_Cloud(c.get_Cloud());
+}
+Cloud Tree::get_skeleton()
+{
+  return *m_skeleton;
+}
+

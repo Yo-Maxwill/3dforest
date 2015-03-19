@@ -71,7 +71,7 @@ void Project::cleanAll()
   m_ostCloud.clear();
   m_stromy.clear();
 }
-QString Project::get_Jmeno_Projektu()
+QString Project::get_ProjName()
 {
 return m_projectName;
 }
@@ -175,6 +175,26 @@ void Project::set_treeDBHCloud(QString name)
       m_stromy.at(i).set_dbhHT();
       m_stromy.at(i).set_dbhLSR();
 
+    }
+  }
+}
+void Project::set_skeleton(QString name, Cloud c)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_skeleton(c);
+    }
+  }
+}
+void Project::set_length(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_length();
     }
   }
 }
@@ -283,9 +303,16 @@ void Project::save_newCloud(QString type, QString path)
 {
   //save cloud
   QString path1 = save_Cloud(path);
+  QMessageBox::information(0,("f"),("saved"));
   //otevrit Proj.3df file pro pripsani
-  QString projfile = QString("%1/proj.3df").arg(get_Path());
+    QString projfile = QString("%1/%2.3df").arg(get_Path()).arg(get_ProjName());
   QFile file (projfile);
+  if(!file.exists())
+  {
+    projfile = QString("%1\\proj.3df").arg(get_Path()).arg(get_ProjName());
+    QFile file (projfile);
+  }
+
   file.open(QIODevice::Append | QIODevice::Text);
   QTextStream out(&file);
   out  << type << " " << path1<<"\n";
@@ -295,10 +322,18 @@ void Project::save_newCloud(QString type, QString name, pcl::PointCloud<pcl::Poi
 {
 
   QString path = save_Cloud(name,c);
+  QMessageBox::information(0,("f"),("saved"));
     //otevrit Proj.3df file pro pripsani
-  QString projfile = QString("%1\\proj.3df").arg(get_Path());
+  QString projfile = QString("%1\\%2.3df").arg(get_Path()).arg(get_ProjName());
 
   QFile file (projfile);
+  if(!file.exists())
+  {
+    projfile = QString("%1\\proj.3df").arg(get_Path()).arg(get_ProjName());
+    QFile file (projfile);
+  }
+  QMessageBox::information(0,("f"),projfile);
+
   file.open(QIODevice::Append | QIODevice::Text);
   QTextStream out(&file);
   out  << type << " " << path<<"\n";
@@ -313,9 +348,7 @@ QString Project::save_Cloud(QString path)
   QString file = name.back();
   QStringList ext = file.split(".");
 
-  QString path_out = QString ("%1\\%2.pcd").arg(get_Path()).arg(ext.front());
-  pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *cloud);
-  return path_out;
+  return save_Cloud(ext.front(),cloud);
 }
 QString Project::save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c)
 {
@@ -357,10 +390,16 @@ bool Project::cloud_exists(QString name)
 void Project::delete_Cloud(QString name)
 {
   //otevrit soubor proj.3df vymazat radek vyhledany podle zadaneho textu
-  QString filepath = QString ("%1/proj.3df").arg(m_path);
-  QString fileout = QString ("%1/proj_t.3df").arg(m_path);
+  QString filepath = QString ("%1/%2.3df").arg(m_path).arg(m_projectName);
+  QString fileout = QString ("%1/%2_t.3df").arg(m_path).arg(m_projectName);
 
   QFile file(filepath);
+  if(!file.exists())
+  {
+    filepath = QString("%1\\proj.3df").arg(get_Path());
+    fileout = QString("%1\\proj_t.3df").arg(get_Path());
+    QFile file (filepath);
+  }
   QFile fileU(fileout);
   file.open(QIODevice::ReadWrite| QIODevice::Text);
   fileU.open(QIODevice::ReadWrite| QIODevice::Text);
@@ -532,8 +571,8 @@ void Project::set_PointSize(QString name, int p)
 void Project::save_color(QString name, QColor col)
 {
   //open pro file,
-  QString filepath = QString ("%1/proj.3df").arg(m_path);
-  QString filepathtmp = QString ("%1/proj.tmp").arg(m_path);
+  QString filepath = QString ("%1/%2.3df").arg(m_path).arg(m_projectName);
+  QString filepathtmp = QString ("%1/%2.tmp").arg(m_path).arg(m_projectName);
   QFile file(filepath);
   QFile tmp (filepathtmp);
   file.open(QIODevice::ReadWrite);

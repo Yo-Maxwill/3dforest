@@ -118,7 +118,7 @@ public:
   double get_Ztransform();
     //! Get project name.
     /*! \return project name  */
-  QString get_Jmeno_Projektu();
+  QString get_ProjName();
     //! Get project path.
     /*! \return project path  */
   QString get_Path();
@@ -183,15 +183,17 @@ public:
   int get_sizeTreeCV();
     //! Set tree DBH_pointCloud.
     /*! \param name tree name \param cloud pointCloud representing points for DBH estimation  */
-    void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+  void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     //! Set convex hull pointCloud.
     /*! \param name tree name \param cloud pointCloud representing points of convex hull  */
-    void set_treeConvexCloud(QString name);
+  void set_treeConvexCloud(QString name);
     //! Set concave hull pointCloud.
     /*! \param name tree name \param cloud pointCloud representing points of concave hull  */
-    void set_treeConcaveCloud(QString name,float edge);
-    void set_treePosition(QString name);
-    void set_treeDBHCloud(QString name);
+  void set_treeConcaveCloud(QString name,float edge);
+  void set_treePosition(QString name);
+  void set_treeDBHCloud(QString name);
+  void set_length(QString name);
+  void set_skeleton(QString name, Cloud c);
 //OSTCLOUDset_dbhCloud(cl);
     //! Set new ost cloud.
     /*! \param cloud cloud of new ost cloud  */

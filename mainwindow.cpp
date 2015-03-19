@@ -206,11 +206,15 @@ void MainWindow::closeProject()
   //clean qvtwidget
   m_vis->removeAllPointClouds();
   m_vis->removeAllShapes();
-
+// set connection of treebar to default.
   disconnect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_HideAll()));
   connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
   disconnect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_HideAll()));
   connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
+  disconnect(heightT,SIGNAL(triggered()),this,SLOT(height_HideAll()));
+  connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
+  disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
+  connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
 
   qvtkwidget->update();
 
@@ -1383,7 +1387,7 @@ void MainWindow::treeAtributes()
 //clouds
     if(exdialog->get_treeName() == "All_trees")
     {
-      for(int i = 0; i < (names.size()-1); i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
 
         Tree *c = new Tree(Proj->get_TreeCloud(i));
@@ -1407,8 +1411,8 @@ void MainWindow::treeAtributes()
         }
         if(exdialog->get_Length() == true)
         {
-         c->set_lenght();
-          out << exdialog->get_separator() << c->get_lenght();
+         c->set_length();
+          out << exdialog->get_separator() << c->get_length();
         }
         if(exdialog->get_DBH_HT() == true)
         {
@@ -1463,8 +1467,8 @@ void MainWindow::treeAtributes()
       }
       if(exdialog->get_Length() == true)
       {
-       c->set_lenght();
-        out << exdialog->get_separator() << c->get_lenght();
+       c->set_length();
+        out << exdialog->get_separator() << c->get_length();
       }
       if(exdialog->get_DBH_HT() == true)
       {
@@ -1507,8 +1511,8 @@ void MainWindow::convexhull()
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute concave hull of tree.");
   in->set_path(Proj->get_Path());
-  in->set_description("Method for computing concvex hull of given tree."
-                        " This method serve only for display estimated polygon of convex hull. ");
+  in->set_description("Method for computing convex hull of given tree."
+                        " This method serve only for computing and display estimated polygon of convex hull. ");
   in->set_inputCloud1("Input Tree cloud:",names);
 
   in->set_stretch();
@@ -1525,11 +1529,10 @@ void MainWindow::convexhull()
 
     if(in->get_inputCloud1() == "All_trees")
     {
-      for(int i = 0; i < (names.size() - 1); i++ )
+      for(int i = 1; i < names.size() ; i++ )
       {
         Proj->set_treeConvexCloud(names.at(i));
-        QColor col = Proj->get_TreeCloud(i).get_color();
-        dispCloud(Proj->get_TreeCloud(i).get_vexhull(),col.red(),col.green(), col.blue());
+        convexhullDisplay(names.at(i));
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
@@ -1537,13 +1540,82 @@ void MainWindow::convexhull()
     else
     {
       Proj->set_treeConvexCloud(in->get_inputCloud1());
-      QColor col = Proj->get_TreeCloud(in->get_inputCloud1()).get_color();
-      dispCloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_vexhull(),col.red(),col.green(), col.blue());
+      convexhullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
+    convexT->setEnabled(true);
   }
+}
+void MainWindow::convexhullDisplay(QString name)
+{
+  //addcloud
+  QColor col = Proj->get_TreeCloud(name).get_color();
+  dispCloud(Proj->get_TreeCloud(name).get_vexhull(),col.red(),col.green(), col.blue());
+  m_vis->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, Proj->get_TreeCloud(name).get_vexhull().get_name().toUtf8().constData());
+
+ //addAreaText
+  pcl::PointXYZI bod;
+  bod = Proj->get_TreeCloud(name).get_pose();
+  QString h = QString("%1 m2").arg(Proj->get_TreeCloud(name).get_areaconvex());
+  std::stringstream name2 ;
+  name2 << name.toUtf8().constData() << "_vexText";
+  m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+
+  //addpolygon
+  std::stringstream Pname;
+  Pname << name.toUtf8().constData() << "_convex_polygon";
+  m_vis->addPolygon<pcl::PointXYZI>(Proj->get_TreeCloud(name).get_vexhull().get_Cloud(),col.redF(),col.greenF(), col.blueF(), Pname.str());
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 1, Pname.str() );
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, Pname.str() );
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_REPRESENTATION , pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE , Pname.str() );
+
+  disconnect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_DisplayAll()));
+  connect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_HideAll()));
+}
+void MainWindow::convexhull_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    convexhullDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::convexhull_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove dbhCloud
+    std::stringstream Clname ;
+    Clname  << names.at(i).toUtf8().constData() << "_convex";
+    m_vis->removePointCloud(Clname.str());
+
+    //remove polygon
+    std::stringstream Pname ;
+    Pname  << names.at(i).toUtf8().constData() << "_convex_polygon";
+    m_vis->removeShape (Pname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname  << names.at(i).toUtf8().constData() << "_vexText";
+    m_vis->removeText3D (Tname.str());
+
+  }
+  disconnect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_HideAll()));
+  connect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::concavehull()
 {
@@ -1574,12 +1646,10 @@ void MainWindow::concavehull()
 
     if(in->get_inputCloud1() == "All_trees")
     {
-      for(int i = 0; i < (names.size() - 1); i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
         Proj->set_treeConcaveCloud(names.at(i),(float)in->get_intValue()/100);
-        QColor col = Proj->get_TreeCloud(i).get_color();
-        dispCloud(Proj->get_TreeCloud(i).get_concavehull(),col.red(),col.green(), col.blue());
-        //m_vis->addPolygon<pcl::PointXYZI>(c->get_concavehull().get_Cloud(), c->get_concavehull().get_name().toUtf8().constData());
+        concavehullDisplay(names.at(i));
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
@@ -1587,14 +1657,80 @@ void MainWindow::concavehull()
     else
     {
       Proj->set_treeConcaveCloud(in->get_inputCloud1(),(float)in->get_intValue()/100);
-      QColor col = Proj->get_TreeCloud(in->get_inputCloud1()).get_color();
-      dispCloud(Proj->get_TreeCloud(in->get_inputCloud1()).get_concavehull(),col.red(),col.green(), col.blue());
-      //m_vis->addPolygon(c->get_concavehull()->get_Cloud(),c->get_concavehull()->get_name());
+      concavehullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
+    concaveT->setEnabled(true);
   }
+}
+void MainWindow::concavehullDisplay(QString name)
+{
+  //addcloud
+  QColor col = Proj->get_TreeCloud(name).get_color();
+  dispCloud(Proj->get_TreeCloud(name).get_concavehull(),col.red(),col.green(), col.blue());
+  m_vis->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, Proj->get_TreeCloud(name).get_concavehull().get_name().toUtf8().constData());
+
+  //addAreaText
+  pcl::PointXYZI bod;
+  bod = Proj->get_TreeCloud(name).get_pose();
+  QString h = QString("%1 m2").arg(Proj->get_TreeCloud(name).get_areaconcave());
+  std::stringstream name2 ;
+  name2 << name.toUtf8().constData() << "_caveText";
+  m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+
+  //addpolygon
+  std::stringstream Pname;
+  Pname << name.toUtf8().constData() << "_concave_polygon";
+  m_vis->addPolygon<pcl::PointXYZI>(Proj->get_TreeCloud(name).get_concavehull().get_Cloud(),col.redF(),col.greenF(), col.blueF(), Pname.str());
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 1, Pname.str() );
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, Pname.str() );
+  m_vis->setShapeRenderingProperties ( pcl::visualization::PCL_VISUALIZER_REPRESENTATION , pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE , Pname.str() );
+  disconnect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_DisplayAll()));
+  connect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_HideAll()));
+}
+void MainWindow::concavehull_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    concavehullDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::concavehull_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove dbhCloud
+    std::stringstream Clname ;
+    Clname  << names.at(i).toUtf8().constData() << "_concave";
+    m_vis->removePointCloud(Clname.str());
+
+    //remove polygon
+    std::stringstream Pname ;
+    Pname  << names.at(i).toUtf8().constData() << "_concave_polygon";
+    m_vis->removeShape (Pname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname  << names.at(i).toUtf8().constData() << "_caveText";
+    m_vis->removeText3D (Tname.str());
+  }
+  disconnect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_HideAll()));
+  connect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::dbhHT()
 {
@@ -1605,8 +1741,8 @@ void MainWindow::dbhHT()
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree DBH using randomized hough transform (RHT) for circle detection.");
   in->set_path(Proj->get_Path());
-  in->set_description("Method for computing tree DBH (Diameter in breat height) for given tree."
-                        " This method serve only for display estimated cylinder with computed centre, diameter and with height od 10 cm. ");
+  in->set_description("Method for computing tree DBH (Diameter in Breast Height) for given tree."
+                        " This method serve for computing and display estimated cylinder with computed centre, diameter and with cylinder height 10 cm. ");
   in->set_inputCloud1("Input Tree cloud:",names);
   in->set_stretch();
   int dl = in->exec();
@@ -1623,7 +1759,7 @@ void MainWindow::dbhHT()
 
     if(in->get_inputCloud1() == "All_trees")
     {
-      for(int i = 0; i < (names.size() - 1); i++ )
+      for(int i = 0; i < Proj->get_sizeTreeCV() ; i++ )
       {
         Proj->get_TreeCloud(i).set_dbhHT();
         dbhHTDisplay(Proj->get_TreeCloud(i).get_name());
@@ -1756,7 +1892,7 @@ void MainWindow::dbhLSR()
 
     if(in->get_inputCloud1() == "All_trees")
     {
-      for(int i = 0; i < (names.size()-1); i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
         Proj->get_TreeCloud(i).set_dbhLSR();
         dbhLSRDisplay(Proj->get_TreeCloud(i).get_name());
@@ -1885,7 +2021,7 @@ void MainWindow::height()
 
     if(in->get_inputCloud1() == "All_trees" )
     {
-      for(int i = 0; i < names.size()-1; i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
         Proj->get_TreeCloud(i).set_height();
         heightDisplay(names.at(i));
@@ -1965,7 +2101,7 @@ void MainWindow::height_HideAll()
   connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
   qvtkwidget->update();
 }
-void MainWindow::lenght()
+void MainWindow::length()
 {
   QStringList names;
   names <<"All_trees";
@@ -1992,17 +2128,11 @@ void MainWindow::lenght()
 
     if(in->get_inputCloud1() == "All_trees" )
     {
-      for(int i = 0; i < names.size()-1; i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
-        Tree *c = new Tree(Proj->get_TreeCloud(i));
-        c->set_lenght();
+        Proj->set_length(names.at(i));
 
-        std::stringstream name ;
-        name << c->get_name().toUtf8().constData() << "_lenght";
-        m_vis->addLine(c->get_lpoint(true),c->get_lpoint(false),name.str());
-
-        QString h= QString("%1").arg(c->get_lenght());
-        m_vis->addText3D(h.toUtf8().constData(),c->get_lpoint(false),0.6,0.6,0.5,0);
+        lengthDisplay(names.at(i));
 
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
@@ -2010,20 +2140,66 @@ void MainWindow::lenght()
     }
     else
     {
-      Tree *c = new Tree(Proj->get_TreeCloud(in->get_inputCloud1()));
-      c->set_lenght();
+      Proj->set_length(in->get_inputCloud1());
 
-      std::stringstream name ;
-      name << c->get_name().toUtf8().constData() << "_lenght";
-      m_vis->addLine(c->get_lpoint(true),c->get_lpoint(false),name.str());
-      QString h= QString("%1").arg(c->get_lenght());
-      m_vis->addText3D(h.toUtf8().constData(),c->get_lpoint(false),0.6,0.6,0.5,0);
+      lengthDisplay(in->get_inputCloud1());
 
       pBar->setValue(100);
       pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
+}
+void MainWindow::lengthDisplay(QString name)
+{
+  std::stringstream Lname ;
+  Lname << name.toUtf8().constData() << "_length";
+  m_vis->addLine(Proj->get_TreeCloud(name).get_lpoint(true),Proj->get_TreeCloud(name).get_lpoint(false),Lname.str());
+
+  std::stringstream Lname2 ;
+  Lname2 << name.toUtf8().constData() << "_lengthText";
+  QString h= QString("%1").arg(Proj->get_TreeCloud(name).get_length());
+  m_vis->addText3D(h.toUtf8().constData(),Proj->get_TreeCloud(name).get_lpoint(false),0.6,0.6,0.5,0,Lname2.str());
+
+  disconnect(lengthT,SIGNAL(triggered()),this,SLOT(length_DisplayAll()));
+  connect(lengthT,SIGNAL(triggered()),this,SLOT(length_HideAll()));
+}
+void MainWindow::length_DisplayAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  pBar = new QProgressBar(statusBar());
+  pBar->setMaximumSize(200,16);
+  statusBar()->addWidget(pBar);
+  pBar->setValue(0);
+  for(int i = 0; i < names.size(); i++)
+  {
+    lengthDisplay(names.at(i));
+    pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
+    pBar->update();
+  }
+  statusBar()->removeWidget(pBar);
+}
+void MainWindow::length_HideAll()
+{
+  QStringList names;
+  names << get_treeNames();
+  for(int i = 0; i < names.size(); i++)
+  {
+    //remove line
+    std::stringstream Cname ;
+    Cname << names.at(i).toUtf8().constData() << "_length";
+    m_vis->removeShape (Cname.str());
+
+    //remove text
+    std::stringstream Tname ;
+    Tname << names.at(i).toUtf8().constData() << "_lengthText";
+    m_vis->removeText3D (Tname.str());
+
+  }
+  disconnect(lengthT,SIGNAL(triggered()),this,SLOT(length_HideAll()));
+  connect(lengthT,SIGNAL(triggered()),this,SLOT(length_DisplayAll()));
+  qvtkwidget->update();
 }
 void MainWindow::position()
 {
@@ -2053,7 +2229,7 @@ void MainWindow::position()
 
     if(in->get_inputCloud1() == "All_trees" )
     {
-      for(int i = 0; i < names.size()-1; i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
         positionDisplay(names.at(i));
 
@@ -2147,7 +2323,7 @@ void MainWindow::skeleton()
 
     if(in->get_inputCloud1() == "All_trees" )
     {
-      for(int i = 0; i < names.size()-1; i++ )
+      for(int i = 1; i < names.size(); i++ )
       {
 
         pcl::PointXYZI minp,maxp;
@@ -2160,7 +2336,7 @@ void MainWindow::skeleton()
 
         Skeleton *skel = new Skeleton(Proj->get_TreeCloud(i).get_Cloud(),rad);
     //skel->graph();
-
+//compute skeleton
         for(int j=0; j< 2; j++)
         {
           for(int i=0; i < 10; i++)
@@ -2176,41 +2352,21 @@ void MainWindow::skeleton()
           skel->branching();
           rad +=rad0;
         }
-        QString n = Proj->get_TreeCloud(i).get_name().remove(".pcd");
+        QString n = in->get_inputCloud1().remove(".pcd");
         QString name = QString("%1_skeleton.pcd").arg(n);
         Cloud *cll = new Cloud(skel->get_skeleton(),name);
-        saveOstCloud(cll);
-        skel->graph();
 
+        Proj->set_skeleton(names.at(i),*cll);
+
+        skel->graph();
+      skeletonDisplay(names.at(i));
       // save_skel
         QString newFile = QString("%1\\%2.skel").arg(Proj->get_Path()).arg(n);
-        QFile file (newFile);
-        file.open(QIODevice::WriteOnly | QIODevice::Text);
-        QTextStream out(&file);
-        out.setRealNumberNotation(QTextStream::FixedNotation);
-        out.setRealNumberPrecision(3);
-        for(int i = 0; i < skel->get_start()->points.size(); i++)
-        {
-          pcl::PointXYZI it;
-          it = skel->get_start()->points.at(i);
-
-          double x_start = it.x - Proj->get_Xtransform();
-          double y_start = it.y - Proj->get_Ytransform();
-          double z_start = it.z - Proj->get_Ztransform();
-
-          pcl::PointXYZI it2;
-            it2 = skel->get_stop()->points.at(i);
-          double x_stop = it2.x - Proj->get_Xtransform();
-          double y_stop = it2.y - Proj->get_Ytransform();
-          double z_stop = it2.z - Proj->get_Ztransform();
-
-          out << x_start << " " << y_start << " " << z_start << " " << x_stop << " " << y_stop << " " << z_stop<< "\n";
-        }
-        file.close();
-
+        skel->save_skel(newFile);
+        //display line
         for(int k = 0; k < skel->get_start()->points.size(); k++)
         {
-          std::stringstream namea ;
+          std::stringstream namea;
           namea << name.toUtf8().constData()<< k << "_linie";
           m_vis->addLine(skel->get_start()->points.at(k),skel->get_stop()->points.at(k),namea.str());
         }
@@ -2300,7 +2456,24 @@ void MainWindow::skeleton()
     statusBar()->removeWidget(pBar);
   }
 }
+void MainWindow::skeletonDisplay(QString name)
+{
+  //display cloud
+  QColor col = Proj->get_TreeCloud(name).get_color();
+  dispCloud(Proj->get_TreeCloud(name).get_skeleton(),col.red(),col.green(), col.blue());
+  m_vis->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, Proj->get_TreeCloud(name).get_skeleton().get_name().toUtf8().constData());
 
+  //display lines
+
+}
+void MainWindow::skeleton_DisplayAll()
+{
+
+}
+void MainWindow::skeleton_HideAll()
+{
+
+}
 void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
 {
   QString name = QInputDialog::getText(this, tr("Name of new tree File"),tr("e.g. strom"));
@@ -3018,21 +3191,21 @@ void MainWindow::createActions()
  // heightAct->setEnabled(false);
   connect(heightAct, SIGNAL(triggered()), this, SLOT(height()));
 
-  posAct = new QAction(tr("Tree position"), this);
+  posAct = new QAction(tr("Position"), this);
   posAct->setStatusTip(tr("display sphere in tree position"));
   connect(posAct, SIGNAL(triggered()), this, SLOT(position()));
 
-  treeEditAct = new QAction(tr("Tree cloud edit"), this);
+  treeEditAct = new QAction(tr("Cloud edit"), this);
   treeEditAct->setStatusTip(tr("edit selected tree cloud"));
   connect(treeEditAct, SIGNAL(triggered()), this, SLOT(treeEdit()));
 
-  dbhEditAct = new QAction(tr("Tree DBHcloud edit"), this);
+  dbhEditAct = new QAction(tr("DBHcloud edit"), this);
   dbhEditAct->setStatusTip(tr("edit selected tree cloud"));
   connect(dbhEditAct, SIGNAL(triggered()), this, SLOT(dbhCloudEdit()));
 
-  lengAct = new QAction(tr("Cloud lenght"), this);
-  lengAct->setStatusTip(tr("display cloud lenght"));
-  connect(lengAct, SIGNAL(triggered()), this, SLOT(lenght()));
+  lengAct = new QAction(tr("Cloud length"), this);
+  lengAct->setStatusTip(tr("display cloud length"));
+  connect(lengAct, SIGNAL(triggered()), this, SLOT(length()));
 
   skeletonAct = new QAction(tr("Skeleton"), this);
   skeletonAct->setStatusTip(tr("create skeleton cloud"));
@@ -3047,7 +3220,7 @@ void MainWindow::createActions()
   connect(concaveAct, SIGNAL(triggered()), this, SLOT(concavehull()));
 
 //MISC
-  plusAct = new QAction(tr("Cloud contencate"), this);
+  plusAct = new QAction(tr("Cloud merge"), this);
   plusAct->setStatusTip(tr("cloud + cloud"));
   connect(plusAct, SIGNAL(triggered()), this, SLOT(plusCloud()));
 
@@ -3059,7 +3232,7 @@ void MainWindow::createActions()
   IDWAct->setStatusTip(tr("IDW of clouds. Only for special purpose"));
   connect(IDWAct, SIGNAL(triggered()), this, SLOT(IDW()));
 
-  clipedAct = new QAction(tr("clip "), this);
+  clipedAct = new QAction(tr("Clip "), this);
   clipedAct->setStatusTip(tr("cliped clouds. Only for special purpose"));
   connect(clipedAct, SIGNAL(triggered()), this, SLOT(clip()));
 
@@ -3151,6 +3324,7 @@ void MainWindow::createToolbars()
 //Project toolbar
   QToolBar *Projectbar = addToolBar("Project toolbar");
   Projectbar->setMaximumHeight(24);
+  Projectbar->resize(20,80);
   Projectbar->setIconSize(QSize(16,16));
   QAction *newProjectT = Projectbar->addAction(QPixmap(":/images/projectBar/new.png"),"New Project");
   connect(newProjectT,SIGNAL(triggered()),this,SLOT(newProject()));
@@ -3163,9 +3337,13 @@ void MainWindow::createToolbars()
 
 
 // Tree toolbar
-  QToolBar *treeBar = addToolBar("Tree toolbar");
+  treeBar = addToolBar("Tree toolbar");
   treeBar->setMaximumHeight(24);
   treeBar->setIconSize(QSize(16,16));
+
+  positionT  = new QAction(QPixmap(":/images/treeBar/position.png"),"Display/Hide Tree position",0);
+  treeBar->addAction(positionT);
+  connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
 
   dbhthT  = new QAction(QPixmap(":/images/treeBar/dbhHT.png"),"Display/Hide DBH Hough Transform",0);
   treeBar->addAction(dbhthT);
@@ -3179,11 +3357,24 @@ void MainWindow::createToolbars()
   treeBar->addAction(heightT);
   connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
 
-  positionT  = new QAction(QPixmap(":/images/treeBar/position.png"),"Display/Hide Tree position",0);
-  treeBar->addAction(positionT);
-  connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+  lengthT  = new QAction(QPixmap(":/images/treeBar/length.png"),"Display/Hide Tree length",0);
+  treeBar->addAction(lengthT);
+  connect(lengthT,SIGNAL(triggered()),this,SLOT(length_DisplayAll()));
 
+  convexT  = new QAction(QPixmap(":/images/treeBar/convex.png"),"Display/Hide convex projection",0);
+  treeBar->addAction(convexT);
+  convexT->setEnabled(false);
+  connect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_DisplayAll()));
 
+  concaveT  = new QAction(QPixmap(":/images/treeBar/concave.png"),"Display/Hide concave projection",0);
+  treeBar->addAction(concaveT);
+  concaveT->setEnabled(false);
+  connect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_DisplayAll()));
+
+  skeletonT  = new QAction(QPixmap(":/images/treeBar/skeleton.png"),"Display/Hide tree skeleton",0);
+  treeBar->addAction(skeletonT);
+  skeletonT->setEnabled(false);
+  connect(skeletonT,SIGNAL(triggered()),this,SLOT(skeleton_DisplayAll()));
 }
 void MainWindow::createTreeView()
 {
@@ -3491,9 +3682,12 @@ void MainWindow::deleteCloud(QString name)
 }
 void MainWindow::about()
 {
-QMessageBox::about(this,tr("about 3D Forest application"),tr(" 3D Forest application was developed as a part of my Ph.D. thesis.\n"
-                                                             " But continue as a free platform for TLS data processing. \n"
-                                                             "  AUTHORS: Jan Trochta j.trochta@gmail.com "));
+QMessageBox::about(this,tr("about 3D Forest application"),tr(" 3D Forest application started as a part of Ph.D. thesis.\n"
+                                                             " But now continue as a free platform for TLS data processing. \n"
+                                                             "  AUTHORS:\n "
+                                                             "Jan Trochta j.trochta@gmail.com \n"
+                                                             " Martin Krucek krucek.martin@gmail.com\n"
+                                                             "Kamil Kral kamil.kral@vukoz.cz"));
  }
 void MainWindow::dispCloud(QString name)
 {

@@ -168,16 +168,28 @@ private slots:
     /*! Compute hlenght for given tree as as diff of coordinates of two selected points.
         it select axis with biggest value range. On this range select extreme points and compute distance between those points.
         Lenght is displayed as a line connection those two points and green value of lenght.  */
-  void lenght();
+  void length();
+  void lengthDisplay(QString name);
+  void length_DisplayAll();
+  void length_HideAll();
     //! Display tree skeleton.
     /*! Compute tree skeleton  for given tree and displays it as lines.  */
   void skeleton();
+  void skeletonDisplay(QString name);
+  void skeleton_DisplayAll();
+  void skeleton_HideAll();
     //! Display convex hull of tree.
     /*! Compute convex hull  from top view of tree and display it on terrain.  */
   void convexhull();
+  void convexhullDisplay(QString name);
+  void convexhull_DisplayAll();
+  void convexhull_HideAll();
     //! Display concave hull of tree.
     /*! Compute concave hull from top view of tree and display it on terrain.  */
   void concavehull();
+  void concavehullDisplay(QString name);
+  void concavehull_DisplayAll();
+  void concavehull_HideAll();
     //! Manual editing of tree DBH cloud.
     /*! Choose tree cloud for manual editing of cloud representing points for estimating DBH. */
   void dbhCloudEdit();
@@ -484,10 +496,15 @@ private:
   QAction *IDWAct;            /**< IDW Act */
 
   //Treebar actions
-  QAction *dbhthT;            /**< display/hide cylinders and text associated to dbhHT. Used in treeBar */
-  QAction *dbhlsrT;            /**< display/hide cylinders and text associated to dbhLSR. Used in treeBar */
-  QAction *heightT;            /**< display/hide  line and text associated to height. Used in treeBar */
+  QToolBar *treeBar;
+  QAction *dbhthT;              /**< display/hide cylinders and text associated to dbhHT. Used in treeBar */
+  QAction *dbhlsrT;             /**< display/hide cylinders and text associated to dbhLSR. Used in treeBar */
+  QAction *heightT;             /**< display/hide  line and text associated to height. Used in treeBar */
   QAction *positionT;           /**< display/hide  sphere in tree position. Used in treeBar */
+  QAction *lengthT;              /**< display/hide  line connecting the most remote points. Used in treeBar */
+  QAction *convexT;             /**< display/hide  points representing convex projection of tree. Used in treeBar */
+  QAction *concaveT;            /**< display/hide  points representing concave projection of tree. Used in treeBar */
+  QAction *skeletonT;           /**< display/hide  lines connected in tree skeleton. Used in treeBar */
 
   Project *Proj;                /**< Project definition */
   Cloud *m_cloud;               /**< temporary cloud serves mainly in editing mode */

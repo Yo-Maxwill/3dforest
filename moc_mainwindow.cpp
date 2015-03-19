@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created: Wed 18. Mar 15:57:02 2015
+** Created: Thu 19. Mar 14:14:58 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_MainWindow[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      64,   14, // methods
+      76,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -75,26 +75,38 @@ static const uint qt_meta_data_MainWindow[] = {
      671,   11,   11,   11, 0x08,
      693,   11,   11,   11, 0x08,
      712,   11,   11,   11, 0x08,
-     721,   11,   11,   11, 0x08,
-     732,   11,   11,   11, 0x08,
-     745,   11,   11,   11, 0x08,
-     759,   11,   11,   11, 0x08,
-     774,   11,   11,   11, 0x08,
-     793,   11,   11,   11, 0x08,
-     805,   11,   11,   11, 0x08,
-     818,   11,   11,   11, 0x08,
-     829,   11,   11,   11, 0x08,
-     835,   11,   11,   11, 0x08,
-     842,   11,   11,   11, 0x08,
-     852,   11,   11,   11, 0x08,
-     863,   11,   11,   11, 0x08,
+     721,  435,   11,   11, 0x08,
+     744,   11,   11,   11, 0x08,
+     764,   11,   11,   11, 0x08,
+     781,   11,   11,   11, 0x08,
+     792,  435,   11,   11, 0x08,
+     817,   11,   11,   11, 0x08,
+     839,   11,   11,   11, 0x08,
+     858,   11,   11,   11, 0x08,
      871,  435,   11,   11, 0x08,
-     890,  435,   11,   11, 0x08,
-     911,  435,   11,   11, 0x08,
-     932,  435,   11,   11, 0x08,
-     952,  435,   11,   11, 0x08,
-     977,  435,   11,   11, 0x08,
-     996,   11,   11,   11, 0x08,
+     898,   11,   11,   11, 0x08,
+     922,   11,   11,   11, 0x08,
+     943,   11,   11,   11, 0x08,
+     957,  435,   11,   11, 0x08,
+     985,   11,   11,   11, 0x08,
+    1010,   11,   11,   11, 0x08,
+    1032,   11,   11,   11, 0x08,
+    1047,   11,   11,   11, 0x08,
+    1066,   11,   11,   11, 0x08,
+    1078,   11,   11,   11, 0x08,
+    1091,   11,   11,   11, 0x08,
+    1102,   11,   11,   11, 0x08,
+    1108,   11,   11,   11, 0x08,
+    1115,   11,   11,   11, 0x08,
+    1125,   11,   11,   11, 0x08,
+    1136,   11,   11,   11, 0x08,
+    1144,  435,   11,   11, 0x08,
+    1163,  435,   11,   11, 0x08,
+    1184,  435,   11,   11, 0x08,
+    1205,  435,   11,   11, 0x08,
+    1225,  435,   11,   11, 0x08,
+    1250,  435,   11,   11, 0x08,
+    1269,   11,   11,   11, 0x08,
 
        0        // eod
 };
@@ -121,15 +133,21 @@ static const char qt_meta_stringdata_MainWindow[] = {
     "height_DisplayAll()\0height_HideAll()\0"
     "position()\0positionDisplay(QString)\0"
     "position_DisplayAll()\0position_HideAll()\0"
-    "lenght()\0skeleton()\0convexhull()\0"
-    "concavehull()\0dbhCloudEdit()\0"
-    "dbhCloudStopEdit()\0plusCloud()\0"
-    "minusCloud()\0voxelize()\0IDW()\0clip()\0"
-    "clipped()\0clipStop()\0about()\0"
-    "dispCloud(QString)\0removeCloud(QString)\0"
-    "deleteCloud(QString)\0colorCloud(QString)\0"
-    "colorCloudField(QString)\0PointSize(QString)\0"
-    "undo()\0"
+    "length()\0lengthDisplay(QString)\0"
+    "length_DisplayAll()\0length_HideAll()\0"
+    "skeleton()\0skeletonDisplay(QString)\0"
+    "skeleton_DisplayAll()\0skeleton_HideAll()\0"
+    "convexhull()\0convexhullDisplay(QString)\0"
+    "convexhull_DisplayAll()\0convexhull_HideAll()\0"
+    "concavehull()\0concavehullDisplay(QString)\0"
+    "concavehull_DisplayAll()\0concavehull_HideAll()\0"
+    "dbhCloudEdit()\0dbhCloudStopEdit()\0"
+    "plusCloud()\0minusCloud()\0voxelize()\0"
+    "IDW()\0clip()\0clipped()\0clipStop()\0"
+    "about()\0dispCloud(QString)\0"
+    "removeCloud(QString)\0deleteCloud(QString)\0"
+    "colorCloud(QString)\0colorCloudField(QString)\0"
+    "PointSize(QString)\0undo()\0"
 };
 
 void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -181,27 +199,39 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 40: _t->positionDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 41: _t->position_DisplayAll(); break;
         case 42: _t->position_HideAll(); break;
-        case 43: _t->lenght(); break;
-        case 44: _t->skeleton(); break;
-        case 45: _t->convexhull(); break;
-        case 46: _t->concavehull(); break;
-        case 47: _t->dbhCloudEdit(); break;
-        case 48: _t->dbhCloudStopEdit(); break;
-        case 49: _t->plusCloud(); break;
-        case 50: _t->minusCloud(); break;
-        case 51: _t->voxelize(); break;
-        case 52: _t->IDW(); break;
-        case 53: _t->clip(); break;
-        case 54: _t->clipped(); break;
-        case 55: _t->clipStop(); break;
-        case 56: _t->about(); break;
-        case 57: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 58: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 59: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 60: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 61: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 62: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 63: _t->undo(); break;
+        case 43: _t->length(); break;
+        case 44: _t->lengthDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 45: _t->length_DisplayAll(); break;
+        case 46: _t->length_HideAll(); break;
+        case 47: _t->skeleton(); break;
+        case 48: _t->skeletonDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 49: _t->skeleton_DisplayAll(); break;
+        case 50: _t->skeleton_HideAll(); break;
+        case 51: _t->convexhull(); break;
+        case 52: _t->convexhullDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 53: _t->convexhull_DisplayAll(); break;
+        case 54: _t->convexhull_HideAll(); break;
+        case 55: _t->concavehull(); break;
+        case 56: _t->concavehullDisplay((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 57: _t->concavehull_DisplayAll(); break;
+        case 58: _t->concavehull_HideAll(); break;
+        case 59: _t->dbhCloudEdit(); break;
+        case 60: _t->dbhCloudStopEdit(); break;
+        case 61: _t->plusCloud(); break;
+        case 62: _t->minusCloud(); break;
+        case 63: _t->voxelize(); break;
+        case 64: _t->IDW(); break;
+        case 65: _t->clip(); break;
+        case 66: _t->clipped(); break;
+        case 67: _t->clipStop(); break;
+        case 68: _t->about(); break;
+        case 69: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 70: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 71: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 72: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 73: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 74: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 75: _t->undo(); break;
         default: ;
         }
     }
@@ -239,9 +269,9 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 64)
+        if (_id < 76)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 64;
+        _id -= 76;
     }
     return _id;
 }
