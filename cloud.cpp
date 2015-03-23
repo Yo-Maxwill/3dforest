@@ -915,9 +915,7 @@ void Tree::set_concavehull(float maxEdgeLenght = 1.5)
 
   Hull *c = new Hull(m_Cloud,aa,col);
   int i = c->set_concaveZkracovanim(maxEdgeLenght);
-  QString a = QString (" errors: %1").arg(i);
 
-  QMessageBox::information(0,("r"),a);
   set_concavehull(c->get_concavehull());
 
   c->set_areacave(c->get_concavehull());

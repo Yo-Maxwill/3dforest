@@ -20,5 +20,9 @@
 <file>images/treeBar/dbhLSR.png</file>
 <file>images/treeBar/position.png</file>
 <file>images/treeBar/height.png</file>
+<file>images/treeBar/length.png</file>
+<file>images/treeBar/convex.png</file>
+<file>images/treeBar/concave.png</file>
+<file>images/treeBar/skeleton.png</file>
 </qresource>
 </RCC>

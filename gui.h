@@ -20,6 +20,7 @@
 #include <QtGui/QDialog>
 #include <QtGui/QWizard>
 #include <QtGui/QTreeWidget>
+#include <QtGui/QToolBar>
 #include <pcl/visualization/pcl_visualizer.h>
 
 //INPUTDIALOG
