@@ -15,6 +15,7 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "cloud.h"
+#include "hull.h"
 #include <pcl/filters/voxel_grid.h>pcl::PointCloud<pcl::PointXYZI>::Ptr m_sample; // sample cloud
 #include <pcl/kdtree/kdtree_flann.h>
 //CLOUD
@@ -95,10 +96,12 @@ Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col,
   QString aa = QString("%1_convex").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_2(new pcl::PointCloud<pcl::PointXYZI>);
   m_convexhull = new Cloud(cloud_2, aa);
+  m_areaconvex = 0;
 
   QString aaa = QString("%1_concave").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_3(new pcl::PointCloud<pcl::PointXYZI>);
   m_concavehull = new Cloud(cloud_3, aaa);
+  m_areaconcave = 0;
 
   QString aaaa = QString("%1_skeleton").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
@@ -123,10 +126,12 @@ Tree::Tree (Cloud cloud)
    QString aa = QString("%1_convex").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_2(new pcl::PointCloud<pcl::PointXYZI>);
   m_convexhull = new Cloud(cloud_2, aa);
+  m_areaconvex = 0;
 
   QString aaa = QString("%1_concave").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_3(new pcl::PointCloud<pcl::PointXYZI>);
   m_concavehull = new Cloud(cloud_3, aaa);
+  m_areaconcave = 0;
 
   QString aaaa = QString("%1_skeleton").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
@@ -416,7 +421,7 @@ stred Tree::get_dbhLSR()
 }
 void Tree::set_dbhLSR()
 {
-  if(m_dbhCloud->get_Cloud()->points.size() > 3)
+  if(m_dbhCloud->get_Cloud()->points.size() > 5)
   {
     // only one layer
     stred guess = set_dbhLSRALG(m_dbhCloud->get_Cloud());
@@ -883,292 +888,41 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Tree::get_dbhCloud()
 }
 void Tree::set_convexhull()
 {
-  //nacteni do vekteru
-  double ymin = 9999;
-  double zmin = 9999;
-  double xminy, intens, xx, yy;
-  int i = 0;
-  int it = 0;
+  QString aa = QString("%1_convex").arg(m_name);
+  QColor col = get_color();
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
-  {
-    i++;
-    pcl::PointXYZI bod;
-    bod.x =ith->x;
-    bod.y =ith->y;
-    bod.z =ith->z;
-    bod.intensity = ith->intensity;
-    if (ymin > ith->y)
-    {
-      ymin = ith->y;
-      xminy = ith->x;
-      intens = ith->intensity;
-      it = i;
-    }
-    if (zmin > ith->z) {zmin = ith->z;}
-    cloud->points.push_back(bod);
-  }
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb (new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointXYZI bod;
-  bod.x =xminy;
-  bod.y =ymin;
-  bod.z =zmin;
-  bod.intensity =intens;
-  cloudb->points.push_back(bod);
-  float n = (float) cloud->points.size();
+  Hull *c = new Hull(m_Cloud,aa,col);
+  c->set_convexhull();
+  set_convexhull(c->get_convexhull());
+  c->set_areavex(c->get_convexhull());
 
-  for(int i=0; i < n;i++)
-  {
-    double x,y;
-    pcl::PointXYZI ith = cloud->points.at(i);
-    x =ith.x;
-    y =ith.y;
-    if (x==xminy && y==ymin)
-    {
-      cloud->points.erase(cloud->points.begin()+i);
-      n--;
-    }
-  }
+  m_areaconvex = c->get_areaconvex();
 
-  int k = 0;
-  do
-  {
-    double xback, yback, xnext, ynext, xB, yB, xb, yb;
-    double Abigger = 0;
-    if (k == 0)
-    {
-      xback = -1;
-      yback = -1;
-      xx =xminy;
-      yy =ymin;
-    }
-    else
-    {
-      pcl::PointXYZI ith = cloudb->points.at(k-1);
-      xB =ith.x;
-      yB =ith.y;
-      xback =xx - xB;
-      yback =yy - yB;
-    }
-    float n = (float) cloud->points.size();
-
-    for(int m=0; m < n;m++)
-    {
-      pcl::PointXYZI ith = cloud->points.at(m);
-      double xfor, yfor, A;
-      xfor = ith.x;
-      yfor = ith.y;
-
-      xnext = xfor - xx;
-      ynext = yfor - yy;
-      double dist =sqrt(xnext*xnext+ynext*ynext);
-      A = (((atan2(xback*ynext-xnext*yback,xback*xnext+yback*ynext)))*180/3.14159265359);
-      if (A > 0){A -= 360;}
-      if (A < 0){A = A * (-1);}
-      if (A == 0){A = 180;}
-      if (A > Abigger && dist > 0)
-      {
-        Abigger = A;
-        xb = xfor;
-        yb = yfor;
-      }
-    }
-
-    xx =xb;
-    yy =yb;
-
-    pcl::PointXYZI bod;
-    bod.x =xx;
-    bod.y =yy;
-    bod.z =zmin;
-    bod.intensity =intens;
-    cloudb->points.push_back(bod);
-
-    for(int i=0; i < n;i++)  // Prohledava vektor a maze vybrane body
-    {
-      double x,y;
-      pcl::PointXYZI ith = cloud->points.at(i);
-      x =ith.x;
-      y =ith.y;
-      if (x==xx && y==yy)
-      {
-        cloud->points.erase(cloud->points.begin()+i);
-        n--;
-      }
-    }
-    if (k==3) // Vrati prvni bod do prohledavaneho vektoru
-    {
-      pcl::PointXYZI bod;
-      bod.x =xminy;
-      bod.y =ymin;
-      bod.z =zmin;
-      bod.intensity =intens;
-      cloud->points.push_back(bod);
-    }
-        //Podminka
-    if (k > 10 && xx == xminy && yy == ymin)
-    {
-      break;
-    }
-    k++;
-  }
-  while (k<100);
-
-  QString a = QString("%1_convex").arg(m_name);
-  QColor col = QColor(255,0,0);
-  Cloud *cl = new Cloud(cloudb, a);
-  m_convexhull = cl;
-  set_areavex(*cl);
 }
 void Tree::set_convexhull(Cloud c)
 {
   m_convexhull->set_Cloud(c.get_Cloud());
+  set_areavex( c);
 }
 Cloud Tree::get_vexhull()
 {
   return *m_convexhull;
 }
-void Tree::set_concavehull(float maxEdgeLenght = 150)
+void Tree::set_concavehull(float maxEdgeLenght = 1.5)
 {
-  //nacteni do vekteru
-  double ymin = 9999;
-  double zmin = 9999;
-  double xminy, intens, xx, yy;
-  int i = 0;
-  int it = 0;
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloudtrans (new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
-  {
-      pcl::PointXYZI bod;
-      bod.x =ith->x;
-      bod.y =ith->y;
-      bod.z =ith->z;
-      bod.intensity = ith->intensity;
-        if (ymin > ith->y)
-            {
-            ymin = ith->y;
-            xminy = ith->x;
-            intens = ith->intensity;
-            it = i;
-            }
-        if (zmin > ith->z) {zmin = ith->z;}
-      cloud->points.push_back(bod);
-      i++;
-  }
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb (new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointXYZI bod;
-      bod.x =xminy;
-      bod.y =ymin;
-      bod.z =zmin;
-      bod.intensity =intens;
-      cloudb->points.push_back(bod);
-      float n = (float) cloud->points.size();
+  QString aa = QString("%1_concave").arg(m_name);
+  QColor col = get_color();
 
-      for(int i=0; i < n;i++)
-        {
-            double x,y;
-            pcl::PointXYZI ith = cloud->points.at(i);
-            x =ith.x;
-            y =ith.y;
-            if (x==xminy && y==ymin)
-            {
-              cloud->points.erase(cloud->points.begin()+i);
-              n--;
-            }
-        }
+  Hull *c = new Hull(m_Cloud,aa,col);
+  int i = c->set_concaveZkracovanim(maxEdgeLenght);
+  QString a = QString (" errors: %1").arg(i);
 
-      int k = 0;
-     do
-     {
-            double xback, yback, xnext, ynext, xB, yB, xb, yb;
-            double Abigger = 0;
-            if (k == 0)
-            {xback = -1;
-             yback = -1;
-             xx =xminy;
-             yy =ymin;
-             }
-            else
-            {
-             pcl::PointXYZI ith = cloudb->points.at(k-1);
-             xB =ith.x;
-             yB =ith.y;
-             xback =xB-xx;
-             yback =yB-yy;
-            }
-         float n = (float) cloud->points.size();
+  QMessageBox::information(0,("r"),a);
+  set_concavehull(c->get_concavehull());
 
-         for(int m=0; m < n;m++)
-        {
-                pcl::PointXYZI ith = cloud->points.at(m);
-                double xfor, yfor, A;
-                xfor = ith.x;
-                yfor = ith.y;
-
-            xnext = xfor - xx;
-            ynext = yfor - yy;
-            double dist =sqrt(xnext*xnext+ynext*ynext);
-            if (dist > 0 && dist < maxEdgeLenght)
-            {
-                A = (((atan2(xback*ynext-xnext*yback,xback*xnext+yback*ynext)))*180/3.14159265359);
-                if (A > 0){A -= 360;}
-                if (A < 0){A = A * (-1);}
-                if (A > Abigger && A < 270)
-                    {
-                    Abigger = A;
-                    xb = xfor;
-                    yb = yfor;
-                    }
-            }
-        }
-
-           //Podminka
-        if (k > 10 && xx == xminy && yy == ymin)
-        {
-            break;
-        }
-
-        xx =xb;
-        yy =yb;
-
-        pcl::PointXYZI bod;
-        bod.x =xx;
-        bod.y =yy;
-        bod.z =zmin;
-        bod.intensity =intens;
-        cloudb->points.push_back(bod);
-
-       for(int i=0; i < n;i++)  // Prohledava vektor a maze vybrane body
-        {
-            double x,y;
-            pcl::PointXYZI ith = cloud->points.at(i);
-            x =ith.x;
-            y =ith.y;
-            if (x==xx && y==yy)
-            {
-              cloud->points.erase(cloud->points.begin()+i);
-              n--;
-            }
-        }
-        if (k==10) // Vrati prvni bod do prohledavaneho vektoru
-            {
-                pcl::PointXYZI bod;
-                bod.x =xminy;
-                bod.y =ymin;
-                bod.z =zmin;
-                bod.intensity =intens;
-                cloud->points.push_back(bod);
-            }
-        k++;
-        }while (k<200);
-
-        QString a = QString("%1_concave").arg(m_name);
-        QColor col = QColor(255,0,0);
-        Cloud *cl = new Cloud(cloudb, a);
-        m_concavehull = cl;
-        set_areacave(*cl);
+  c->set_areacave(c->get_concavehull());
+  m_areaconcave = c->get_areaconcave();
+  //return i;
 }
 void Tree::set_concavehull(Cloud c)
 {

@@ -15,6 +15,7 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "project.h"
 #include "cloud.h"
+#include "hull.h"
 
 //include INPUT OUTPUT
 #include <pcl/io/io.h>
@@ -152,6 +153,7 @@ void Project::set_treeConcaveCloud(QString name,float edge)
     if (get_TreeCloud(i).get_name() == name)
     {
       m_stromy.at(i).set_concavehull(edge);
+      //return i;
     }
   }
 }
@@ -303,9 +305,8 @@ void Project::save_newCloud(QString type, QString path)
 {
   //save cloud
   QString path1 = save_Cloud(path);
-  QMessageBox::information(0,("f"),("saved"));
   //otevrit Proj.3df file pro pripsani
-    QString projfile = QString("%1/%2.3df").arg(get_Path()).arg(get_ProjName());
+  QString projfile = QString("%1/%2.3df").arg(get_Path()).arg(get_ProjName());
   QFile file (projfile);
   if(!file.exists())
   {
@@ -320,9 +321,7 @@ void Project::save_newCloud(QString type, QString path)
 }
 void Project::save_newCloud(QString type, QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c )
 {
-
   QString path = save_Cloud(name,c);
-  QMessageBox::information(0,("f"),("saved"));
     //otevrit Proj.3df file pro pripsani
   QString projfile = QString("%1\\%2.3df").arg(get_Path()).arg(get_ProjName());
 
@@ -332,8 +331,6 @@ void Project::save_newCloud(QString type, QString name, pcl::PointCloud<pcl::Poi
     projfile = QString("%1\\proj.3df").arg(get_Path()).arg(get_ProjName());
     QFile file (projfile);
   }
-  QMessageBox::information(0,("f"),projfile);
-
   file.open(QIODevice::Append | QIODevice::Text);
   QTextStream out(&file);
   out  << type << " " << path<<"\n";

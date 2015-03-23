@@ -15,6 +15,7 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 
+
 #include <liblas/liblas.hpp>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/common/pca.h>
@@ -215,6 +216,8 @@ void MainWindow::closeProject()
   connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
   disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
   connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+  convexT->setEnabled(false);
+  concaveT->setEnabled(false);
 
   qvtkwidget->update();
 
@@ -1054,6 +1057,7 @@ void MainWindow::manualAdjust()
     m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //spustit editacni listu
+    addToolBarBreak ();
     editBar = new QToolBar(tr("edit bar"),this);
     editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
@@ -1127,7 +1131,7 @@ void MainWindow::manualSelect()
     m_cloud1->set_Psize(Proj->get_Cloud(in->get_inputCloud1()).get_Psize());
 
     //spustit editacni listu
-
+    addToolBarBreak ();
     editBar = new QToolBar(tr("edit bar"),this);
     editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
@@ -1226,6 +1230,7 @@ void MainWindow::treeEdit()
 
 
     //spustit editacni listu
+    addToolBarBreak ();
     editBar = new QToolBar(tr("edit bar"),this);
     editBar->setIconSize(QSize(16,16));
     this->addToolBar(editBar);
@@ -1299,6 +1304,7 @@ void MainWindow::dbhCloudEdit()
 
 
     //spustit editacni listu
+    addToolBarBreak ();
     editBar = new QToolBar(tr("edit bar"),this);
     this->addToolBar(editBar);
     editBar->setIconSize(QSize(16,16));
@@ -1561,7 +1567,7 @@ void MainWindow::convexhullDisplay(QString name)
   QString h = QString("%1 m2").arg(Proj->get_TreeCloud(name).get_areaconvex());
   std::stringstream name2 ;
   name2 << name.toUtf8().constData() << "_vexText";
-  m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
+  m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.3,0,name2.str());
 
   //addpolygon
   std::stringstream Pname;
@@ -1649,6 +1655,7 @@ void MainWindow::concavehull()
       for(int i = 1; i < names.size(); i++ )
       {
         Proj->set_treeConcaveCloud(names.at(i),(float)in->get_intValue()/100);
+
         concavehullDisplay(names.at(i));
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
@@ -1657,6 +1664,7 @@ void MainWindow::concavehull()
     else
     {
       Proj->set_treeConcaveCloud(in->get_inputCloud1(),(float)in->get_intValue()/100);
+
       concavehullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
       pBar->update();
@@ -3075,20 +3083,20 @@ void MainWindow::clipStop()
 void MainWindow::createActions()
 {
 //FILE
-  new_projectAct = new QAction( tr("&New Project"), this);
+  new_projectAct = new QAction(QPixmap(":/images/projectBar/new.png"), tr("&New Project"), this);
   new_projectAct->setStatusTip(tr("Create new project"));
   connect(new_projectAct, SIGNAL(triggered()), this, SLOT(newProject()));
 
-  open_projectAct = new QAction( tr("&Open Project"), this);
-  open_projectAct->setStatusTip(tr("Open project"));
+  open_projectAct = new QAction(QPixmap(":/images/projectBar/open.png"), tr("&Open Project"), this);
+  open_projectAct->setStatusTip(tr("Open existing project"));
   connect(open_projectAct, SIGNAL(triggered()), this, SLOT(openProject()));
 
-  close_projectAct = new QAction( tr("&Close Project"), this);
-  close_projectAct->setStatusTip(tr("close project"));
+  close_projectAct = new QAction(QPixmap(":/images/projectBar/close.png"), tr("&Close Project"), this);
+  close_projectAct->setStatusTip(tr("Close project"));
   connect(close_projectAct, SIGNAL(triggered()), this, SLOT(closeProject()));
 
-  import_projectAct = new QAction( tr("&Import project"), this);
-  import_projectAct->setStatusTip(tr("import of existing project or create new"));
+  import_projectAct = new QAction(QPixmap(":/images/projectBar/import.png"), tr("&Import project"), this);
+  import_projectAct->setStatusTip(tr("import of existing project into new folder"));
   connect(import_projectAct, SIGNAL(triggered()), this, SLOT(importProject()));
 
   importTXTAct = new QAction( tr("&Import TXT, XYZ"), this);
