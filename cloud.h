@@ -188,7 +188,7 @@ public:
 
     void set_convexhull();
     void set_convexhull(Cloud c);
-    void set_concavehull(float maxEdgeLenght);
+    int set_concavehull(float maxEdgeLenght);
     void set_concavehull(Cloud c);
     void set_areavex(Cloud c);
     void set_areacave(Cloud c);

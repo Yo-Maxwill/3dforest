@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created: Thu 19. Mar 14:14:58 2015
+** Created: Thu 26. Mar 13:08:07 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_MainWindow[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      76,   14, // methods
+      78,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -100,13 +100,15 @@ static const uint qt_meta_data_MainWindow[] = {
     1115,   11,   11,   11, 0x08,
     1125,   11,   11,   11, 0x08,
     1136,   11,   11,   11, 0x08,
-    1144,  435,   11,   11, 0x08,
-    1163,  435,   11,   11, 0x08,
-    1184,  435,   11,   11, 0x08,
-    1205,  435,   11,   11, 0x08,
-    1225,  435,   11,   11, 0x08,
-    1250,  435,   11,   11, 0x08,
-    1269,   11,   11,   11, 0x08,
+    1155,   11,   11,   11, 0x08,
+    1173,   11,   11,   11, 0x08,
+    1181,  435,   11,   11, 0x08,
+    1200,  435,   11,   11, 0x08,
+    1221,  435,   11,   11, 0x08,
+    1242,  435,   11,   11, 0x08,
+    1262,  435,   11,   11, 0x08,
+    1287,  435,   11,   11, 0x08,
+    1306,   11,   11,   11, 0x08,
 
        0        // eod
 };
@@ -144,6 +146,7 @@ static const char qt_meta_stringdata_MainWindow[] = {
     "dbhCloudEdit()\0dbhCloudStopEdit()\0"
     "plusCloud()\0minusCloud()\0voxelize()\0"
     "IDW()\0clip()\0clipped()\0clipStop()\0"
+    "set_ConcaveCloud()\0set_ConvexCloud()\0"
     "about()\0dispCloud(QString)\0"
     "removeCloud(QString)\0deleteCloud(QString)\0"
     "colorCloud(QString)\0colorCloudField(QString)\0"
@@ -224,14 +227,16 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 65: _t->clip(); break;
         case 66: _t->clipped(); break;
         case 67: _t->clipStop(); break;
-        case 68: _t->about(); break;
-        case 69: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 70: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 71: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 72: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 73: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 74: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 75: _t->undo(); break;
+        case 68: _t->set_ConcaveCloud(); break;
+        case 69: _t->set_ConvexCloud(); break;
+        case 70: _t->about(); break;
+        case 71: _t->dispCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 72: _t->removeCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 73: _t->deleteCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 74: _t->colorCloud((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 75: _t->colorCloudField((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 76: _t->PointSize((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 77: _t->undo(); break;
         default: ;
         }
     }
@@ -269,9 +274,9 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 76)
+        if (_id < 78)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 76;
+        _id -= 78;
     }
     return _id;
 }

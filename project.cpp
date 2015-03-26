@@ -146,16 +146,40 @@ void Project::set_treeConvexCloud(QString name)
     }
   }
 }
-void Project::set_treeConcaveCloud(QString name,float edge)
+int Project::set_treeConcaveCloud(QString name,float edge)
 {
+    int errors =0;
   for(int i = 0; i< m_stromy.size(); i++)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_concavehull(edge);
-      //return i;
+      errors =m_stromy.at(i).set_concavehull(edge);
     }
   }
+  return errors;
+}
+Cloud Project::set_ConcaveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float edge, QString name, QColor color)
+{
+
+    Hull *h = new Hull (cloud, name, color);
+    QString m = QString("Pred h->set_concaveZkracovanim(edge)").arg(name);
+    int errors = h->set_concaveZkracovanim(edge);
+
+    if(errors>0)
+      {
+        QString m = QString(" Warning: %1 edge are longer than Maximum Edge Lenght.\n In cloud: %2").arg(errors).arg(name);
+        QMessageBox::information(0,("Warning"),m);
+      }
+    return h->get_concavehull();
+}
+Cloud Project::set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor color)
+{
+
+    Hull *h = new Hull (cloud, name, color);
+    QString m = QString("Pred h->set_concaveZkracovanim(edge)").arg(name);
+    h->set_convexhull();
+
+    return h->get_convexhull();
 }
 void Project::set_treePosition(QString name)
 {

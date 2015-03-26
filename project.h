@@ -189,7 +189,7 @@ public:
   void set_treeConvexCloud(QString name);
     //! Set concave hull pointCloud.
     /*! \param name tree name \param cloud pointCloud representing points of concave hull  */
-  void set_treeConcaveCloud(QString name,float edge);
+  int set_treeConcaveCloud(QString name,float edge);
   void set_treePosition(QString name);
   void set_treeDBHCloud(QString name);
   void set_length(QString name);
@@ -204,6 +204,8 @@ public:
     //! Get size of ost cloud vector.
     /*! \return size of vector containing ost clouds */
   int get_sizeostCV();
+  Cloud set_ConcaveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float edge, QString name, QColor color);
+  Cloud set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor color);
 
 private:
     //! Delete file from disc.

@@ -798,7 +798,6 @@ void MainWindow::exportConvexTxt()
   {
     QString name = Proj->get_TreeCloud(i).get_name();
     Cloud *cloud = new Cloud (Proj->get_TreeCloud(i).get_vexhull());
-
     for(int j = 1; j < cloud->get_Cloud()->points.size(); j++)
     {
         pcl::PointXYZI bod;
@@ -838,11 +837,11 @@ void MainWindow::exportConcaveTxt()
         bod = cloud->get_Cloud()->points.at(j-1);
         double x = bod.x - Proj->get_Xtransform();
         double y = bod.y - Proj->get_Ytransform();
+        double z = bod.z;
         out << i << ";" << x << ";" << y ;
         bod = cloud->get_Cloud()->points.at(j);
         double xend = bod.x - Proj->get_Xtransform();
         double yend = bod.y - Proj->get_Ytransform();
-        double z = bod.z;
         out << ";" << xend << ";" << yend << ";" << z << endl;
     }
   }
@@ -1515,7 +1514,7 @@ void MainWindow::convexhull()
   names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Compute concave hull of tree.");
+  in->set_title("Compute convex hull of tree.");
   in->set_path(Proj->get_Path());
   in->set_description("Method for computing convex hull of given tree."
                         " This method serve only for computing and display estimated polygon of convex hull. ");
@@ -1654,20 +1653,31 @@ void MainWindow::concavehull()
     {
       for(int i = 1; i < names.size(); i++ )
       {
-        Proj->set_treeConcaveCloud(names.at(i),(float)in->get_intValue()/100);
+        int errors = Proj->set_treeConcaveCloud(names.at(i),(float)in->get_intValue()/100);
 
         concavehullDisplay(names.at(i));
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
+        if(errors>0)
+      {
+        QString m = QString(" Warning: %1 edge are longer than Maximum Edge Lenght.\n In cloud: %2").arg(errors).arg(Proj->get_TreeCloud(names.at(i)).get_name());
+        QMessageBox::information(0,("Warning"),m);
+      }
       }
     }
     else
     {
-      Proj->set_treeConcaveCloud(in->get_inputCloud1(),(float)in->get_intValue()/100);
+      int errors = Proj->set_treeConcaveCloud(in->get_inputCloud1(),(float)in->get_intValue()/100);
 
       concavehullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
       pBar->update();
+
+      if(errors>0)
+      {
+        QString m = QString(" Warning: %1 edge are longer than Maximum Edge Lenght.\n In cloud: %2").arg(errors).arg(Proj->get_TreeCloud(in->get_inputCloud1()).get_name());
+        QMessageBox::information(0,("Warning"),m);
+      }
     }
     statusBar()->removeWidget(pBar);
     concaveT->setEnabled(true);
@@ -3079,6 +3089,102 @@ void MainWindow::clipStop()
   m_cloud2->get_Cloud()->clear();
   undopoint.clear();
 }
+
+void MainWindow::set_ConcaveCloud()
+{
+QStringList names;
+  names << get_allNames();
+
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Cloud boundaries");
+  in->set_path(Proj->get_Path());
+  in->set_description("Method for computing concave hull of given tree."
+                        " This method serve only for display estimated polygon of concave hull. ");
+  in->set_inputCloud1("Input cloud:",get_allNames());
+  in->set_outputCloud1("Output cloud name:","hull");
+  in->set_inputInt("Input Maximal Edge length cm:","150");
+  in->set_stretch();
+
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    pBar = new QProgressBar(statusBar());
+    pBar->setMaximumSize(200,16);
+    statusBar()->addWidget(pBar);
+    pBar->setValue(0);
+    QString name = Proj->get_Cloud(in->get_inputCloud1()).get_name();
+    QColor color = Proj->get_Cloud(in->get_inputCloud1()).get_color();
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+        cloud = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud();
+        Cloud *cl = new Cloud (Proj->set_ConcaveCloud(cloud,(float)in->get_intValue()/100,name,color));
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloudHull(new pcl::PointCloud<pcl::PointXYZI>);
+        cloudHull = cl->get_Cloud();
+
+        Proj->save_newCloud("ost",in->get_outputCloud1(),cloudHull);
+        QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+        openOstFile(fullnameV);
+
+      pBar->setValue(100);
+      pBar->update();
+
+    }
+    statusBar()->removeWidget(pBar);
+    concaveT->setEnabled(true);
+}
+void MainWindow::set_ConvexCloud()
+{
+QStringList names;
+  names << get_allNames();
+
+  InputDialog *in = new InputDialog(this);
+  in->set_title("Cloud boundaries");
+  in->set_path(Proj->get_Path());
+  in->set_description("Method for computing convex hull of given tree."
+                        " This method serve only for display estimated polygon of convex hull. ");
+  in->set_inputCloud1("Input cloud:",get_allNames());
+  in->set_outputCloud1("Output cloud name:","hull");
+  in->set_stretch();
+
+  int dl = in->exec();
+
+  if(dl == QDialog::Rejected)
+    { return; }
+
+  if(dl == QDialog::Accepted)
+  {
+    pBar = new QProgressBar(statusBar());
+    pBar->setMaximumSize(200,16);
+    statusBar()->addWidget(pBar);
+    pBar->setValue(0);
+    QString name = Proj->get_Cloud(in->get_inputCloud1()).get_name();
+    QColor color = Proj->get_Cloud(in->get_inputCloud1()).get_color();
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+        cloud = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud();
+        Cloud *cl = new Cloud (Proj->set_ConvexCloud(cloud,name,color));
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloudHull(new pcl::PointCloud<pcl::PointXYZI>);
+        cloudHull = cl->get_Cloud();
+
+        Proj->save_newCloud("ost",in->get_outputCloud1(),cloudHull);
+        QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+        openOstFile(fullnameV);
+
+      pBar->setValue(100);
+      pBar->update();
+
+    }
+    statusBar()->removeWidget(pBar);
+    concaveT->setEnabled(true);
+}
+
+
 //ACTION and MENUS
 void MainWindow::createActions()
 {
@@ -3143,12 +3249,12 @@ void MainWindow::createActions()
   exportPTSAct->setStatusTip(tr("Export cloud into pts file"));
   connect(exportPTSAct, SIGNAL(triggered()), this, SLOT(exportPts()));
 
-  exportCONVEXAct = new QAction(tr("&Export convex contours (txt)"), this);
-  exportPTSAct->setStatusTip(tr("Export cloud into txt file"));
+  exportCONVEXAct = new QAction(tr("&Export tree convex projection (txt)"), this);
+  exportPTSAct->setStatusTip(tr("Export polygon into txt file"));
   connect(exportCONVEXAct, SIGNAL(triggered()), this, SLOT(exportConvexTxt()));
 
-  exportCONCAVEAct = new QAction(tr("&Export concave contours (txt)"), this);
-  exportCONCAVEAct->setStatusTip(tr("Export cloud into txt file"));
+  exportCONCAVEAct = new QAction(tr("&Export tree concave projection (txt)"), this);
+  exportCONCAVEAct->setStatusTip(tr("Export polygon into txt file"));
   connect(exportCONCAVEAct, SIGNAL(triggered()), this, SLOT(exportConcaveTxt()));
 
   exitAct = new QAction(tr("E&xit"), this);
@@ -3219,11 +3325,11 @@ void MainWindow::createActions()
   skeletonAct->setStatusTip(tr("create skeleton cloud"));
   connect(skeletonAct, SIGNAL(triggered()), this, SLOT(skeleton()));
 
-  convexAct = new QAction(tr("Convex hull"), this);
+  convexAct = new QAction(tr("Convex planar projection"), this);
   convexAct->setStatusTip(tr("display boardes"));
   connect(convexAct, SIGNAL(triggered()), this, SLOT(convexhull()));
 
-  concaveAct = new QAction(tr("Concave hull"), this);
+  concaveAct = new QAction(tr("Concave planar projection"), this);
   concaveAct->setStatusTip(tr("display boardes"));
   connect(concaveAct, SIGNAL(triggered()), this, SLOT(concavehull()));
 
@@ -3248,6 +3354,13 @@ void MainWindow::createActions()
   minusAct->setStatusTip(tr("delete common points from bigger cloud"));
   connect(minusAct, SIGNAL(triggered()), this, SLOT(minusCloud()));
 
+  convexCloudAct = new QAction(tr("Create convex boundary"), this);
+  minusAct->setStatusTip(tr("compute convex boundaries of cloud"));
+  connect(convexCloudAct, SIGNAL(triggered()), this, SLOT(set_ConvexCloud()));
+
+  concaveCloudAct = new QAction(tr("Create concave boundary"), this);
+  minusAct->setStatusTip(tr("compute concave boundaries of cloud"));
+  connect(concaveCloudAct, SIGNAL(triggered()), this, SLOT(set_ConcaveCloud()));
 
 //ABOUT
   aboutAct = new QAction(tr("&About"), this);
@@ -3323,6 +3436,9 @@ void MainWindow::createMenus()
   miscMenu->addAction(voxAct);
   miscMenu->addAction(IDWAct);
   miscMenu->addAction(clipedAct);
+  miscMenu->addAction(convexCloudAct);
+  miscMenu->addAction(concaveCloudAct);
+
 //ABOUT
   helpMenu = menuBar()->addMenu(tr("&About"));
   helpMenu->addAction(aboutAct);

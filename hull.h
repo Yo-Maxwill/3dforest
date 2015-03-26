@@ -20,6 +20,7 @@ class Hull : public Cloud
     float direction;
 public:
     Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col);
+    Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
     Hull (Cloud cloud);
     void set_convexhull();
     void set_convexhull(Cloud c);
@@ -39,6 +40,9 @@ public:
     void returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb);
     float returnDistance(pcl::PointXYZI boda, pcl::PointXYZI bodb);
     float return_clockwiseAngle(pcl::PointXYZI boda, pcl::PointXYZI bodc, pcl::PointXYZI bodb);
+    void erasePointFromCloud (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI bod);
+    float returnPreponaDist (float a, float b);
+    void PointToHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI boda, pcl::PointXYZI bodb, pcl::PointXYZI bodx);
 };
 
 

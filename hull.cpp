@@ -33,7 +33,13 @@ concavehull(new Cloud())
 {
 
 }
+Hull::Hull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
+: Cloud(cloud, name),
+vexhull(new Cloud()),
+concavehull(new Cloud())
+{
 
+}
 void Hull::set_Hull(Hull hull)
 {
     *m_hull = hull;
@@ -44,7 +50,7 @@ Hull Hull::get_Hull()
 }
 void Hull::set_convexhull()
 {
-  //nacteni do vekteru
+    //nacteni do vekteru
   double ymin = 9999;
   double zmin = 9999;
   double xminy, intens, xx, yy;
@@ -60,124 +66,15 @@ void Hull::set_convexhull()
       bod.y =ith->y;
       bod.z =ith->z;
       bod.intensity = ith->intensity;
-        if (ymin > ith->y)
-            {
-            ymin = ith->y;
-            xminy = ith->x;
-            intens = ith->intensity;
-            it = i;
-            }
-        if (zmin > ith->z) {zmin = ith->z;}
       cloud->points.push_back(bod);
   }
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb (new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::PointXYZI bod;
-      bod.x =xminy;
-      bod.y =ymin;
-      bod.z =zmin;
-      bod.intensity =intens;
-      cloudb->points.push_back(bod);
-      float n = (float) cloud->points.size();
-
-      for(int i=0; i < n;i++)
-        {
-            double x,y;
-            pcl::PointXYZI ith = cloud->points.at(i);
-            x =ith.x;
-            y =ith.y;
-            if (x==xminy && y==ymin)
-            {
-              cloud->points.erase(cloud->points.begin()+i);
-              n--;
-            }
-        }
-
-      int k = 0;
-     do
-     {
-            double xback, yback, xnext, ynext, xB, yB, xb, yb;
-            double Abigger = 0;
-            if (k == 0)
-            {xback = -1;
-             yback = -1;
-             xx =xminy;
-             yy =ymin;
-             }
-            else
-            {
-             pcl::PointXYZI ith = cloudb->points.at(k-1);
-             xB =ith.x;
-             yB =ith.y;
-             xback =xx - xB;
-             yback =yy - yB;
-            }
-         float n = (float) cloud->points.size();
-
-         for(int m=0; m < n;m++)
-        {
-                pcl::PointXYZI ith = cloud->points.at(m);
-                double xfor, yfor, A;
-                xfor = ith.x;
-                yfor = ith.y;
-
-            xnext = xfor - xx;
-            ynext = yfor - yy;
-            double dist =sqrt(xnext*xnext+ynext*ynext);
-            A = (((atan2(xback*ynext-xnext*yback,xback*xnext+yback*ynext)))*180/3.14159265359);
-            if (A > 0){A -= 360;}
-            if (A < 0){A = A * (-1);}
-            if (A == 0){A = 180;}
-            if (A > Abigger && dist > 0)
-            {
-                Abigger = A;
-                xb = xfor;
-                yb = yfor;
-            }
-        }
-
-        xx =xb;
-        yy =yb;
-
-        pcl::PointXYZI bod;
-        bod.x =xx;
-        bod.y =yy;
-        bod.z =zmin;
-        bod.intensity =intens;
-        cloudb->points.push_back(bod);
-
-       for(int i=0; i < n;i++)  // Prohledava vektor a maze vybrane body
-        {
-            double x,y;
-            pcl::PointXYZI ith = cloud->points.at(i);
-            x =ith.x;
-            y =ith.y;
-            if (x==xx && y==yy)
-            {
-              cloud->points.erase(cloud->points.begin()+i);
-              n--;
-            }
-        }
-        if (k==3) // Vrati prvni bod do prohledavaneho vektoru
-            {
-                pcl::PointXYZI bod;
-                bod.x =xminy;
-                bod.y =ymin;
-                bod.z =zmin;
-                bod.intensity =intens;
-                cloud->points.push_back(bod);
-            }
-        //Podminka
-        if (k > 10 && xx == xminy && yy == ymin)
-        {
-            break;
-        }
-        k++;
-        }while (k<100);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloudhull (new pcl::PointCloud<pcl::PointXYZI>);
+    returnConvexhull(cloud, cloudhull);
 
         QString a = QString("%1_vex").arg(m_name);
         QColor col = QColor(255,0,0);
-        Cloud *cl = new Cloud(cloudb, a);
+        Cloud *cl = new Cloud(cloudhull, a);
         vexhull = cl;
         set_areavex(*cl);
 }
@@ -357,12 +254,12 @@ int Hull::set_concaveZkracovanim(float maxEdgeLenght = 150)
   returnConvexhull(cloud, cloudb);
     float n = (float) cloudb->points.size();
 
-  for (int a=0; a<n-1; a++)
+    int a =0;
+  do
   {
-      int i =a;
       int j = a+1;
       float ax, ay, bx, by, xx, yy;
-      pcl::PointXYZI boda =cloudb->points.at(i);
+      pcl::PointXYZI boda =cloudb->points.at(a);
       float z =boda.z;
       pcl::PointXYZI bodb =cloudb->points.at(j);
       pcl::PointXYZI bodx;
@@ -413,31 +310,42 @@ int Hull::set_concaveZkracovanim(float maxEdgeLenght = 150)
                     }
                 }
             }
+            if(bodx.z != z)
+            {
+               float Amax =9999;
+               for (int g=0; g< cloud->points.size(); g++)
+                {
+                    pcl::PointXYZI bodc =cloud->points.at(g);
+                    float distBC =returnDistance(bodb,bodc);
+                    float distAC =returnDistance(boda,bodc);
+                    if (distBC < distAB && distAC < distAB)
+                    {
+                        float A =return_clockwiseAngle(boda,bodc,bodb);
+                        if (A < Amax )
+                        {
+                            Amax = A;
+                            bodx =bodc;
+                            bodx.z =z;
+                            BC = true;
+                        }
+                    }
+                }
+            }
                 if(bodx.z ==z)
                 {
                     cloudb->points.insert(cloudb->points.begin()+j,bodx);
                     n++;
-
-                    float q = (float) cloud->points.size();
-                    for (int h=0; h<n; h++)
-                    {
-                        pcl::PointXYZI bod =cloud->points.at(h);
-                        if (bod.x == bodx.x && bod.y == bodx.y)
-                        {
-                            cloud->points.erase(cloud->points.begin()+h);
-                            q--;
-                        }
-                    }
+                    erasePointFromCloud(cloud,bodx);
                 }
-
             if(bodx.z != z){errors++;}
-            if(BC == true) {a--;}
         }
-  }
+        if(BC == true) {a--;}
+        a++;
+  }while (a < n-1);
 
-    QString a = QString("%1_vex").arg(m_name);
+    QString aa = QString("%1_vex").arg(m_name);
     QColor col = QColor(255,0,0);
-    Cloud *cl = new Cloud(cloudb, a);
+    Cloud *cl = new Cloud(cloudb, aa);
     concavehull = cl;
     concavehull->set_Psize(3);
     set_areacave(*cl);
@@ -512,7 +420,7 @@ float Hull::get_areaconcave()
 {
   return m_areaconcave;
 }
-void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb)
+void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointCloud<pcl::PointXYZI>::Ptr cloudhull)
 {
     float xmin =0;
     float ymin =99999;
@@ -535,7 +443,7 @@ void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::Poin
       bod.y =ymin;
       bod.z =zmin;
       bod.intensity =100;
-      cloudb->points.push_back(bod);
+      cloudhull->points.push_back(bod);
       float n = (float) cloud->points.size();
 
       for(int i=0; i < n;i++)
@@ -564,7 +472,7 @@ void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::Poin
              }
             else
             {
-             pcl::PointXYZI ith = cloudb->points.at(k-1);
+             pcl::PointXYZI ith = cloudhull->points.at(k-1);
              xB =ith.x;
              yB =ith.y;
              xback =xx - xB;
@@ -602,7 +510,7 @@ void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::Poin
         bod.y =yy;
         bod.z =zmin;
         bod.intensity =100;
-        cloudb->points.push_back(bod);
+        cloudhull->points.push_back(bod);
 
        for(int i=0; i < n;i++)  // Prohledava vektor a maze vybrane body
         {
@@ -633,8 +541,44 @@ void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::Poin
         k++;
         }while (k<100);
 }
-
-
-
+void Hull::erasePointFromCloud (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI bod)
+{
+                float q = (float) cloud->points.size();
+                for (int h=0; h<q; h++)
+                {
+                    pcl::PointXYZI bodx =cloud->points.at(h);
+                    if (bodx.x == bod.x && bodx.y == bod.y)
+                    {
+                        cloud->points.erase(cloud->points.begin()+h);
+                        q--;
+                    }
+                }
+}
+float Hull::returnPreponaDist (float a, float b)
+{
+    return sqrt(a*a+b*b);
+}
+void Hull::PointToHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI boda, pcl::PointXYZI bodb, pcl::PointXYZI bodx)
+{
+    float Amax =9999;
+        for (int g=0; g< cloud->points.size(); g++)
+        {
+            pcl::PointXYZI bodc =cloud->points.at(g);
+            float distAB =returnDistance(bodb,boda);
+            float distBC =returnDistance(bodb,bodc);
+            float distAC =returnDistance(boda,bodc);
+            if (distBC < maxEdgeLenght && distAC < distAB)
+            {
+                float A =return_clockwiseAngle(boda,bodc,bodb);
+                if (A < Amax)
+                {
+                    Amax = A;
+                    bodx =bodc;
+                    //bodx.z =z;
+                    //BC = true;
+                }
+            }
+        }
+}
 
 

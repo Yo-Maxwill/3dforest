@@ -81,7 +81,6 @@ int Cloud::get_Psize()
 {
   return m_PointSize;
 }
-
 //Tree
 Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s)
 : Cloud(cloud, name, col)
@@ -908,7 +907,7 @@ Cloud Tree::get_vexhull()
 {
   return *m_convexhull;
 }
-void Tree::set_concavehull(float maxEdgeLenght = 1.5)
+int Tree::set_concavehull(float maxEdgeLenght = 1.5)
 {
   QString aa = QString("%1_concave").arg(m_name);
   QColor col = get_color();
@@ -916,11 +915,13 @@ void Tree::set_concavehull(float maxEdgeLenght = 1.5)
   Hull *c = new Hull(m_Cloud,aa,col);
   int i = c->set_concaveZkracovanim(maxEdgeLenght);
 
+
   set_concavehull(c->get_concavehull());
 
   c->set_areacave(c->get_concavehull());
   m_areaconcave = c->get_areaconcave();
-  //return i;
+
+  return i;
 }
 void Tree::set_concavehull(Cloud c)
 {

@@ -20,6 +20,7 @@
 #include <QtGui/QMainWindow>
 #include <gui.h>
 #include <project.h>
+#include "hull.h"
 
 //!  Main application window.
 /*!
@@ -220,6 +221,13 @@ private slots:
     //! Clip of two cloud - special purpose function only.
     /*! finish editing clipping */
   void clipStop();
+  void set_ConcaveCloud();
+  //! Create concave hull of cloud.
+    /*! output is new ost cloud*/
+  void set_ConvexCloud();
+  //! Create convex hull of cloud.
+    /*! output is new ost cloud*/
+
 // ABOUT
     //! Information about application
     /*! Basic information about application purpose and authors.  */
@@ -484,12 +492,17 @@ private:
   QAction *skeletonAct;       /**< Compute tree skeleton and display Act */
   QAction *convexAct;         /**< Compute convex hull Act */
   QAction *concaveAct;        /**< Compute concave hull Act */
+
   //MISC ACTIONS
   QAction *plusAct;           /**< Merge two cloud into single one Act */
   QAction *minusAct;          /**< Subtract two cloud Act */
   QAction *voxAct;            /**< Voxelize cloud Act */
   QAction *clipAct;           /**< Clipping Act */
   QAction *clipedAct;         /**< Clipping Act 2 */
+  QAction *convexCloudAct;    /**< ConvexCloud Act */
+  QAction *concaveCloudAct;   /**< ConcaveCloud Act */
+
+
   //ABOUT ACTIONS
   QAction *aboutAct;          /**< About application Act */
   QAction *aboutQtAct;        /**< About Qt Act */
