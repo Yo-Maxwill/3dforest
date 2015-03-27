@@ -395,7 +395,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPCD(QString file)
 void MainWindow::importBaseCloud()
 {
 QString selectedFilter;
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Open file"),Proj->get_Path(),
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Select file"),Proj->get_Path(),
                                                  tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
                                                  &selectedFilter);
   if (ls.isEmpty())
@@ -444,7 +444,7 @@ QString selectedFilter;
 void MainWindow::importTerrainFile()
 {
   QString selectedFilter;
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Select file"),Proj->get_Path(),
                                                  tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
                                                  &selectedFilter);
   if (ls.isEmpty())
@@ -493,7 +493,7 @@ void MainWindow::importTerrainFile()
 void MainWindow::importVegeCloud()
 {
   QString selectedFilter;
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Select file"),Proj->get_Path(),
                                                  tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
                                                  &selectedFilter);
   if (ls.isEmpty())
@@ -540,7 +540,7 @@ void MainWindow::importVegeCloud()
 void MainWindow::importTreeCloud()
 {
   QString selectedFilter;
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Select file"),Proj->get_Path(),
                                                  tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
                                                  &selectedFilter);
   if (ls.isEmpty())
@@ -597,12 +597,10 @@ void MainWindow::openTerrainFile(QString file)
   Cloud *c =new Cloud(cloud,coords.back(),col);
 
   Proj->set_TerrainCloud(*c);
-  //Proj->save_color(coords.back(),col);
+
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
- // manualSelAct->setEnabled(true);
-  //manualADAct->setEnabled(true);
 }
 void MainWindow::openVegeFile(QString file)
 {
@@ -614,10 +612,8 @@ void MainWindow::openVegeFile(QString file)
   Cloud *c =new Cloud(cloud,coords.back(),col);
 
   Proj->set_VegeCloud(*c);
-  //Proj->save_color(coords.back(),col);
   dispCloud(*c);
   addTreeItem(c->get_name());
-  //manualSelAct->setEnabled(true);
   m_vis->resetCamera();
 }
 void MainWindow::openTreeFile(QString file)
@@ -630,7 +626,7 @@ void MainWindow::openTreeFile(QString file)
   QColor col = QColor(rand() %255,rand() %255,rand() %255);
   Cloud *c =new Cloud(cloud,coords.back(),col);
   Proj->set_Tree(*c);
-  //Proj->save_color(coords.back(),col);
+
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
@@ -645,11 +641,11 @@ void MainWindow::openOstFile(QString file)
   Cloud *c =new Cloud(cloud,coords.back(),col);
 
   Proj->set_OstCloud(*c);
-  //Proj->save_color(coords.back(),col);
+
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
-  //manualSelAct->setEnabled(true);
+
 }
 void MainWindow::openCloudFile(QString file)
 {
@@ -662,7 +658,6 @@ void MainWindow::openCloudFile(QString file)
   Cloud *c =new Cloud(cloud,coords.back(),col);
 
   Proj->set_baseCloud(*c);
-  //Proj->save_color(coords.back(),col);
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
@@ -679,8 +674,6 @@ void MainWindow::openTerrainFile(QString file, QColor col)
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
-       //menu
- // manualADAct->setEnabled(true);
 }
 void MainWindow::openVegeFile(QString file, QColor col)
 {
@@ -692,7 +685,6 @@ void MainWindow::openVegeFile(QString file, QColor col)
   Proj->set_VegeCloud(*c);
   dispCloud(*c);
   addTreeItem(c->get_name());
- // manualSelAct->setEnabled(true);
   m_vis->resetCamera();
 }
 void MainWindow::openOstFile(QString file, QColor col)
@@ -706,7 +698,6 @@ void MainWindow::openOstFile(QString file, QColor col)
   dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
- // manualSelAct->setEnabled(true);
 }
 void MainWindow::openTreeFile(QString file, QColor col)
 {
@@ -737,13 +728,13 @@ void MainWindow::openCloudFile(QString file, QColor col)
 void MainWindow::exportCloud()
 {
 //vybrat cloud
-  QString cloudName = QInputDialog::getItem(this,("select cloud for export into txt"),("name of cloud:"),get_allNames());
+  QString cloudName = QInputDialog::getItem(this,("Please select cloud for exporting into text file"),("Name of cloud:"),get_allNames());
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
   *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
 
 //vybrat jmeno noveho souboru
-  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.txt)"));
+  QString newFile = QFileDialog::getSaveFileName(this,("Insert file name"),"",tr("files (*.txt)"));
 //zapisovat jednotlive radky
   QFile file (newFile);
   file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -778,12 +769,12 @@ void MainWindow::plysave()
   {
     names << Proj->get_TreeCloud(i).get_name();
   }
-  QString cloudName = QInputDialog::getItem(this,("select cloud"),("name of cloud for export:"),names);
+  QString cloudName = QInputDialog::getItem(this,("Please select cloud for exporting into PLY file"),("Name of cloud:"),names);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
   *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
 //vybrat jmeno noveho souboru
-  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.ply)"));
+  QString newFile = QFileDialog::getSaveFileName(this,("Insert file name"),"",tr("files (*.ply)"));
   //zapisovat jednotlive radky
 
   pcl::io::savePLYFileASCII(newFile.toUtf8().constData(),*cloud);
@@ -809,12 +800,12 @@ void MainWindow::exportPts()
   {
     names << Proj->get_TreeCloud(i).get_name();
   }
-  QString cloudName = QInputDialog::getItem(this,("select cloud for voxelization"),("name of cloud:"),names);
+  QString cloudName = QInputDialog::getItem(this,("Please select cloud for exporting into text file"),("Name of cloud:"),names);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
 
   *cloud = *Proj->get_Cloud(cloudName).get_Cloud();
 //vybrat jmeno noveho souboru
-  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.pts)"));
+  QString newFile = QFileDialog::getSaveFileName(this,("Insert file name"),"",tr("files (*.pts)"));
 //zapisovat jednotlive radky
   QFile file (newFile);
   file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -836,7 +827,7 @@ void MainWindow::exportPts()
 void MainWindow::exportConvexTxt()
 {
     //vybrat jmeno noveho souboru
-  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.txt)"));
+  QString newFile = QFileDialog::getSaveFileName(this,("Insert file name"),"",tr("files (*.txt)"));
    //zapisovat jednotlive radky
   QFile file (newFile);
   file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -869,7 +860,7 @@ void MainWindow::exportConvexTxt()
 void MainWindow::exportConcaveTxt()
 {
 //vybrat jmeno noveho souboru
-  QString newFile = QFileDialog::getSaveFileName(this,("insert file name"),"",tr("files (*.txt)"));
+  QString newFile = QFileDialog::getSaveFileName(this,("Insert file name"),"",tr("files (*.txt)"));
    //zapisovat jednotlive radky
   QFile file (newFile);
   file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -909,11 +900,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::voxelgrid()
 {
   InputDialog *in = new InputDialog(this);
-  in->set_title("Terrain voxel");
+  in->set_title("Voxelized terrain");
   in->set_path(Proj->get_Path());
-  in->set_description("Terrain is derived from voxels. Input point cloud is reduced into centroid of voxels and only those with lowest z coordinate anre selected as a ground.");
+  in->set_description("Automated method for terrain extraction from base cloud. "
+                      "Input cloud is voxelized to the voxels based on given resolution and for terrain are selected lowest points which are saved into new file.\n"
+                      "This method is excelent for deriving DEM from point cloud since result contains less point of vegetation than other method, but for further vegetation analysis "
+                      "do not serve well. ");
   in->set_inputCloud1("Input cloud:",get_baseNames());
-  in->set_outputCloud1("Output cloud of ground:","voxel-terrain");
+  in->set_outputCloud1("Output cloud of terrain:","voxel-terrain");
   in->set_outputCloud2("Output cloud of non-ground:","voxel-vegetation");
   in->set_inputInt("Resolution in cm:","50");
   in->set_stretch();
@@ -982,12 +976,14 @@ void MainWindow::voxelgrid()
 void MainWindow::octreeSlot()
 {
   InputDialog *in = new InputDialog(this);
-  in->set_title("Terrain created with octree ");
+  in->set_title("Terrain created with OcTree ");
   in->set_path(Proj->get_Path());
-  in->set_description("Input point cloud is divided into cubes with given resolution and from all cubes, which  contains points are selected lowest."
-                        " Output cloud contains point from selected cubes. ");
+  in->set_description("Method divide input cloud into cubes with given resolution and select the lowest ones."
+                      " This method use two pass approach for removing points in distant places. "
+                      " In first round create cubes with 5 times greater resolution that user input, in the second round in uses given resolution to the rest of the cloud."
+                      " Result is cloud with no reduction of points but with more noise. After manual adjustment it can be used for detailed terrain morphology and rest can be used for vegetation segmentation. ");
   in->set_inputCloud1("Input cloud:",get_baseNames());
-  in->set_outputCloud1("Output cloud of ground:","Octree-terrain");
+  in->set_outputCloud1("Output cloud of terrain:","Octree-terrain");
   in->set_outputCloud2("Output cloud of non-ground:","Octree-vegetation");
   in->set_inputInt("Resolution","10");
   in->set_stretch();
@@ -1081,8 +1077,8 @@ void MainWindow::manualAdjust()
   InputDialog *in = new InputDialog(this);
   in->set_path(Proj->get_Path());
   in->set_title("Manual adjustment of terrain cloud");
-  in->set_description("Manual editing of point cloud representing terrain. For editing please press key 'x' and outline rectangle."
-                        " Selected points will be deleted. and saved in output cloud ");
+  in->set_description("Manual editing of point cloud representing terrain. For editing please press key 'x' and drag and draw rectangle with mouse."
+                        " Selected points will be deleted and saved in output cloud ");
   in->set_inputCloud1("Input terrain cloud:",get_terrainNames());
   in->set_outputCloud1("Output cloud of deleted points:","terrain-rest");
   in->set_stretch();
@@ -1156,7 +1152,7 @@ void MainWindow::manualSelect()
   InputDialog *in = new InputDialog(this);
   in->set_title("Manual selection of trees");
   in->set_path(Proj->get_Path());
-  in->set_description("Manual editing of point cloud representing vegetation. For editing please press key 'x' and outline rectangle."
+  in->set_description("Manual editing of point cloud representing vegetation. For editing please press key 'x' and drag and draw rectangle wth left mouse button."
                         " Selected points will be deleted. After selection you can choose if you want edit more or you want to close it.");
   in->set_inputCloud1("Input Vegetation cloud:",names);
   in->set_outputCloud1("Output cloud of deleted points:","vegetation-rest");
@@ -1398,7 +1394,8 @@ void MainWindow::treeAtributes()
   names << get_treeNames();
 
   ExportAttr *exdialog = new ExportAttr (this);
-  exdialog->set_description(" Export of tree attributes. You can select which atributes you want to export into text file.");
+  exdialog->set_description("Method for exporting tree attributes into formatted text file. User can select tree for which want to export attributes, separator of field and attributes."
+                            " Method export currently computed values. If you want to change any (position computed with terrain, etc.) use special methods for computing those.");
   exdialog->set_trees(names);
   int dl = exdialog->exec();
 
@@ -1566,8 +1563,8 @@ void MainWindow::convexhull()
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute convex hull of tree.");
   in->set_path(Proj->get_Path());
-  in->set_description("Method for computing convex hull of given tree."
-                        " This method serve only for computing and display estimated polygon of convex hull. ");
+  in->set_description("Method for computing and display planar projection of given tree."
+                      " This method serve for computing point representing convex planar projection of tree and its area.");
   in->set_inputCloud1("Input Tree cloud:",names);
 
   in->set_stretch();
@@ -1679,10 +1676,11 @@ void MainWindow::concavehull()
   names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Compute concave hull of tree.");
+  in->set_title("Compute concave planar projection of tree.");
   in->set_path(Proj->get_Path());
-  in->set_description("Method for computing concave hull of given tree."
-                        " This method serve only for display estimated polygon of concave hull. ");
+  in->set_description("Method for computing and display planar projection of given tree."
+                      " This method serve for computing point representing concave planar projection of tree and its area."
+                      " Concave planar projection of a tree is a region enclosing the point cloud in direction of Z axis.");
   in->set_inputCloud1("Input Tree cloud:",names);
   in->set_inputInt("Input Maximal Edge length cm:","150");
 
@@ -1807,10 +1805,11 @@ void MainWindow::dbhHT()
   names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Compute tree DBH using randomized hough transform (RHT) for circle detection.");
+  in->set_title("Compute/Display tree DBH using Randomized Hough Transform (RHT) for circle detection.");
   in->set_path(Proj->get_Path());
-  in->set_description("Method for computing tree DBH (Diameter in Breast Height) for given tree."
-                        " This method serve for computing and display estimated cylinder with computed centre, diameter and with cylinder height 10 cm. ");
+  in->set_description("Method for computing and display tree DBH (Diameter in Breast Height) for given tree."
+                        " This method serve for computing and display estimated cylinder with computed centre, diameter and with cylinder height 10 cm."
+                        " The result is saved in tree variable and can be recomputed if you change DBH cloud.");
   in->set_inputCloud1("Input Tree cloud:",names);
   in->set_stretch();
   int dl = in->exec();
@@ -1939,7 +1938,7 @@ void MainWindow::dbhLSR()
   names << get_treeNames();
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Compute tree DBH using Least square regression (LSR) for circle detection.");
+  in->set_title("Compute/Display tree DBH using Least square regression (LSR) for circle detection.");
   in->set_path(Proj->get_Path());
   in->set_description("Method for computing tree DBH (Diameter in breat height) for given tree."
                         " This method serve only for display estimated cylinder with computed centre, diameter and with height of cylinder 10 cm ");
@@ -2371,8 +2370,7 @@ void MainWindow::skeleton()
   InputDialog *in = new InputDialog(this);
   in->set_title("Tree skeleton");
   in->set_path(Proj->get_Path());
-  in->set_description("Manual editing of point cloud representing single tree. For editing please press key 'x' and outline rectangle."
-                        " Selected points will be deleted. After selection you can choose if you want edit more or you want to close it.");
+  in->set_description("Compute tree skeleton with given resolution. Computing is based on L1-median skeleton algorithm.");
   in->set_inputCloud1("Input Tree cloud:",names);
   //in->set_inputInt("skeleton radius in cm:", "20");
  // in->set_outputCloud1("Output cloud of deleted points:","tree-rest");
@@ -2747,9 +2745,9 @@ void MainWindow::plusCloud()
   types << "Base cloud" << "Terrain cloud" << "Vegetation cloud" <<"Tree" << "Other";
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Cloud join");
+  in->set_title("Cloud merge");
   in->set_path(Proj->get_Path());
-  in->set_description("Join of two clouds which create  new third one.");
+  in->set_description("Merge two clouds into new one.");
   in->set_inputCloud1("1. input cloud:",get_allNames());
   in->set_inputCloud2("2. input cloud:",get_allNames());
   in->set_outputCloud1("Output cloud :","cloud");
@@ -2790,12 +2788,12 @@ void MainWindow::plusCloud(QString input1, QString input2,QString output, QStrin
 void MainWindow::minusCloud()
 {
   InputDialog *in = new InputDialog(this);
-  in->set_title("Cloud join");
+  in->set_title("Cloud subtraction");
   in->set_path(Proj->get_Path());
   in->set_description("Remove same points from bigger cloud. The function compare two input clouds. From the bigger one remove all common points and save the rest into a new file. ");
   in->set_inputCloud1("1. input cloud:",get_allNames());
   in->set_inputCloud2("2. input cloud:",get_allNames());
-  in->set_outputCloud1("Output cloud:","cloud_minus");
+  in->set_outputCloud1("Output cloud:","cloud_subtraction");
   in->set_stretch();
   int dl = in->exec();
 
@@ -2859,9 +2857,9 @@ void MainWindow::voxelize()
 {
 
   InputDialog *in = new InputDialog(this);
-  in->set_title("Cloud join");
+  in->set_title("Voxelize input cloud");
   in->set_path(Proj->get_Path());
-  in->set_description("Make voxelized cloud. Resulting cloud has point only in centroids of boxex with resolution where was present at least one point. ");
+  in->set_description("Make voxelized cloud. Resulting cloud has points only in centroids of boxes with resolution where was present at least one point.");
   in->set_inputCloud1("Input cloud:",get_allNames());
   in->set_outputCloud1("Output cloud name:","voxel");
   in->set_inputInt("Resolution in cm:","10");
@@ -3239,166 +3237,166 @@ QStringList names;
 void MainWindow::createActions()
 {
 //FILE
-  new_projectAct = new QAction(QPixmap(":/images/projectBar/new.png"), tr("&New Project"), this);
-  new_projectAct->setStatusTip(tr("Create new project"));
+  new_projectAct = new QAction(QPixmap(":/images/projectBar/new.png"), tr("New Project"), this);
+  new_projectAct->setStatusTip(tr("Create new project."));
   connect(new_projectAct, SIGNAL(triggered()), this, SLOT(newProject()));
 
-  open_projectAct = new QAction(QPixmap(":/images/projectBar/open.png"), tr("&Open Project"), this);
-  open_projectAct->setStatusTip(tr("Open existing project"));
+  open_projectAct = new QAction(QPixmap(":/images/projectBar/open.png"), tr("Open Project"), this);
+  open_projectAct->setStatusTip(tr("Open existing project."));
   connect(open_projectAct, SIGNAL(triggered()), this, SLOT(openProject()));
 
-  close_projectAct = new QAction(QPixmap(":/images/projectBar/close.png"), tr("&Close Project"), this);
-  close_projectAct->setStatusTip(tr("Close project"));
+  close_projectAct = new QAction(QPixmap(":/images/projectBar/close.png"), tr("Close Project"), this);
+  close_projectAct->setStatusTip(tr("Close project."));
   connect(close_projectAct, SIGNAL(triggered()), this, SLOT(closeProject()));
 
-  import_projectAct = new QAction(QPixmap(":/images/projectBar/import.png"), tr("&Import project"), this);
-  import_projectAct->setStatusTip(tr("import of existing project into new folder"));
+  import_projectAct = new QAction(QPixmap(":/images/projectBar/import.png"), tr("Import project"), this);
+  import_projectAct->setStatusTip(tr("Import of existing project into new folder."));
   connect(import_projectAct, SIGNAL(triggered()), this, SLOT(importProject()));
 
-  importBaseAct = new QAction(tr("&Import basic cloud"), this);
-  importBaseAct->setStatusTip(tr("Open an existing file"));
+  importBaseAct = new QAction(tr("Import Base cloud"), this);
+  importBaseAct->setStatusTip(tr("Import new Base cloud into project. Various formats are available."));
   connect(importBaseAct, SIGNAL(triggered()), this, SLOT(importBaseCloud()));
 
-  importTerenAct = new QAction(tr("&Import Terrain file (PCD)"), this);
-  importTerenAct->setStatusTip(tr("Open an existing terrain file"));
+  importTerenAct = new QAction(tr("Import Terrain cloud)"), this);
+  importTerenAct->setStatusTip(tr("Import new Terrain cloud into project. Various formats are available."));
   connect(importTerenAct, SIGNAL(triggered()), this, SLOT(importTerrainFile()));
 
-  importVegeAct = new QAction(tr("&Import Vegetation file (PCD)"), this);
-  importVegeAct->setStatusTip(tr("Open an existing vegetation file"));
+  importVegeAct = new QAction(tr("Import Vegetation cloud)"), this);
+  importVegeAct->setStatusTip(tr("Import new VEgetation cloud into project. Various formats are available."));
   connect(importVegeAct, SIGNAL(triggered()), this, SLOT(importVegeCloud()));
 
-  importTreeAct = new QAction(tr("&Import Tree file (PCD)"), this);
-  importTreeAct->setStatusTip(tr("Open an existing tree file and import into project"));
+  importTreeAct = new QAction(tr("Import Tree cloud"), this);
+  importTreeAct->setStatusTip(tr("Import new Tree cloud into project. Various formats are available."));
   connect(importTreeAct, SIGNAL(triggered()), this, SLOT(importTreeCloud()));
 
-  exportTXTAct = new QAction(tr("&Export file (txt)"), this);
-  exportTXTAct->setStatusTip(tr("Export cloud into txt file"));
+  exportTXTAct = new QAction(tr("Export file (txt)"), this);
+  exportTXTAct->setStatusTip(tr("Export selected cloud into TXT file."));
   connect(exportTXTAct, SIGNAL(triggered()), this, SLOT(exportCloud()));
 
-  exportPLYAct = new QAction(tr("&Export file (ply)"), this);
-  exportPLYAct->setStatusTip(tr("Export cloud into ply file"));
+  exportPLYAct = new QAction(tr("Export file (ply)"), this);
+  exportPLYAct->setStatusTip(tr("Export selected cloud into PLY file."));
   connect(exportPLYAct, SIGNAL(triggered()), this, SLOT(plysave()));
 
-  exportPTSAct = new QAction(tr("&Export file (pts)"), this);
-  exportPTSAct->setStatusTip(tr("Export cloud into pts file"));
+  exportPTSAct = new QAction(tr("Export file (pts)"), this);
+  exportPTSAct->setStatusTip(tr("Export selected cloud into PTS file."));
   connect(exportPTSAct, SIGNAL(triggered()), this, SLOT(exportPts()));
 
-  exportCONVEXAct = new QAction(tr("&Export tree convex projection (txt)"), this);
-  exportPTSAct->setStatusTip(tr("Export polygon into txt file"));
+  exportCONVEXAct = new QAction(tr("Export Tree convex projection (txt)"), this);
+  exportPTSAct->setStatusTip(tr("Export convex planar projection of selected Tree."));
   connect(exportCONVEXAct, SIGNAL(triggered()), this, SLOT(exportConvexTxt()));
 
-  exportCONCAVEAct = new QAction(tr("&Export tree concave projection (txt)"), this);
-  exportCONCAVEAct->setStatusTip(tr("Export polygon into txt file"));
+  exportCONCAVEAct = new QAction(tr("Export Tree concave projection (txt)"), this);
+  exportCONCAVEAct->setStatusTip(tr("Export concae planar projection of selected Tree."));
   connect(exportCONCAVEAct, SIGNAL(triggered()), this, SLOT(exportConcaveTxt()));
 
-  exitAct = new QAction(tr("E&xit"), this);
+  exitAct = new QAction(tr("Exit"), this);
   exitAct->setShortcuts(QKeySequence::Quit);
-  exitAct->setStatusTip(tr("Exit the application"));
+  exitAct->setStatusTip(tr("Terminate the application."));
   connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
 
 //TERRAIN
-  voxelAct = new QAction(tr("Terrain voxel"), this);
-  voxelAct->setStatusTip(tr("voxel method with variable size of voxel"));
+  voxelAct = new QAction(tr("Terrain from voxels"), this);
+  voxelAct->setStatusTip(tr("Automatic Terrain extraction method using voxelized derivate of input cloud. Result is voxelized."));
  // voxelAct->setEnabled(false);
   connect(voxelAct, SIGNAL(triggered()), this, SLOT(voxelgrid()));
 
-  octreeAct = new QAction(tr("Terrain octree"), this);
-  octreeAct->setStatusTip(tr("compute surface point based on octree structure"));
+  octreeAct = new QAction(tr("Terrain from OcTree"), this);
+  octreeAct->setStatusTip(tr("Automatic Terrain extraction method using searching for lowest point in OcTree search. Result is origal points from input, but can be noisy and can be adjusted by maual adjustment."));
   //octreeAct->setEnabled(false);
   connect(octreeAct, SIGNAL(triggered()), this, SLOT(octreeSlot()));
 
   manualADAct = new QAction(tr("Manual adjustment"), this);
-  manualADAct->setStatusTip(tr("manual adjustment of terrain cloud"));
+  manualADAct->setStatusTip(tr("Manual adjustment of selected terrain cloud. serves for deletion of non-ground points from cloud."));
  // manualADAct->setEnabled(false);
   connect(manualADAct, SIGNAL(triggered()), this, SLOT(manualAdjust()));
 
 //VEGETATION
 
   manualSelAct = new QAction(tr("Manual selection"), this);
-  manualSelAct->setStatusTip(tr("Display best fitted cylinder"));
+  manualSelAct->setStatusTip(tr("Manual selection of trees from vegetation cloud. User iteratively delete points that do not belong to the tree."));
   connect(manualSelAct, SIGNAL(triggered()), this, SLOT(manualSelect()));
 
 
 //TREE ATRIBUTES
-  tAAct = new QAction(tr("Tree atributes into file"), this);
-  tAAct->setStatusTip(tr("Compute atributes for all trees"));
+  tAAct = new QAction(tr("Tree atributes export"), this);
+  tAAct->setStatusTip(tr("Export Tree attributes into new file. User can selected which attributes want export and how they are separated."));
   connect(tAAct, SIGNAL(triggered()), this, SLOT(treeAtributes()));
 
   dbhHTAct = new QAction(tr("DBH HT"), this);
-  dbhHTAct->setStatusTip(tr("compute cylinder using hough transform"));
+  dbhHTAct->setStatusTip(tr("Compute and display DBH using Randomized Hough Transform method. It display cloud representing point for computing DBH and estimated cylinder with DBH value."));
   //dbhAct->setEnabled(false);
   connect(dbhHTAct, SIGNAL(triggered()), this, SLOT(dbhHT()));
 
   dbhLSRAct = new QAction(tr("DBH LSR"), this);
-  dbhLSRAct->setStatusTip(tr("display best fitted cylinder"));
+  dbhLSRAct->setStatusTip(tr("Compute and display DBH using Least Square Regression method. It display cloud representing point for computing DBH and estimated cylinder with DBH value."));
   //dbhAct->setEnabled(false);
   connect(dbhLSRAct, SIGNAL(triggered()), this, SLOT(dbhLSR()));
 
   heightAct = new QAction(tr("Height"), this);
-  heightAct->setStatusTip(tr("compute height of the tree"));
+  heightAct->setStatusTip(tr("Compute and display height of the tree. Displays line starting at tree position and follows Z axis to the height of highest point of tree."));
  // heightAct->setEnabled(false);
   connect(heightAct, SIGNAL(triggered()), this, SLOT(height()));
 
   posAct = new QAction(tr("Position"), this);
-  posAct->setStatusTip(tr("display sphere in tree position"));
+  posAct->setStatusTip(tr("Compute and display position of the tree. Displays sphere with diameter 10 cm and centre at tree position. If terrain is presented user can recalculate position according to terrain."));
   connect(posAct, SIGNAL(triggered()), this, SLOT(position()));
 
-  treeEditAct = new QAction(tr("Cloud edit"), this);
-  treeEditAct->setStatusTip(tr("edit selected tree cloud"));
+  treeEditAct = new QAction(tr("Tree cloud edit"), this);
+  treeEditAct->setStatusTip(tr("Edit tree cloud and save deleted parts in new file."));
   connect(treeEditAct, SIGNAL(triggered()), this, SLOT(treeEdit()));
 
-  dbhEditAct = new QAction(tr("DBHcloud edit"), this);
-  dbhEditAct->setStatusTip(tr("edit selected tree cloud"));
+  dbhEditAct = new QAction(tr("DBH cloud edit"), this);
+  dbhEditAct->setStatusTip(tr("Edit tree cloud udsed for computing DBH."));
   connect(dbhEditAct, SIGNAL(triggered()), this, SLOT(dbhCloudEdit()));
 
-  lengAct = new QAction(tr("Cloud length"), this);
-  lengAct->setStatusTip(tr("display cloud length"));
+  lengAct = new QAction(tr("Length"), this);
+  lengAct->setStatusTip(tr("Compute and display length of the tree. Display line between two points with the greatest distance in cloud "));
   connect(lengAct, SIGNAL(triggered()), this, SLOT(length()));
 
   skeletonAct = new QAction(tr("Skeleton"), this);
-  skeletonAct->setStatusTip(tr("create skeleton cloud"));
+  skeletonAct->setStatusTip(tr("Compute and display skeleton of tree. Dispaly connected parts of tree as lines. "));
   connect(skeletonAct, SIGNAL(triggered()), this, SLOT(skeleton()));
 
   convexAct = new QAction(tr("Convex planar projection"), this);
-  convexAct->setStatusTip(tr("display boardes"));
+  convexAct->setStatusTip(tr("Compute and display convex planar projection of tree. Displays polygon in color of tree with 50% opacity and with value of polygon area."));
   connect(convexAct, SIGNAL(triggered()), this, SLOT(convexhull()));
 
   concaveAct = new QAction(tr("Concave planar projection"), this);
-  concaveAct->setStatusTip(tr("display boardes"));
+  concaveAct->setStatusTip(tr("Compute and display concave planar projection of tree. Displays polygon in color of tree with 50% opacity and with value of polygon area."));
   connect(concaveAct, SIGNAL(triggered()), this, SLOT(concavehull()));
 
 //MISC
   plusAct = new QAction(tr("Cloud merge"), this);
-  plusAct->setStatusTip(tr("cloud + cloud"));
+  plusAct->setStatusTip(tr("Merge two clouds into single one and save result as a new cloud with desired type of cloud."));
   connect(plusAct, SIGNAL(triggered()), this, SLOT(plusCloud()));
 
   voxAct = new QAction(tr("Voxelize cloud"), this);
-  voxAct->setStatusTip(tr("voxels from cloud"));
+  voxAct->setStatusTip(tr("Create voxelized cloudfrom selected cloud with given resolution and save it into new file."));
   connect(voxAct, SIGNAL(triggered()), this, SLOT(voxelize()));
 
-  IDWAct = new QAction(tr("IDW "), this);
-  IDWAct->setStatusTip(tr("IDW of clouds. Only for special purpose"));
+  IDWAct = new QAction(tr("IDW"), this);
+  IDWAct->setStatusTip(tr("Method only for special purpose! Serve as a computation of Inverse Distance Weight. Weight are computed from diff of reference terrain and ground point and apply to cloud. "));
   connect(IDWAct, SIGNAL(triggered()), this, SLOT(IDW()));
 
-  clipedAct = new QAction(tr("Clip "), this);
-  clipedAct->setStatusTip(tr("cliped clouds. Only for special purpose"));
+  clipedAct = new QAction(tr("Clip"), this);
+  clipedAct->setStatusTip(tr("Method only for special purpose! Serve as selection from cloud strip when displayed two cloud. BUGGY!  "));
   connect(clipedAct, SIGNAL(triggered()), this, SLOT(clip()));
 
   minusAct = new QAction(tr("Cloud Subtraction"), this);
-  minusAct->setStatusTip(tr("delete common points from bigger cloud"));
+  minusAct->setStatusTip(tr("Extract common points from bigger cloud and save. "));
   connect(minusAct, SIGNAL(triggered()), this, SLOT(minusCloud()));
 
-  convexCloudAct = new QAction(tr("Create convex boundary"), this);
-  minusAct->setStatusTip(tr("compute convex boundaries of cloud"));
+  convexCloudAct = new QAction(tr("Create convex hull"), this);
+  minusAct->setStatusTip(tr("Compute and display concave planar projection of selected cloud. Saved as new cloud."));
   connect(convexCloudAct, SIGNAL(triggered()), this, SLOT(set_ConvexCloud()));
 
-  concaveCloudAct = new QAction(tr("Create concave boundary"), this);
-  minusAct->setStatusTip(tr("compute concave boundaries of cloud"));
+  concaveCloudAct = new QAction(tr("Create concave hull"), this);
+  minusAct->setStatusTip(tr("Compute and display concave planar projection of selected cloud. Saved as new cloud."));
   connect(concaveCloudAct, SIGNAL(triggered()), this, SLOT(set_ConcaveCloud()));
 
 //ABOUT
   aboutAct = new QAction(tr("&About"), this);
-  aboutAct->setStatusTip(tr("Show the application's About box"));
+  aboutAct->setStatusTip(tr("Show information about 3D Forest application."));
   connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
 
 
