@@ -235,153 +235,102 @@ void MainWindow::importProject()
 }
 //IMPORT methods
 
-void MainWindow::importtxt()
-{
-  QStringList ls =QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.txt *xyz)"));
-  if (ls.isEmpty())
-  {
-    QMessageBox::warning(this,"ERROR","No file selected");
-    return;
-  }
-
-  for(int i=0; i<=ls.size()-1; i++)
-  {
-    QString fileName = ls.at(i);
-    if( !fileName.isEmpty())
-    {
-      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-      QFile file (fileName);
-      file.open(QIODevice::ReadOnly | QIODevice::Text);
-      QTextStream in(&file);
-      while(!in.atEnd())
-      {
-        QString line = in.readLine();
-        QStringList coords = line.split(" ");
-        if(coords.size() >1)
-        {
-          pcl::PointXYZI data;
-
-          data.x = (float)(coords.at(0).toDouble() + Proj->get_Xtransform());
-          data.y = (float)(coords.at(1).toDouble() + Proj->get_Ytransform());
-          data.z = coords.at(2).toFloat();
-          data.intensity=1;//coords.at(3).toFloat();
-          cloud->points.push_back(data);
-        }
-      }
-      file.close();
-      //in.~QTextStream();
-      cloud->width = cloud->points.size();
-      cloud->is_dense=true;
-      cloud->height=1;
-
-      QStringList Fname = fileName.split("\\");
-      QStringList name = Fname.back().split(".");
-
-      Proj->save_newCloud("cloud",name.at(0),cloud);
-
-      QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-      openCloudFile(fullname);
-    }
-  }
-}
-void MainWindow::importpts()
-{
-  QStringList ls =QFileDialog::getOpenFileNames(this,tr("open PTS files"),"",tr("files (*.pts)"));
-  if (ls.isEmpty())
-  {
-    QMessageBox::warning(this,"ERROR","No file selected");
-    return;
-  }
-
-  for(int i=0; i<=ls.size()-1; i++)
-  {
-    QString fileName = ls.at(i);
-    if( !fileName.isEmpty())
-    {
-      QStringList Fname = fileName.split("\\");
-      QStringList name = Fname.back().split("."); // name.at(0) - NEW FILE NAME
-      QFile file (fileName);
-      file.open(QIODevice::ReadOnly | QIODevice::Text);
-      QTextStream in(&file);
-      bool first_line = true;
-      int cloud_number = 1;
-      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-      while(!in.atEnd())
-      {
-        QString line = in.readLine();
-        QStringList coords = line.split(" ");
-
-        if(coords.size() != 4 ) // header
-        {
-          if (first_line != true )
-          {
-            cloud->width = cloud->points.size();
-            cloud->is_dense=true;
-            cloud->height=1;
-          //cloud name
-            QString a = QString ("%1_%2").arg(name.at(0)).arg(cloud_number);
-          // save cloud
-            Proj->save_newCloud( "cloud", a, cloud);
-          //empty cloud
-            cloud->points.clear();
-            cloud_number++;
-          }
-          first_line = false;
-
-        }
-        else //points
-        {
-          pcl::PointXYZI data;
-          data.x = coords.at(0).toDouble() + Proj->get_Xtransform();
-          data.y = coords.at(1).toDouble() + Proj->get_Ytransform();
-          data.z = coords.at(2).toDouble() + Proj->get_Ztransform();
-          data.intensity=coords.at(3).toFloat();
-          cloud->points.push_back(data);
-        }
-      }
-      file.close();
-      cloud->width = cloud->points.size();
-      cloud->is_dense=true;
-      cloud->height=1;
-    //cloud name
-      QString a = QString ("%1_%2").arg(name.at(0)).arg(cloud_number);
-    // save cloud
-      Proj->save_newCloud("cloud",a,cloud);
-    //empty cloud
-      cloud_number++;
-
-      for(int i = 1; i < cloud_number; i++)
-      {
-        QString fullname = QString("%1\\%2_%3.pcd").arg(Proj->get_Path()).arg(name.at(0)).arg(i);
-        openCloudFile(fullname);
-      }
-    }
-  }
-}
-void MainWindow::importptx()
+pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importTXT(QString file)
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-
-  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.ptx)"));
-  if (fileName.isEmpty())
+  QFile fileName (file);
+  fileName.open(QIODevice::ReadOnly | QIODevice::Text);
+  QTextStream in(&fileName);
+  while(!in.atEnd())
   {
-    QMessageBox::warning(this,"ERROR","no name filled");
-    return;
-  }
-  else
-  {
-    QFile file (fileName);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QTextStream in(&file);
-    int i = 0;
-    while(!in.atEnd())
+    QString line = in.readLine();
+    QStringList coords = line.split(" ");
+    if(coords.size() > 1)
     {
-      if (i < 11)
-      {
-          QString hlavicka = in.readLine();
-      }
+      pcl::PointXYZI data;
+
+      data.x = (float)(coords.at(0).toDouble() + Proj->get_Xtransform());
+      data.y = (float)(coords.at(1).toDouble() + Proj->get_Ytransform());
+      data.z = coords.at(2).toFloat();
+      if(coords.size() > 3)
+        data.intensity=coords.at(3).toFloat();
       else
+        data.intensity=1;
+
+      cloud->points.push_back(data);
+    }
+  }
+  fileName.close();
+      //in.~QTextStream();
+  cloud->width = cloud->points.size();
+  cloud->is_dense=true;
+  cloud->height=1;
+
+  return cloud;
+}
+pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPTS(QString file)
+{
+  QFile fileName (file);
+  fileName.open(QIODevice::ReadOnly | QIODevice::Text);
+  QTextStream in(&fileName);
+  bool first_line = true;
+  int cloud_number = 1;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+  while(!in.atEnd())
+  {
+    QString line = in.readLine();
+    QStringList coords = line.split(" ");
+
+    if(coords.size() != 4 ) // header
+    {
+      if (first_line != true )
       {
+        cloud->width = cloud->points.size();
+        cloud->is_dense=true;
+        cloud->height=1;
+          //cloud name
+        QString a = QString ("xxx_%1").arg(cloud_number);
+        // save cloud
+        Proj->save_newCloud( "cloud", a, cloud);
+      //empty cloud
+        cloud->points.clear();
+        cloud_number++;
+      }
+      first_line = false;
+
+    }
+    else //points
+    {
+      pcl::PointXYZI data;
+      data.x = coords.at(0).toDouble() + Proj->get_Xtransform();
+      data.y = coords.at(1).toDouble() + Proj->get_Ytransform();
+      data.z = coords.at(2).toDouble() + Proj->get_Ztransform();
+      data.intensity=coords.at(3).toFloat();
+      cloud->points.push_back(data);
+    }
+  }
+  fileName.close();
+  cloud->width = cloud->points.size();
+  cloud->is_dense=true;
+  cloud->height=1;
+  return cloud;
+
+}
+pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPTX(QString file)
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+  QFile fileName (file);
+  fileName.open(QIODevice::ReadOnly | QIODevice::Text);
+  QTextStream in(&fileName);
+  int i = 0;
+  while(!in.atEnd())
+  {
+    if (i < 11)
+    {
+      QString hlavicka = in.readLine();
+    }
+    else
+    {
       QString line = in.readLine();
       QStringList coords = line.split(" ");
       pcl::PointXYZI data;
@@ -391,94 +340,64 @@ void MainWindow::importptx()
       y = coords.at(1).toDouble();
       z = coords.at(2).toFloat();
       i = coords.at(3).toFloat();
-          if (x != 0 && y != 0 && z != 0 && i != 0.5)
-          {
-            data.x = x+Proj->get_Xtransform();
-            data.y = y+Proj->get_Ytransform();
-            data.z = z;
-            data.intensity=i;
-            cloud->points.push_back(data);
-          }
+      if (x != 0 && y != 0 && z != 0 && i != 0.5)
+      {
+        data.x = x+Proj->get_Xtransform();
+        data.y = y+Proj->get_Ytransform();
+        data.z = z;
+        data.intensity=i;
+        cloud->points.push_back(data);
       }
-      i++;
     }
-    file.close();
-    in.~QTextStream();
-    cloud->width = cloud->points.size ();
-    cloud->is_dense=true;
-    cloud->height=1;
-
-    QStringList Fname = fileName.split("/");
-    QStringList name = Fname.back().split(".");
-    Proj->save_newCloud("cloud",name.at(0),cloud);
-    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-//open new file
-    openCloudFile(fullname);
-
+    i++;
   }
+  fileName.close();
+  in.~QTextStream();
+  cloud->width = cloud->points.size ();
+  cloud->is_dense=true;
+  cloud->height=1;
+  return cloud;
 }
-void MainWindow::importlas()
+pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importLAS(QString file)
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-
-  QString fileName = QFileDialog::getOpenFileName(this,tr("open file"),"",tr("files (*.las)"));
-  if (fileName.isEmpty())
-  {
-    QMessageBox::warning(this,"ERROR","no name filled");
-    return;
-  }
-  else
-  {
-    std::ifstream ifs;
-    ifs.open(fileName.toUtf8().constData(), std::ios::in | std::ios::binary);
-
-    liblas::ReaderFactory f;
-    liblas::Reader reader = f.CreateWithStream(ifs);
-    liblas::Header const& header = reader.GetHeader();
-
+  std::ifstream ifs;
+  ifs.open(file.toUtf8().constData(), std::ios::in | std::ios::binary);
+  liblas::ReaderFactory f;
+  liblas::Reader reader = f.CreateWithStream(ifs);
 //read data into cloud
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    while (reader.ReadNextPoint())
-    {
-      liblas::Point const& p = reader.GetPoint();
-      pcl::PointXYZI data;
-
-      data.x = p.GetX()+Proj->get_Xtransform();
-      data.y = p.GetY()+Proj->get_Ytransform();
-      data.z = p.GetZ();
-      data.intensity=0;
-      cloud->points.push_back(data);
-    }
-    cloud->width = cloud->points.size ();
-    cloud->is_dense=true;
-    cloud->height=1;
-
-    QString name = QInputDialog::getText(this, tr("Name of Import File"),tr("Please insert name of\nimported file (e.g. cloud)"));
-    QString fullname = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name);
-    Proj->save_newCloud("cloud",name,cloud);
-//open new file
-    openCloudFile(fullname);
-  }
-}
-void MainWindow::importTerrainFile()
-{
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
-  if (ls.isEmpty())
+  while (reader.ReadNextPoint())
   {
-    QMessageBox::warning(this,"ERROR","No file selected");
-    return;
-  }
+    liblas::Point const& p = reader.GetPoint();
+    pcl::PointXYZI data;
 
-  for(int i=0;i<ls.size(); i++)
-  {
-    QString fileName = ls.at(i);
-    openTerrainFile(fileName);
-    Proj->save_newCloud("teren",fileName);
+    data.x = p.GetX()+Proj->get_Xtransform();
+    data.y = p.GetY()+Proj->get_Ytransform();
+    data.z = p.GetZ();
+    data.intensity=0;
+    cloud->points.push_back(data);
   }
+  cloud->width = cloud->points.size ();
+  cloud->is_dense=true;
+  cloud->height=1;
+  return cloud;
 }
-void MainWindow::importCloud()
+pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPCD(QString file)
 {
-   QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::io::loadPCDFile(file.toUtf8().constData(),*cloud);
+  cloud->width = cloud->points.size();
+  cloud->is_dense=true;
+  cloud->height=1;
+  return cloud;
+}
+
+void MainWindow::importBaseCloud()
+{
+QString selectedFilter;
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("Open file"),Proj->get_Path(),
+                                                 tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
+                                                 &selectedFilter);
   if (ls.isEmpty())
   {
     QMessageBox::warning(this,"ERROR","No file selected");
@@ -486,12 +405,19 @@ void MainWindow::importCloud()
   }
   for(int i=0;i<ls.size(); i++)
   {
-    QString fileName = ls.at(i);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile(fileName.toUtf8().constData(),*cloud);
-    cloud->width = cloud->points.size();
-    cloud->is_dense=true;
-    cloud->height=1;
+    QString fileName = ls.at(i);
+
+    if(selectedFilter == "PCD files (*.pcd)")
+      cloud = importPCD(fileName);
+    if(selectedFilter == "TXT files (*.txt)")
+      cloud = importTXT(fileName);
+    if(selectedFilter == "LAS files (*.las)")
+      cloud = importLAS(fileName);
+    if(selectedFilter == "PTS files (*.pts)")
+      cloud = importPTS(fileName);
+    if(selectedFilter == "PTX files (*.ptx)")
+      cloud = importPTX(fileName);
 
     QStringList Fname = fileName.split("\\");
     QStringList name = Fname.back().split(".");
@@ -502,36 +428,112 @@ void MainWindow::importCloud()
     openCloudFile(fileName);
   }
 }
-void MainWindow::importVegeCloud()
+void MainWindow::importTerrainFile()
 {
-  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
+  QString selectedFilter;
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+                                                 tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
+                                                 &selectedFilter);
   if (ls.isEmpty())
   {
     QMessageBox::warning(this,"ERROR","No file selected");
     return;
   }
-
   for(int i=0;i<ls.size(); i++)
   {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     QString fileName = ls.at(i);
-    openVegeFile(fileName);
-    Proj->save_newCloud("vege",fileName);
+
+    if(selectedFilter == "PCD files (*.pcd)")
+      cloud = importPCD(fileName);
+    if(selectedFilter == "TXT files (*.txt)")
+      cloud = importTXT(fileName);
+    if(selectedFilter == "LAS files (*.las)")
+      cloud = importLAS(fileName);
+    if(selectedFilter == "PTS files (*.pts)")
+      cloud = importPTS(fileName);
+    if(selectedFilter == "PTX files (*.ptx)")
+      cloud = importPTX(fileName);
+
+    QStringList Fname = fileName.split("\\");
+    QStringList name = Fname.back().split(".");
+
+    Proj->save_newCloud("teren",name.at(0),cloud);
+
+    QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+    openCloudFile(fileName);
+  }
+}
+void MainWindow::importVegeCloud()
+{
+  QString selectedFilter;
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+                                                 tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
+                                                 &selectedFilter);
+  if (ls.isEmpty())
+  {
+    QMessageBox::warning(this,"ERROR","No file selected");
+    return;
+  }
+  for(int i=0;i<ls.size(); i++)
+  {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    QString fileName = ls.at(i);
+
+    if(selectedFilter == "PCD files (*.pcd)")
+      cloud = importPCD(fileName);
+    if(selectedFilter == "TXT files (*.txt)")
+      cloud = importTXT(fileName);
+    if(selectedFilter == "LAS files (*.las)")
+      cloud = importLAS(fileName);
+    if(selectedFilter == "PTS files (*.pts)")
+      cloud = importPTS(fileName);
+    if(selectedFilter == "PTX files (*.ptx)")
+      cloud = importPTX(fileName);
+
+    QStringList Fname = fileName.split("\\");
+    QStringList name = Fname.back().split(".");
+
+    Proj->save_newCloud("vege",name.at(0),cloud);
+
+    QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+    openCloudFile(fileName);
   }
 }
 void MainWindow::importTreeCloud()
 {
-  QStringList ls =QFileDialog::getOpenFileNames(this,tr("open file"),"",tr("files (*.pcd)"));
+  QString selectedFilter;
+  QStringList ls = QFileDialog::getOpenFileNames(this,tr("open file"),Proj->get_Path(),
+                                                 tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
+                                                 &selectedFilter);
   if (ls.isEmpty())
   {
     QMessageBox::warning(this,"ERROR","No file selected");
     return;
   }
-
   for(int i=0;i<ls.size(); i++)
   {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     QString fileName = ls.at(i);
-    openTreeFile(fileName);
-    Proj->save_newCloud("strom",fileName);
+
+    if(selectedFilter == "PCD files (*.pcd)")
+      cloud = importPCD(fileName);
+    if(selectedFilter == "TXT files (*.txt)")
+      cloud = importTXT(fileName);
+    if(selectedFilter == "LAS files (*.las)")
+      cloud = importLAS(fileName);
+    if(selectedFilter == "PTS files (*.pts)")
+      cloud = importPTS(fileName);
+    if(selectedFilter == "PTX files (*.ptx)")
+      cloud = importPTX(fileName);
+
+    QStringList Fname = fileName.split("\\");
+    QStringList name = Fname.back().split(".");
+
+    Proj->save_newCloud("strom",name.at(0),cloud);
+
+    QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+    openCloudFile(fileName);
   }
 }
 
@@ -3205,25 +3207,9 @@ void MainWindow::createActions()
   import_projectAct->setStatusTip(tr("import of existing project into new folder"));
   connect(import_projectAct, SIGNAL(triggered()), this, SLOT(importProject()));
 
-  importTXTAct = new QAction( tr("&Import TXT, XYZ"), this);
-  importTXTAct->setStatusTip(tr("Import of txt file"));
-  connect(importTXTAct, SIGNAL(triggered()), this, SLOT(importtxt()));
-
-  importPTSAct = new QAction( tr("&Import PTS"), this);
-  importPTSAct->setStatusTip(tr("Import of pts file"));
-  connect(importPTSAct, SIGNAL(triggered()), this, SLOT(importpts()));
-
-  importPTXAct = new QAction( tr("&Import PTX"), this);
-  importPTXAct->setStatusTip(tr("Import of ptx file"));
-  connect(importPTXAct, SIGNAL(triggered()), this, SLOT(importptx()));
-
-  importLASAct = new QAction( tr("&Import LAS"), this);
-  importLASAct->setStatusTip(tr("Import of las file"));
-  connect(importLASAct, SIGNAL(triggered()), this, SLOT(importlas()));
-
-  importPCDAct = new QAction(tr("&Import basic cloud (PCD)"), this);
-  importPCDAct->setStatusTip(tr("Open an existing file"));
-  connect(importPCDAct, SIGNAL(triggered()), this, SLOT(importCloud()));
+  importBaseAct = new QAction(tr("&Import basic cloud"), this);
+  importBaseAct->setStatusTip(tr("Open an existing file"));
+  connect(importBaseAct, SIGNAL(triggered()), this, SLOT(importBaseCloud()));
 
   importTerenAct = new QAction(tr("&Import Terrain file (PCD)"), this);
   importTerenAct->setStatusTip(tr("Open an existing terrain file"));
@@ -3386,11 +3372,7 @@ void MainWindow::createMenus()
   fileMenu->addAction(import_projectAct);
   fileMenu->addSeparator();
   importMenu =  fileMenu->addMenu(tr("Import"));
-  importMenu->addAction(importTXTAct);
-  importMenu->addAction(importLASAct);
-  importMenu->addAction(importPTSAct);
-  importMenu->addAction(importPTXAct);
-  importMenu->addAction(importPCDAct);
+  importMenu->addAction(importBaseAct);
   importMenu->addAction(importTerenAct);
   importMenu->addAction(importVegeAct);
   importMenu->addAction(importTreeAct);

@@ -25,19 +25,30 @@
   /*! Algorithms for computing convex hull, concave hull in 2D or 3D space. */
 class Hull : public Cloud
 {
-    Hull *m_hull;
-    Cloud *vexhull;// mracno hranicnich bodu
-    Cloud *concavehull;
-    float m_areaconvex;               /**< Area of tree projection from top view */
-    float m_areaconcave;               /**< Area of tree projection from top view */
-    float maxEdgeLenght;
-    float vertical;
-    float direction;
+    Hull *m_hull;                      /**<  */
+    Cloud *vexhull;                    /**< Cloud representing convex hull */
+    Cloud *concavehull;                /**< Cloud representing concave hull */
+    float m_areaconvex;                /**< Area of convex hull */
+    float m_areaconcave;               /**< Area of concave hull */
+    float maxEdgeLenght;               /**< Maximal length of edge */
+    float vertical;                    /**< Vertical angle  */
+    float direction;                   /**< Horizontal angle */
+
 public:
+      //! Default constructor
+      /*! Constructor for creating Hull \param cloud pointcloud \param name name of the cloud \param col color of the cloud */
     Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col);
+      //! Constructor
+      /*! Constructor for creating Hull \param cloud pointcloud \param name name of the cloud */
     Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
+      //! Constructor
+      /*! Constructor for creating Hull \param Cloud of points*/
     Hull (Cloud cloud);
+      //! Set convex hull for cloud
+      /*! For m_cloud create convex hull and save it onto m_convexhull*/
     void set_convexhull();
+      //! Set convex hull for cloud
+      /*! \param c cloud representing hull points*/
     void set_convexhull(Cloud c);
     void set_concavehull(float maxEdgeLenght);
     int set_concaveZkracovanim(float maxEdgeLenght);

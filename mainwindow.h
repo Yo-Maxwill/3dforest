@@ -57,24 +57,13 @@ private slots:
     /*! Import existing project to new path and correct all path in proj file. */
   void importProject();
   //file import/open
-    //! Import text file.
-    /*! Import existing text file into project as a base cloud.  */
-  void importtxt();
-    //! Import LAS file.
-    /*! Import existing las file into project as a base cloud.  */
-  void importlas();
-    //! Import PTS Leica file.
-    /*! Import existing pts file into project as a base cloud. Fields of this file is: X Y Z intensity  */
-  void importpts();
-    //! Import PTX Leica file.
-    /*! Import existing ptx file into project as a base cloud.  */
-  void importptx();
+
     //! Import PCD file.
     /*! Import existing file into project as a terrain cloud.  */
   void importTerrainFile();
-    //! Import PCD file.
+    //! Import Basic cloud file.
     /*! Import existing file into project as a base cloud.  */
-  void importCloud();
+  void importBaseCloud();
     //! Import PCD file.
     /*! Import existing file into project as a vegetation cloud.  */
   void importVegeCloud();
@@ -314,7 +303,22 @@ private:
   //! Create toolbars
     /*! Create toolbars for display/hide tree parameters.  */
   void createToolbars();
-
+//import various formats
+    //! Import text file.
+    /*! Import existing text file into project as a base cloud.  */
+  pcl::PointCloud<pcl::PointXYZI>::Ptr importTXT(QString file);
+    //! Import LAS file.
+    /*! Import existing las file into project as a base cloud.  */
+  pcl::PointCloud<pcl::PointXYZI>::Ptr importLAS(QString file);
+    //! Import PCD file.
+    /*! Import existing text file into project as a base cloud.  */
+  pcl::PointCloud<pcl::PointXYZI>::Ptr importPCD(QString file);
+    //! Import PTS Leica file.
+    /*! Import existing pts file into project as a base cloud. Fields of this file is: X Y Z intensity  */
+  pcl::PointCloud<pcl::PointXYZI>::Ptr importPTS(QString file);
+    //! Import PTX Leica file.
+    /*! Import existing ptx file into project as a base cloud.  */
+  pcl::PointCloud<pcl::PointXYZI>::Ptr importPTX(QString file);
 //opening methods
     //! Open project file
     /*! Open project file load transformation matrix, all clouds and display it.
@@ -499,14 +503,10 @@ private:
   QAction *open_projectAct;   /**< Open project Act */
   QAction *close_projectAct;  /**< Close project Act */
   QAction *import_projectAct; /**< Import Project Act */
-  QAction *importTXTAct;      /**< Import text file Act */
-  QAction *importLASAct;      /**< Import LAS file Act */
-  QAction *importPTSAct;      /**< Import PTS file Act */
-  QAction *importPTXAct;      /**< Import PTX file Act */
-  QAction *importPCDAct;      /**< Import PCD file as base cloud Act */
-  QAction *importTerenAct;    /**< Import PCD file as terrain cloud Act */
-  QAction *importVegeAct;     /**< Import PCD file as vegetation cloud Act */
-  QAction *importTreeAct;     /**< Import PCD file as tree cloud Act */
+  QAction *importBaseAct;     /**< Import files as base cloud Act */
+  QAction *importTerenAct;    /**< Import files as terrain cloud Act */
+  QAction *importVegeAct;     /**< Import files as vegetation cloud Act */
+  QAction *importTreeAct;     /**< Import files as tree cloud Act */
   QAction *exportTXTAct;      /**< Export cloud as text file Act */
   QAction *exportPLYAct;      /**< Export cloud as PLY file Act */
   QAction *exportPTSAct;      /**< Export cloud as PTS file Act */
