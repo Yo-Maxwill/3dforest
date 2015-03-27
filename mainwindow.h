@@ -486,6 +486,7 @@ private:
     /*! Return names of all base clouds in project
         \return QStringList of all base cloud names */
   QStringList get_baseNames();
+  QString name_Exists();
 
   QProgressBar *pBar;          /**< ProgressBar definition */
   //MENUS

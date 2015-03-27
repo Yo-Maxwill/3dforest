@@ -422,10 +422,23 @@ QString selectedFilter;
     QStringList Fname = fileName.split("\\");
     QStringList name = Fname.back().split(".");
 
-    Proj->save_newCloud("cloud",name.at(0),cloud);
-
+    //if file exist in project folder, ask for another name
     QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-    openCloudFile(fileName);
+    QString newName;
+    if(QFile(newFile).exists())
+    {
+      QString a = QString ("In project folder already exist file with the same name - %1.pcd. Please enter new name for imported file.").arg(name.at(0));
+      QMessageBox::information(0,("File exist"), a);
+      newName = name_Exists();
+    }
+    else
+    {
+      newName = name.at(0);
+    }
+
+    Proj->save_newCloud("cloud",newName,cloud);
+    QString newFilepath = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(newName);
+    openCloudFile(newFilepath);
   }
 }
 void MainWindow::importTerrainFile()
@@ -458,10 +471,23 @@ void MainWindow::importTerrainFile()
     QStringList Fname = fileName.split("\\");
     QStringList name = Fname.back().split(".");
 
-    Proj->save_newCloud("teren",name.at(0),cloud);
-
+    //if file exist in project folder, ask for another name
     QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-    openCloudFile(fileName);
+    QString newName;
+    if(QFile(newFile).exists())
+    {
+      QString a = QString ("In project folder already exist file with the same name - %1.pcd. Please enter new name for imported file.").arg(name.at(0));
+      QMessageBox::information(0,("File exist"), a);
+      newName = name_Exists();
+    }
+    else
+    {
+      newName = name.at(0);
+    }
+
+    Proj->save_newCloud("teren",newName,cloud);
+    QString newFilepath = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(newName);
+    openCloudFile(newFilepath);
   }
 }
 void MainWindow::importVegeCloud()
@@ -493,11 +519,22 @@ void MainWindow::importVegeCloud()
 
     QStringList Fname = fileName.split("\\");
     QStringList name = Fname.back().split(".");
-
-    Proj->save_newCloud("vege",name.at(0),cloud);
-
+    //if file exist in project folder, ask for another name
     QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-    openCloudFile(fileName);
+    QString newName;
+    if(QFile(newFile).exists())
+    {
+      QString a = QString ("In project folder already exist file with the same name - %1.pcd. Please enter new name for imported file.").arg(name.at(0));
+      QMessageBox::information(0,("File exist"), a);
+      newName = name_Exists();
+    }
+    else
+    {
+      newName = name.at(0);
+    }
+    Proj->save_newCloud("vege",newName,cloud);
+    QString newFilepath = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(newName);
+    openCloudFile(newFilepath);
   }
 }
 void MainWindow::importTreeCloud()
@@ -529,11 +566,22 @@ void MainWindow::importTreeCloud()
 
     QStringList Fname = fileName.split("\\");
     QStringList name = Fname.back().split(".");
-
-    Proj->save_newCloud("strom",name.at(0),cloud);
-
+    //if file exist in project folder, ask for another name
     QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
-    openCloudFile(fileName);
+    QString newName;
+    if(QFile(newFile).exists())
+    {
+      QString a = QString ("In project folder already exist file with the same name - %1.pcd. Please enter new name for imported file.").arg(name.at(0));
+      QMessageBox::information(0,("File exist"), a);
+      newName = name_Exists();
+    }
+    else
+    {
+      newName = name.at(0);
+    }
+    Proj->save_newCloud("strom",newName,cloud);
+    QString newFilepath = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(newName);
+    openCloudFile(newFilepath);
   }
 }
 
@@ -3739,7 +3787,39 @@ QStringList MainWindow::get_baseNames()
   }
 return names;
 }
+QString MainWindow::name_Exists()
+{
 
+  QString newName = QInputDialog::getText(this, tr("Name of new Cloud file"),tr("Please enter name for new cloud (without spaces)"));
+
+  if(newName.isEmpty())
+  {
+    QMessageBox::warning(this,tr("Error"),tr("You forgot to fill name of new tree cloud"));
+    name_Exists();
+  }
+  else
+  {
+    QString path = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(newName);
+    QFile file(path);
+    if(file.exists())
+    {
+      //do you wish to rewrite existing file?
+      QMessageBox::StandardButton rewrite = QMessageBox::question(this,tr("Overwrite file?"),tr("File with given name exist. Do you wish to overwrite file?"),QMessageBox::Yes|QMessageBox::No);
+      if(rewrite == QMessageBox::Yes)
+      {
+        return newName;
+      }
+      else
+      {
+        return name_Exists();
+      }
+    }
+    else
+    {
+      return newName;
+    }
+  }
+}
 //TREEWIDGET
 
 void MainWindow::addTreeItem(QString name)
