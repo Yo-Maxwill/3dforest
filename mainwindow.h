@@ -1,18 +1,18 @@
-//  3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
+//    This file is part of 3DFOREST  www.3dforest.eu
 //
-//    This program is free software: you can redistribute it and/or modify
+//    3DFOREST is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
 //    the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
 //
-//    This program is distributed in the hope that it will be useful,
+//    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////
 #ifndef MAINWINDOW_H_INCLUDED
 #define MAINWINDOW_H_INCLUDED
 
@@ -138,58 +138,96 @@ private slots:
     /*! Compute DBH for given tree with method of Randomized Hough Transform for circle detection. User can select single tree or all_trees.
         Result is displayed as a cylinder in 1,3 m from position with green value of estimated DBH. */
   void dbhHT();
-    //! display DBH computed by hough transform.
-    /*! Compute DBH for given tree with method of Randomized Hough Transform for circle detection. User can select single tree or all_trees.
-        Result is displayed as a cylinder in 1,3 m from position with green value of estimated DBH. */
+    //! Display DBH computed by Randomized Hough Transform.
+    //!  For given cloud name show dbh_cloud and cylinder with text of DBH value
+    /*! \param name name of tree cloud.*/
   void dbhHTDisplay(QString name);
+    //! Display DBH computed by Randomized Hough Transform for all trees.
   void dbhHT_DisplayAll();
+    //! Hide cylinder and DBH_cloud fro all trees.
   void dbhHT_HideAll();
-    //! Compute DBH using Least Square Regression.
+    //! Compute and display DBH using Least Square Regression.
     /*! Compute DBH for given tree with method of Least Square Regression for circle fitting. User can select single tree or all_trees.
         Result is displayed as a cylinder in 1,3 m from position with beige value of estimated DBH.*/
   void dbhLSR();
+    //! Display DBH computed using Least Square Regression.
+    /*! For given cloud name show dbh_cloud and cylinder with text of DBH value*/
+    /*! \param name name of tree cloud.*/
   void dbhLSRDisplay(QString name);
+    //! Display DBH computed by Least Square Regression for all trees.
   void dbhLSR_DisplayAll();
+    //! Hide cylinder and DBH_cloud fro all trees.
   void dbhLSR_HideAll();
     //! Compute tree height.
-    /*! Compute height for given tree as as diff of Z coordinate between highest point of tree and Z coordinate of input terrain point closest to the tree position.
+    /*! Compute and display height for given tree as diff of Z coordinate between highest point of tree and Z coordinate of input terrain point closest to the tree position.
         Lenght is displayed as a line connection those two points and beige value of height. */
   void height();
+    //! Display height for given tree.
+    /*! For given cloud name show line starting at tree position and follows Z axis up to the height of the highest pint of tree. at the end is dispalyed test with value.*/
+    /*! \param name name of tree cloud.*/
   void heightDisplay(QString name);
+    //! Display Height for all trees.
   void height_DisplayAll();
+    //! Hide line and text of height for all trees.
   void height_HideAll();
     //! Compute tree position.
     /*! Compute tree position using median coordinate of all point that are up to given height above lowest point of cloud.
         Position is displayed as a sphere with centre at position and radius of 10 cm. */
   void position();
+    //! Display position as s sphere for given tree.
+    /*! For given cloud name show sphere at tree position.*/
+    /*! \param name name of tree cloud.*/
   void positionDisplay(QString name);
+    //! Display sphere at position for all trees.
   void position_DisplayAll();
+    //! Hide sphere at position for all trees.
   void position_HideAll();
     //! Compute cloud lenght.
     /*! Compute hlenght for given tree as as diff of coordinates of two selected points.
         it select axis with biggest value range. On this range select extreme points and compute distance between those points.
         Lenght is displayed as a line connection those two points and green value of lenght.  */
   void length();
+    //! Display length for given tree.
+    /*! For given cloud name show line of two points with greatest distance between in cloud and text with distance at starting point.*/
+    /*! \param name name of tree cloud.*/
   void lengthDisplay(QString name);
+    //! Display cloud length for all trees.
   void length_DisplayAll();
+    //! Hide line and text of cloud length for all trees.
   void length_HideAll();
-    //! Display tree skeleton.
-    /*! Compute tree skeleton  for given tree and displays it as lines.  */
+    //! Compute and display tree skeleton.
+    /*! Slot for selecting tree cloud and compute skeleton. skeleton is saved in project with ext skel. and it is loaded automatically with tree. */
   void skeleton();
+    //! Display tree skeleton.
+    /*! Display lines connected in tree skeleton. */
+    /*! \param name name of tree cloud.*/
   void skeletonDisplay(QString name);
+    //! Display tree skeleton for all trees.
+    /*! Display lines connected in tree skeleton for all trees. */
   void skeleton_DisplayAll();
+    //! Hide skeleton of all trees.
   void skeleton_HideAll();
-    //! Display convex hull of tree.
-    /*! Compute convex hull  from top view of tree and display it on terrain.  */
+    //! Compute and display convex planar projection of tree.
+    /*! Compute convex planar projection of tree and display.  */
   void convexhull();
+    //! Display convex planar projection of tree.
+    /*! Display convex planar projection of tree and display it as a polygon with 50% opacity and with text at tree position with value of polygon area.  */
+    /*! \param name name of tree cloud.*/
   void convexhullDisplay(QString name);
+    //! Display convex planar projection of all trees.
   void convexhull_DisplayAll();
+    //! Hide convex planar projection of all trees.
   void convexhull_HideAll();
-    //! Display concave hull of tree.
-    /*! Compute concave hull from top view of tree and display it on terrain.  */
+    //! Compute and display concave planar projection of tree.
+    /*! Compute concave planar projection of tree and display.  */
   void concavehull();
+    //! Display concave planar projection of tree.
+    /*! Display concave planar projection of tree and display it as a polygon with 50% opacity and with text at tree position with value of polygon area.  */
+    /*! \param name name of tree cloud.*/
   void concavehullDisplay(QString name);
+    //! Display concave planar projection of all trees.
   void concavehull_DisplayAll();
+    //! Hide concave planar projection of all trees.
   void concavehull_HideAll();
     //! Manual editing of tree DBH cloud.
     /*! Choose tree cloud for manual editing of cloud representing points for estimating DBH. */
@@ -509,20 +547,20 @@ private:
   QAction *IDWAct;            /**< IDW Act */
 
   //Treebar actions
-  QToolBar *treeBar;
-  QAction *dbhthT;              /**< display/hide cylinders and text associated to dbhHT. Used in treeBar */
-  QAction *dbhlsrT;             /**< display/hide cylinders and text associated to dbhLSR. Used in treeBar */
-  QAction *heightT;             /**< display/hide  line and text associated to height. Used in treeBar */
-  QAction *positionT;           /**< display/hide  sphere in tree position. Used in treeBar */
-  QAction *lengthT;              /**< display/hide  line connecting the most remote points. Used in treeBar */
-  QAction *convexT;             /**< display/hide  points representing convex projection of tree. Used in treeBar */
-  QAction *concaveT;            /**< display/hide  points representing concave projection of tree. Used in treeBar */
-  QAction *skeletonT;           /**< display/hide  lines connected in tree skeleton. Used in treeBar */
+  QToolBar *treeBar;          /**< Toolbar with display/hide tree attributes */
+  QAction *dbhthT;            /**< display/hide cylinders and text associated to dbhHT. Used in treeBar */
+  QAction *dbhlsrT;           /**< display/hide cylinders and text associated to dbhLSR. Used in treeBar */
+  QAction *heightT;           /**< display/hide  line and text associated to height. Used in treeBar */
+  QAction *positionT;         /**< display/hide  sphere in tree position. Used in treeBar */
+  QAction *lengthT;           /**< display/hide  line connecting the most remote points. Used in treeBar */
+  QAction *convexT;           /**< display/hide  points representing convex projection of tree. Used in treeBar */
+  QAction *concaveT;          /**< display/hide  points representing concave projection of tree. Used in treeBar */
+  QAction *skeletonT;         /**< display/hide  lines connected in tree skeleton. Used in treeBar */
 
-  Project *Proj;                /**< Project definition */
-  Cloud *m_cloud;               /**< temporary cloud serves mainly in editing mode */
-  Cloud *m_cloud1;              /**< temporary cloud serves mainly in editing mode */
-  Cloud *m_cloud2;              /**< temporary cloud serves mainly in editing mode*/
+  Project *Proj;              /**< Project definition */
+  Cloud *m_cloud;             /**< temporary cloud serves mainly in editing mode */
+  Cloud *m_cloud1;            /**< temporary cloud serves mainly in editing mode */
+  Cloud *m_cloud2;            /**< temporary cloud serves mainly in editing mode*/
  };
 
 #endif // MAINWINDOW_H_INCLUDED

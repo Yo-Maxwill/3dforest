@@ -1,18 +1,18 @@
-//  3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
+//    This file is part of 3DFOREST  www.3dforest.eu
 //
-//    This program is free software: you can redistribute it and/or modify
+//    3DFOREST is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
 //    the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
 //
-//    This program is distributed in the hope that it will be useful,
+//    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////
 #ifndef PROJECT_H_INCLUDED
 #define PROJECT_H_INCLUDED
 
@@ -104,8 +104,6 @@ public:
     /*! Delete given cloud from project vector, proj file and from the folder \param name cloud name */
   void delete_Cloud(QString name);
 
-
-
     //GET
     //! Get X value of tranformation matrix.
     /*! \return value of X transformation matrix  */
@@ -184,15 +182,23 @@ public:
     //! Set tree DBH_pointCloud.
     /*! \param name tree name \param cloud pointCloud representing points for DBH estimation  */
   void set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    //! Set convex hull pointCloud.
-    /*! \param name tree name \param cloud pointCloud representing points of convex hull  */
+    //! Set convex planar projection pointCloud.
+    /*! \param name tree name \param cloud pointCloud representing points of convex planar projection */
   void set_treeConvexCloud(QString name);
-    //! Set concave hull pointCloud.
-    /*! \param name tree name \param cloud pointCloud representing points of concave hull  */
+    //! Set concave planar projection pointCloud.
+    /*! \param name tree name \param edge maximal length of distance between two points. \return number of edges with greates distance than maximal. */
   int set_treeConcaveCloud(QString name,float edge);
+    //! Set tree position.
+    /*! \param name tree name */
   void set_treePosition(QString name);
+    //! Set tree DBH cloud.
+    /*! \param name tree name */
   void set_treeDBHCloud(QString name);
+    //! Set tree length.
+    /*! \param name tree name */
   void set_length(QString name);
+    //! Set tree skeleton.
+    /*! \param name tree name  \param c Cloud of point representing skeleton.*/
   void set_skeleton(QString name, Cloud c);
 //OSTCLOUDset_dbhCloud(cl);
     //! Set new ost cloud.
@@ -204,7 +210,13 @@ public:
     //! Get size of ost cloud vector.
     /*! \return size of vector containing ost clouds */
   int get_sizeostCV();
+    //! Set concave planar projection pointCloud fro any pointcloud.
+    /*! \param cloud input pointCloud \param edge length of maximal edge length \param name name of the cloud \param color color of the cloud */
+    /*! \return Cloud with point of concave planar projection */
   Cloud set_ConcaveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float edge, QString name, QColor color);
+    //! Set convex planar projection pointCloud fro any pointcloud.
+    /*! \param cloud input pointCloud \param name name of the cloud \param color color of the cloud */
+    /*! \return Cloud with point of convex planar projection */
   Cloud set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor color);
 
 private:
@@ -212,6 +224,5 @@ private:
     /*!  Function ask user if wants to delete this cloud from disc \param name name of the cloud */
     void remove_file(QString name);
 
-  //jeste pridat mazani ze souboru proj.3df a podobne funkce
 };
 #endif // PROJECT_H_INCLUDED

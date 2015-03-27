@@ -1,18 +1,18 @@
-//  <3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
+//    This file is part of 3DFOREST  www.3dforest.eu
 //
-//    This program is free software: you can redistribute it and/or modify
+//    3DFOREST is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
 //    the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
 //
-//    This program is distributed in the hope that it will be useful,
+//    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////
 #ifndef GUI_H_INCLUDED
 #define GUI_H_INCLUDED
 
@@ -132,7 +132,7 @@ private:
   QString input_cloud3;           /**< Third input cloud name */
   QString output_cloud1;          /**< Output cloud name */
   QString output_cloud2;          /**< Second output cloud name */
-  QString output_type;          /**< Second output cloud name */
+  QString output_type;            /**< Second output cloud name */
 
   float float_value1;             /**< input float value */
   float float_value2;             /**< input float value 2 */
@@ -189,79 +189,115 @@ public:
     /*!  set output cloud name. On line is example of possible name
         \param label label of edit line \param example possible name of new cloud */
   void set_outputCloud1(QString label, QString example);
-    //!  Set dialog despcription .
-    /*!  Controls if user enters only digit and no other symbols.
+    //!  Set dialog description .
+    /*!  Displayed description of function.
      \param text explanation */
   void set_description(QString text);
+    //!  Set tree for attributes export.
+    /*!  Sets list of all tree names into combobox for selection.
+     \param li list of all trees*/
   void set_trees(QStringList li);
+    //!  Get tree name.
+    /*!  return selected tree name.
+     \return name of selected tree*/
   QString get_treeName();
+    //!  Get separator.
+    /*!  return separator of fields in resulting file.
+     \return QString of separator*/
   QString get_separator();
+    //!  Get output file.
+    /*!  return the path to the new file containng results.
+     \return QString file path*/
   QString get_outputFile();
+    //!  True if DBH_HT is selected.
+    /*! \return bool */
   bool get_DBH_HT();
+    //!  True if DBH_LSR is selected.
+    /*! \return bool */
   bool get_DBH_LSR();
+    //!  True if Position is selected.
+    /*! \return bool */
   bool get_Position();
+    //!  True if Height is selected.
+    /*! \return bool */
   bool get_Height();
+    //!  True if Length is selected.
+    /*! \return bool */
   bool get_Length();
+    //!  True if Points is selected.
+    /*! \return bool */
   bool get_Points();
+    //!  True if compute area of convex planar projection is selected.
+    /*! \return bool */
   bool get_areaconvex();
+  //!  True if compute area of concave planar projection is selected.
+    /*! \return bool */
   bool get_areaconcave();
 
 
 private slots:
-  //!  Called when directory button pressed
+    //!  Called when directory button pressed
     /*!  Choose existing directory  for proejct creation*/
   void setExistingDirectory();
     //!  when pressed button ok .
     /*!  set variables when user press OK button */
   void ok();
-  //!  Validate user input .
+    //!  Validate user input .
     /*!  Controls if all inputs are in right format \param text input changed text */
   void validate(QString);
-
+    //!  Slot if other separator is selected.
+    /*!  Controls field other separator is selected. \param checked if other separator field is checked */
   void other_Separator(bool checked);
+
   void all_attributes(int checked);
+
   void all_attr(int checked);
 
 private:
-  QLabel *treeLabel;
-  QComboBox * inputTrees;        /**< List of input tree names */
-  QLabel *fileLabel;
-  QLineEdit *outputFile;          /**< output file name */
+  QLabel *treeLabel;              /**< Description of tree selection combobox*/
+  QComboBox * inputTrees;         /**< List of input tree names */
+  QLabel *fileLabel;              /**< Desription of QlineEdit for output file */
+  QLineEdit *outputFile;          /**< Output file name */
   QPushButton *directoryButton;   /**< Button for selecting directory for project */
-  QDialogButtonBox *buttonBox;    /**< default buttons */
-  QHBoxLayout *buttontLayout;     /**< default buttons layout */
-  QVBoxLayout *InputLayout;       /**< default layout of input lines */
-  QHBoxLayout *inputareaLayout;   /**< default layout of input area */
-  QVBoxLayout *mainLayout;        /**< default layout */
-  QVBoxLayout *treeLayout;        /**< default layout */
-  QGridLayout *fileLayout;
-  QRadioButton *radio1;
-  QRadioButton *radio2;
-  QRadioButton *radio3;
-  QRadioButton *radio4;
-  QLineEdit *sep;               /**< separator */
-  QCheckBox *CHB_DBH_HT;
-  QCheckBox *CHB_DBH_LSR;
-  QCheckBox *CHB_height;
-  QCheckBox *CHB_length;
-  QCheckBox *CHB_position;
-  QCheckBox *CHB_areavex;
-  QCheckBox *CHB_areacave;
-  QCheckBox *CHB_points;
-  QCheckBox *CHB_all;
+  QDialogButtonBox *buttonBox;    /**< Default buttons */
+  QHBoxLayout *buttontLayout;     /**< horizontal layout */
+  QVBoxLayout *InputLayout;       /**< Default layout of input lines */
+  QHBoxLayout *inputareaLayout;   /**< Default layout of input area */
+  QVBoxLayout *mainLayout;        /**< Default layout */
+  QVBoxLayout *treeLayout;        /**< Default layout */
+  QGridLayout *fileLayout;        /**< Default layout of check boxesn and attributes*/
+  QRadioButton *radio1;           /**< separator button - semicolon*/
+  QRadioButton *radio2;           /**< separator button - space*/
+  QRadioButton *radio3;           /**< separator button - tabulator*/
+  QRadioButton *radio4;           /**< separator button - other*/
+  QLineEdit *sep;                 /**< optional separator */
+  QCheckBox *CHB_DBH_HT;          /**< checkbox for DBH HT*/
+  QCheckBox *CHB_DBH_LSR;         /**< checkbox for DBH LSR*/
+  QCheckBox *CHB_height;          /**< checkbox for Height*/
+  QCheckBox *CHB_length;          /**< checkbox for Length*/
+  QCheckBox *CHB_position;        /**< checkbox for Position*/
+  QCheckBox *CHB_areavex;         /**< checkbox for area of convex planar projection*/
+  QCheckBox *CHB_areacave;        /**< checkbox for area of concave planar projection*/
+  QCheckBox *CHB_points;          /**< checkbox for point number*/
+  QCheckBox *CHB_all;             /**< checkbox for all attributes*/
 
-  bool DBH_HT;
-  bool DBH_LSR;
-  bool Position;
-  bool Height;
-  bool Length;
-  bool Points;
-  bool Areaconvex;
-  bool Areaconcave;
+  bool DBH_HT;                    /**< true if checkbox for DBH HT is selected*/
+  bool DBH_LSR;                   /**< true if checkbox for DBH LSR is selected*/
+  bool Position;                  /**< true if checkbox for Position is selected*/
+  bool Height;                    /**< true if checkbox for Height is selected*/
+  bool Length;                    /**< true if checkbox for Lengthis selected*/
+  bool Points;                    /**< true if checkbox for point number is selected*/
+  bool Areaconvex;                /**< true if checkbox for area of convex planar projection is selected*/
+  bool Areaconcave;               /**< true if checkbox for area of concave planar projection is selected*/
 
+
+    //!  Group of tree attributes checkboxes.
+    /*!  \return group of attributes checkboxes in defined layout*/
   QGroupBox *attributesGroup();
+    //!  Group of separator checkboxes.
+    /*!  \return group of separator widgets in defined layout*/
   QGroupBox *separatorGroup();
-  QString m_separator;
+  QString m_separator;            /**< QString containg selected separator*/
 
 };
 //PROEJCT WIZARD

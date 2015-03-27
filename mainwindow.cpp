@@ -1,18 +1,18 @@
-//  <3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
+//    This file is part of 3DFOREST  www.3dforest.eu
 //
-//    This program is free software: you can redistribute it and/or modify
+//    3DFOREST is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
 //    the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
 //
-//    This program is distributed in the hope that it will be useful,
+//    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////
 #include "mainwindow.h"
 
 
@@ -3807,11 +3807,11 @@ void MainWindow::deleteCloud(QString name)
 void MainWindow::about()
 {
 QMessageBox::about(this,tr("about 3D Forest application"),tr(" 3D Forest application started as a part of Ph.D. thesis.\n"
-                                                             " But now continue as a free platform for TLS data processing. \n"
+                                                             " But now continue as a free platform for TLS data processing. \n\n"
                                                              "  AUTHORS:\n "
-                                                             "Jan Trochta j.trochta@gmail.com \n"
-                                                             " Martin Krucek krucek.martin@gmail.com\n"
-                                                             "Kamil Kral kamil.kral@vukoz.cz"));
+                                                             "\tJan Trochta j.trochta@gmail.com \n"
+                                                             "\tMartin Krucek krucek.martin@gmail.com\n"
+                                                             "\tKamil Kral kamil.kral@vukoz.cz"));
  }
 void MainWindow::dispCloud(QString name)
 {

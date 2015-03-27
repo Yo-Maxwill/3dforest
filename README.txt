@@ -1,11 +1,7 @@
 3DFOREST application
 created as a part of PhD thesis at VUKOZ Czech republic.
-Published under term of GPL v3 license. for more info see LICENSE file
-	
-AUTHORS:	Jan trochta 	j.trochta@gmail.com
-		Martin Krucek 	krucek.martin@gmail.com
-		Kamil Kral	kamil.kral@vukoz.cz
-
+Published under terms ofGnu/GPL v3 licence.
+created by: Jan trochta j.trochta@gmail.com
 
 INSTALLATION
 	For successfull compilation  from source are needed those libraries:

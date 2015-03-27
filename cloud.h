@@ -1,18 +1,18 @@
-//  3DFOREST - tool for processing lidar data from forest environment>
-//    Copyright (C) <2014>  Jan Trochta
+//    This file is part of 3DFOREST  www.3dforest.eu
 //
-//    This program is free software: you can redistribute it and/or modify
+//    3DFOREST is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
 //    the Free Software Foundation, either version 3 of the License, or
 //    (at your option) any later version.
 //
-//    This program is distributed in the hope that it will be useful,
+//    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////
 
 #ifndef CLOUD_H_INCLUDED
 #define CLOUD_H_INCLUDED
@@ -48,7 +48,8 @@ struct stredLSR {
     {return (i < str.i);}
 				};
 
-
+  //! Basic data class of pointcloud representation.
+  /*! Class represents points cloud with color, point size and name.  */
 class Cloud
 {
 protected:
@@ -178,28 +179,53 @@ public:
   float get_height();
     //! Get tree position.
     /*! Ger tree position. \return pcl::point representing position of tree */
-    pcl::PointXYZI get_pose();
+  pcl::PointXYZI get_pose();
     //! Get cloud length.
     /*! Get tree cloud length.  \return value of tree cloud length*/
-    float get_length();
+  float get_length();
     //! Get lowest/highest point of tree.
     /*! \param low if true get lowest point else highest \return pcl::point representing lowest/highest point of tree cloud.*/
-    pcl::PointXYZI get_lpoint(bool);
+  pcl::PointXYZI get_lpoint(bool);
 
-    void set_convexhull();
-    void set_convexhull(Cloud c);
-    int set_concavehull(float maxEdgeLenght);
-    void set_concavehull(Cloud c);
-    void set_areavex(Cloud c);
-    void set_areacave(Cloud c);
-    float get_areaconvex();
-    float get_areaconcave();
-    Cloud get_vexhull();
-    Cloud get_concavehull();
-
-    void set_skeleton();
-    void set_skeleton(Cloud c);
-    Cloud get_skeleton();
+    //! Set convex planar projection.
+    /*! Compute points representing convex planar projection and save them into m_convexHull*/
+  void set_convexhull();
+    //! Set convex planar projection.
+    /*! Compute points representing convex planar projection and save them into m_convexHull \param c cloud of points representing convex hull*/
+  void set_convexhull(Cloud c);
+    //! Set concave planar projection.
+    /*! Compute points representing concave planar projection and save them into m_concaveHull \param maxEdgeLenght cmaximal length of edge*/
+  int set_concavehull(float maxEdgeLenght);
+    //! Set concave planar projection.
+    /*! Compute points representing concave planar projection and save them into m_concaveHull \param c cloud of points representing concave hull*/
+  void set_concavehull(Cloud c);
+    //! Set convex planar projection area.
+    /*! Compute area of convex planar projection and save them into m_convexarea \param c cloud of points representing convex hull*/
+  void set_areavex(Cloud c);
+    //! Set concave planar projection area.
+    /*! Compute area of concave planar projection and save them into m_concavearea \param c cloud of points representing concave hull*/
+  void set_areacave(Cloud c);
+    //! Get convex planar projection area.
+    /*! \return float area of polygon representing convex planar projection in square meters*/
+  float get_areaconvex();
+    //! Get concave planar projection area.
+    /*! \return float area of polygon representing concave planar projection in square meters*/
+  float get_areaconcave();
+    //! Get convex planar projection cloud.
+    /*! \return cloud representing convex planar projection */
+  Cloud get_vexhull();
+    //! Get concave planar projection cloud.
+    /*! \return cloud representing concave planar projection */
+  Cloud get_concavehull();
+    //! Set skeleton for tree.
+    /*! Compute tree skeleton based and save it onto m_skeleton*/
+  void set_skeleton();
+    //! Set skeleton for tree.
+    /*! Compute tree skeleton based and save it onto m_skeleton \param c cloud of points representing skeleton*/
+  void set_skeleton(Cloud c);
+    //! Get skeleton of tree.
+    /*! \return cloud representing tree skeleton */
+  Cloud get_skeleton();
 };
 
 #endif // CLOUD_H_INCLUDED
