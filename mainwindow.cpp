@@ -14,8 +14,6 @@
 //    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////
 #include "mainwindow.h"
-
-
 #include <liblas/liblas.hpp>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/common/pca.h>
@@ -83,7 +81,7 @@
   createMenus();
   createToolbars();
 
-  statusBar()->showMessage(tr("3D FOREST Ready"));
+  statusBar()->showMessage(tr("3D Forest Ready"));
   point_ev = m_vis->registerPointPickingCallback (&MainWindow::pointEvent, *this );
 }
 
@@ -384,8 +382,26 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importLAS(QString file)
 }
 pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPCD(QString file)
 {
+  QMessageBox::StandardButton reply;
+  reply =QMessageBox::question(0,("Transform cloud?"), "Do you want to apply transform matrix on selected file?",QMessageBox::Yes|QMessageBox::No );
+
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   pcl::io::loadPCDFile(file.toUtf8().constData(),*cloud);
+  if(reply ==QMessageBox::Yes )
+  {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ (new pcl::PointCloud<pcl::PointXYZI>);
+    for(int i = 0; i <cloud->points.size();i++)
+    {
+      pcl::PointXYZI oldp, newp;
+      oldp = cloud->points.at(i);
+      newp.x = oldp.x + Proj->get_Xtransform();
+      newp.y = oldp.y + Proj->get_Ytransform();
+      newp.z = oldp.z + Proj->get_Ztransform();
+      cloud_->points.push_back(newp);
+    }
+    cloud = cloud_;
+  }
+
   cloud->width = cloud->points.size();
   cloud->is_dense=true;
   cloud->height=1;
@@ -394,7 +410,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr MainWindow::importPCD(QString file)
 
 void MainWindow::importBaseCloud()
 {
-QString selectedFilter;
+  QString selectedFilter;
   QStringList ls = QFileDialog::getOpenFileNames(this,tr("Select file"),Proj->get_Path(),
                                                  tr("PCD files (*.pcd);;TXT files (*.txt);;LAS files (*.las);;PTS files (*.pts);;PTX files (*.ptx)" ),
                                                  &selectedFilter);
@@ -1583,6 +1599,7 @@ void MainWindow::convexhull()
     {
       for(int i = 1; i < names.size() ; i++ )
       {
+
         Proj->set_treeConvexCloud(names.at(i));
         convexhullDisplay(names.at(i));
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
@@ -1591,6 +1608,7 @@ void MainWindow::convexhull()
     }
     else
     {
+
       Proj->set_treeConvexCloud(in->get_inputCloud1());
       convexhullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
@@ -2274,12 +2292,18 @@ void MainWindow::position()
   names <<"All_trees";
   names << get_treeNames();
 
+  QStringList names2;
+  names2 << get_terrainNames();
+
   InputDialog *in = new InputDialog(this);
   in->set_title("Compute tree position using lowest points of tree cloud.");
   in->set_path(Proj->get_Path());
   in->set_description("Method for estimating tree position. Position is computed as a median of points lying in horizontal distance up to 60 cm from lowest point in cloud."
                         " Position is displayed as a sphere with centre at position and with radius 5 cm.");
   in->set_inputCloud1("Input Tree cloud:",names);
+  in->set_inputCloud2("Input Terrain cloud:",names2);
+  in->set_inputCheckBox("Recalculate parameters (DBH cloud, Height) based on tree position?");
+
   in->set_stretch();
   int dl = in->exec();
 
@@ -2298,15 +2322,26 @@ void MainWindow::position()
     {
       for(int i = 1; i < names.size(); i++ )
       {
+        Proj->set_treePosition(names.at(i),Proj->get_TerrainCloud(in->get_inputCloud2()));
         positionDisplay(names.at(i));
-
+        if(in->get_CheckBox()==true)
+        {
+          Proj->set_treeDBHCloud(names.at(i));
+          Proj->set_treeheigth(names.at(i));
+        }
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
         pBar->update();
       }
     }
     else
     {
+      Proj->set_treePosition(in->get_inputCloud1(),Proj->get_TerrainCloud(in->get_inputCloud2()));
       positionDisplay(in->get_inputCloud1());
+      if(in->get_CheckBox()==true)
+      {
+        Proj->set_treeDBHCloud(in->get_inputCloud1());
+        Proj->set_treeheigth(in->get_inputCloud1());
+      }
       pBar->setValue(100);
       pBar->update();
     }
@@ -2542,7 +2577,7 @@ void MainWindow::skeleton_HideAll()
 }
 void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
 {
-  QString name = QInputDialog::getText(this, tr("Name of new tree File"),tr("e.g. strom"));
+  QString name = QInputDialog::getText(this, tr("Name of new tree File"),tr("e.g. tree_id"));
 
   if(name.isEmpty())
   {
@@ -3257,11 +3292,11 @@ void MainWindow::createActions()
   importBaseAct->setStatusTip(tr("Import new Base cloud into project. Various formats are available."));
   connect(importBaseAct, SIGNAL(triggered()), this, SLOT(importBaseCloud()));
 
-  importTerenAct = new QAction(tr("Import Terrain cloud)"), this);
+  importTerenAct = new QAction(tr("Import Terrain cloud"), this);
   importTerenAct->setStatusTip(tr("Import new Terrain cloud into project. Various formats are available."));
   connect(importTerenAct, SIGNAL(triggered()), this, SLOT(importTerrainFile()));
 
-  importVegeAct = new QAction(tr("Import Vegetation cloud)"), this);
+  importVegeAct = new QAction(tr("Import Vegetation cloud"), this);
   importVegeAct->setStatusTip(tr("Import new VEgetation cloud into project. Various formats are available."));
   connect(importVegeAct, SIGNAL(triggered()), this, SLOT(importVegeCloud()));
 
@@ -3269,15 +3304,15 @@ void MainWindow::createActions()
   importTreeAct->setStatusTip(tr("Import new Tree cloud into project. Various formats are available."));
   connect(importTreeAct, SIGNAL(triggered()), this, SLOT(importTreeCloud()));
 
-  exportTXTAct = new QAction(tr("Export file (txt)"), this);
+  exportTXTAct = new QAction(tr("Export cloud (txt)"), this);
   exportTXTAct->setStatusTip(tr("Export selected cloud into TXT file."));
   connect(exportTXTAct, SIGNAL(triggered()), this, SLOT(exportCloud()));
 
-  exportPLYAct = new QAction(tr("Export file (ply)"), this);
+  exportPLYAct = new QAction(tr("Export cloud (ply)"), this);
   exportPLYAct->setStatusTip(tr("Export selected cloud into PLY file."));
   connect(exportPLYAct, SIGNAL(triggered()), this, SLOT(plysave()));
 
-  exportPTSAct = new QAction(tr("Export file (pts)"), this);
+  exportPTSAct = new QAction(tr("Export cloud (pts)"), this);
   exportPTSAct->setStatusTip(tr("Export selected cloud into PTS file."));
   connect(exportPTSAct, SIGNAL(triggered()), this, SLOT(exportPts()));
 
@@ -3318,7 +3353,7 @@ void MainWindow::createActions()
 
 
 //TREE ATRIBUTES
-  tAAct = new QAction(tr("Tree atributes export"), this);
+  tAAct = new QAction(tr("Export tree attributes"), this);
   tAAct->setStatusTip(tr("Export Tree attributes into new file. User can selected which attributes want export and how they are separated."));
   connect(tAAct, SIGNAL(triggered()), this, SLOT(treeAtributes()));
 
@@ -3355,6 +3390,7 @@ void MainWindow::createActions()
 
   skeletonAct = new QAction(tr("Skeleton"), this);
   skeletonAct->setStatusTip(tr("Compute and display skeleton of tree. Dispaly connected parts of tree as lines. "));
+  skeletonAct->setEnabled(false);
   connect(skeletonAct, SIGNAL(triggered()), this, SLOT(skeleton()));
 
   convexAct = new QAction(tr("Convex planar projection"), this);
@@ -3426,8 +3462,6 @@ void MainWindow::createMenus()
   exportMenu->addAction(exportTXTAct);
   exportMenu->addAction(exportPLYAct);
   exportMenu->addAction(exportPTSAct);
-  exportMenu->addAction(exportCONVEXAct);
-  exportMenu->addAction(exportCONCAVEAct);
   fileMenu->addSeparator();
   fileMenu->addAction(exitAct);
 
@@ -3445,18 +3479,21 @@ void MainWindow::createMenus()
 //TREE ATRIBUTES
   treeMenu = menuBar()->addMenu(tr("&Trees"));
   treeMenu->addAction(treeEditAct);
+  treeMenu->addAction(dbhEditAct);
   treeMenu->addSeparator();
-  treeMenu->addAction(tAAct);
   treeMenu->addSeparator();
+  treeMenu->addAction(posAct);
   treeMenu->addAction(dbhHTAct);
   treeMenu->addAction(dbhLSRAct);
-  treeMenu->addAction(posAct);
   treeMenu->addAction(heightAct);
   treeMenu->addAction(lengAct);
-  treeMenu->addAction(dbhEditAct);
-  treeMenu->addAction(skeletonAct);
   treeMenu->addAction(convexAct);
   treeMenu->addAction(concaveAct);
+  treeMenu->addAction(skeletonAct);
+  treeMenu->addSeparator();
+  treeMenu->addAction(tAAct);
+  treeMenu->addAction(exportCONVEXAct);
+  treeMenu->addAction(exportCONCAVEAct);
 //MISC
   miscMenu = menuBar()->addMenu(tr("Other features"));
   miscMenu->addAction(plusAct);

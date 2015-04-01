@@ -505,7 +505,7 @@ void Hull::returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::Poin
             xnext = xfor - xx;
             ynext = yfor - yy;
             double dist =sqrt(xnext*xnext+ynext*ynext);
-            A = (((atan2(xback*ynext-xnext*yback,xback*xnext+yback*ynext)))*180/3.14159265359);
+            A = (((atan2(xback*ynext-xnext*yback, xback*xnext+yback*ynext)))*180/3.14159265359);
             if (A > 0){A -= 360;}
             if (A < 0){A = A * (-1);}
             if (A == 0){A = 180;}
