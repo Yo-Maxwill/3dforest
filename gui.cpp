@@ -1341,10 +1341,10 @@ void MyTree::showContextMenu(const QPoint &pos)
 
   QString it = this->model()->data(this->model()->index(index.row(), 1),0).toString();
 
-  QAction *deleteACT = new QAction("delete",menu);
+  QAction *deleteACT = new QAction("Delete",menu);
   menu->addAction(deleteACT);
 
-  QAction *colorACT = new QAction("color",menu);
+  QAction *colorACT = new QAction("Color",menu);
   menu->addAction(colorACT);
 
   QAction *colorFieldACT = new QAction("Color by field",menu);
@@ -1353,11 +1353,11 @@ void MyTree::showContextMenu(const QPoint &pos)
   QAction *PsizeACT = new QAction("Point size",menu);
   menu->addAction(PsizeACT);
 
-  QAction *allONACT = new QAction("all Clouds ON",menu);
+  QAction *allONACT = new QAction("All Clouds ON",menu);
   menu->addAction(allONACT);
   connect(allONACT, SIGNAL(triggered()), this, SLOT(allON()));
 
-  QAction *allOFFACT = new QAction("all Clouds OFF",menu);
+  QAction *allOFFACT = new QAction("All Clouds OFF",menu);
   menu->addAction(allOFFACT);
   connect(allOFFACT, SIGNAL(triggered()), this, SLOT(allOFF()));
 

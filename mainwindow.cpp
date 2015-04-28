@@ -1610,7 +1610,6 @@ void MainWindow::convexhull()
     }
     else
     {
-
       Proj->set_treeConvexCloud(in->get_inputCloud1());
       convexhullDisplay(in->get_inputCloud1());
       pBar->setValue(100);
@@ -1618,6 +1617,7 @@ void MainWindow::convexhull()
     }
     statusBar()->removeWidget(pBar);
     convexT->setEnabled(true);
+    convexT->setIcon(QPixmap(":/images/treeBar/convex_sel.png"));
   }
 }
 void MainWindow::convexhullDisplay(QString name)
@@ -1662,6 +1662,7 @@ void MainWindow::convexhull_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  convexT->setIcon(QPixmap(":/images/treeBar/convex_sel.png"));
 }
 void MainWindow::convexhull_HideAll()
 {
@@ -1687,6 +1688,7 @@ void MainWindow::convexhull_HideAll()
   }
   disconnect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_HideAll()));
   connect(convexT,SIGNAL(triggered()),this,SLOT(convexhull_DisplayAll()));
+   convexT->setIcon(QPixmap(":/images/treeBar/convex.png"));
   qvtkwidget->update();
 }
 void MainWindow::concavehull()
@@ -1749,6 +1751,7 @@ void MainWindow::concavehull()
     }
     statusBar()->removeWidget(pBar);
     concaveT->setEnabled(true);
+    concaveT->setIcon(QPixmap(":/images/treeBar/concave_sel.png"));
   }
 }
 void MainWindow::concavehullDisplay(QString name)
@@ -1792,6 +1795,7 @@ void MainWindow::concavehull_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+   concaveT->setIcon(QPixmap(":/images/treeBar/concave_sel.png"));
 }
 void MainWindow::concavehull_HideAll()
 {
@@ -1816,6 +1820,7 @@ void MainWindow::concavehull_HideAll()
   }
   disconnect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_HideAll()));
   connect(concaveT,SIGNAL(triggered()),this,SLOT(concavehull_DisplayAll()));
+  concaveT->setIcon(QPixmap(":/images/treeBar/concave.png"));
   qvtkwidget->update();
 }
 void MainWindow::dbhHT()
@@ -1927,6 +1932,7 @@ void MainWindow::dbhHT_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  dbhthT->setIcon(QPixmap(":/images/treeBar/dbhHT_sel.png"));
 }
 void MainWindow::dbhHT_HideAll()
 {
@@ -1951,6 +1957,7 @@ void MainWindow::dbhHT_HideAll()
   }
   disconnect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_HideAll()));
   connect(dbhthT,SIGNAL(triggered()),this,SLOT(dbhHT_DisplayAll()));
+  dbhthT->setIcon(QPixmap(":/images/treeBar/dbhHT.png"));
   qvtkwidget->update();
 }
 void MainWindow::dbhLSR()
@@ -2059,6 +2066,7 @@ void MainWindow::dbhLSR_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  dbhlsrT->setIcon(QPixmap(":/images/treeBar/dbhLSR_sel.png"));
 }
 void MainWindow::dbhLSR_HideAll()
 {
@@ -2083,6 +2091,7 @@ void MainWindow::dbhLSR_HideAll()
   }
   disconnect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_HideAll()));
   connect(dbhlsrT,SIGNAL(triggered()),this,SLOT(dbhLSR_DisplayAll()));
+  dbhlsrT->setIcon(QPixmap(":/images/treeBar/dbhLSR.png"));
   qvtkwidget->update();
 }
 void MainWindow::height()
@@ -2171,6 +2180,7 @@ void MainWindow::height_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  heightT->setIcon(QPixmap(":/images/treeBar/height_sel.png"));
 }
 void MainWindow::height_HideAll()
 {
@@ -2191,6 +2201,7 @@ void MainWindow::height_HideAll()
   }
   disconnect(heightT,SIGNAL(triggered()),this,SLOT(height_HideAll()));
   connect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
+  heightT->setIcon(QPixmap(":/images/treeBar/height.png"));
   qvtkwidget->update();
 }
 void MainWindow::length()
@@ -2272,6 +2283,8 @@ void MainWindow::length_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  lengthT->setIcon(QPixmap(":/images/treeBar/length_sel.png"));
+
 }
 void MainWindow::length_HideAll()
 {
@@ -2292,6 +2305,7 @@ void MainWindow::length_HideAll()
   }
   disconnect(lengthT,SIGNAL(triggered()),this,SLOT(length_HideAll()));
   connect(lengthT,SIGNAL(triggered()),this,SLOT(length_DisplayAll()));
+  lengthT->setIcon(QPixmap(":/images/treeBar/length.png"));
   qvtkwidget->update();
 }
 void MainWindow::position()
@@ -2385,6 +2399,7 @@ void MainWindow::position_DisplayAll()
     pBar->update();
   }
   statusBar()->removeWidget(pBar);
+  positionT->setIcon(QPixmap(":/images/treeBar/position_sel.png"));
 }
 void MainWindow::position_HideAll()
 {
@@ -2400,6 +2415,7 @@ void MainWindow::position_HideAll()
   }
   disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
   connect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
+  positionT->setIcon(QPixmap(":/images/treeBar/position.png"));
   qvtkwidget->update();
 }
 void MainWindow::skeleton()
@@ -2575,11 +2591,11 @@ void MainWindow::skeletonDisplay(QString name)
 }
 void MainWindow::skeleton_DisplayAll()
 {
-
+//skeletonT->setIcon(QPixmap(":/images/treeBar/skeleton_sel.png"));
 }
 void MainWindow::skeleton_HideAll()
 {
-
+//skeletonT->setIcon(QPixmap(":/images/treeBar/skeleton.png"));
 }
 void MainWindow::saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud)
 {
