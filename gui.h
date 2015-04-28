@@ -23,6 +23,7 @@
 #include <QtGui/QToolBar>
 #include <pcl/visualization/pcl_visualizer.h>
 
+
 //INPUTDIALOG
 //! Introduction dialog of methods.
 /*! Dialog based class for providing introduction dialog about used methods with options.
@@ -53,6 +54,10 @@ public:
     /*!  set third input cloud name from list of names.
         \param label description of line \param li list of cloud names */
   void set_inputCloud3(QString label, QStringList li);
+  //!  set output cloud name
+    /*!  set output cloud name. On line is example of possible name
+        \param label label of edit line \param example possible name of new cloud */
+  void set_inputCheckBox(QString label);
     //!  set output cloud name
     /*!  set output cloud name. On line is example of possible name
         \param label label of edit line \param example possible name of new cloud */
@@ -105,6 +110,9 @@ public:
     //!  get int value .
     /*!  \return integer value entered by user */
   int get_intValue();
+    //!  get type of output cloud.
+    /*!  \return true if checkbox is seleted*/
+  bool get_CheckBox();
 
 private slots:
     //!  when presed button ok .
@@ -156,6 +164,9 @@ private:
   bool isII1;                     /**< bool value if output cloud name is in proper format  */
   QComboBox * outputType;          /**< List of output cloud types*/
   bool isType;
+  bool isICHB;
+  bool CHB;
+  QCheckBox * CHBox;
 
   QDialogButtonBox *buttonBox;    /**< default buttons */
   QHBoxLayout *buttontLayout;     /**< default buttons layout */
@@ -569,4 +580,6 @@ public:
     /*!  Constructor of dialog  \param name name of the vizualizer */
   Visualizer(QString name);
 };
+
+
 #endif // GUI_H_INCLUDED

@@ -148,6 +148,9 @@ public:
     //! Get terrain cloud.
     /*! \param i get terrain cloud on ith position in vector \return cloud on given position  */
   Cloud get_TerrainCloud(int i);
+  //! Get terrain cloud.
+    /*! \param i get terrain cloud on ith position in vector \return cloud on given position  */
+  Cloud get_TerrainCloud(QString name);
     //! Get size of terrain cloud vector.
     /*! \return size of vector containing terrain clouds */
   int get_sizeTerainCV();
@@ -191,6 +194,12 @@ public:
     //! Set tree position.
     /*! \param name tree name */
   void set_treePosition(QString name);
+    //! Set tree position based on terrain.
+    /*! \param name tree name \param cloud terrain cloud */
+  void set_treePosition(QString name, Cloud terrain);
+    //! Set tree DBH cloud.
+    /*! \param name tree name */
+  void set_treeheigth(QString name);
     //! Set tree DBH cloud.
     /*! \param name tree name */
   void set_treeDBHCloud(QString name);

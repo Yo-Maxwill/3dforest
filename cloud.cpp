@@ -16,7 +16,7 @@
 
 #include "cloud.h"
 #include "hull.h"
-#include <pcl/filters/voxel_grid.h>pcl::PointCloud<pcl::PointXYZI>::Ptr m_sample; // sample cloud
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
 //CLOUD
 Cloud::Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
@@ -141,6 +141,7 @@ Tree::Tree (Cloud cloud)
   set_dbhCloud();
   set_dbhHT();
   set_dbhLSR();
+  set_length();
 }
 Tree Tree::operator=(Tree &kopie)
 {
@@ -152,6 +153,7 @@ Tree Tree::operator=(Tree &kopie)
   set_position();
   set_height();
   set_dbhCloud();
+  set_length();
   return t;
 }
 void Tree::set_height() //check if tree is connected to terrain!!!
@@ -405,7 +407,7 @@ void Tree::set_dbhHT()
       }
     }
     float rad_f = acc_r.at(pos_r)/10.0;
-    stred c = {acc_x.at(pos_x),acc_y.at(pos_y),cloud_fil->points.at(0).z,1,rad_f};
+    stred c = {acc_x.at(pos_x),acc_y.at(pos_y),m_pose.z+1.25,1,rad_f};
     m_dbh_HT = c;
 
   }
@@ -659,7 +661,7 @@ enough:
     stredLSR circlef = Old;
     float r= circlef.r*1000;
     float rr = ceil(r)/10.0;
-    stred c = {circlef.a,circlef.b,meanZ,1,rr};
+    stred c = {circlef.a,circlef.b,m_pose.z+1.25,1,rr};
     return c;
 }
 float Tree::Sigma (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle)
@@ -707,89 +709,27 @@ void Tree::set_position()
     m_pose = m_minp;
   }
 }
-void Tree::set_position(Cloud teren)
+void Tree::set_position(Cloud terrain)
 {
-  //půl metrova cast mracna od zeme
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  std::vector<float> x_coor;
-  std::vector<float> y_coor;
-  std::vector<float> z_coor;
-  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
-  {
-    if (ith->z < (m_minp.z + 0.6) )
-    {
-      x_coor.push_back(ith->x);
-      y_coor.push_back(ith->y);
-      z_coor.push_back(ith->z);
-    }
-  }
-
-  std::sort(x_coor.begin(),x_coor.end());
-  std::sort(y_coor.begin(),y_coor.end());
-  std::sort(z_coor.begin(),z_coor.end());
-
-
-  m_pose.x = x_coor.at(x_coor.size()/2);
-  m_pose.y = y_coor.at(y_coor.size()/2);
-  m_pose.z = z_coor.at(0);
-  m_pose.intensity = 1;
-
-  //VOXELIZATION
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_fil (new pcl::PointCloud<pcl::PointXYZI>);
-  pcl::VoxelGrid<pcl::PointXYZI> sor;
-  sor.setInputCloud (cloud);
-  sor.setLeafSize (0.01f, 0.01f, 0.01f);
-  sor.filter (*cloud_fil);
-
-  // low points
-  pcl::PointCloud<pcl::PointXYZI>::Ptr clow (new pcl::PointCloud<pcl::PointXYZI>);
-  for(int i =0; i < cloud_fil->points.size(); i++)
-  {
-    bool top = false;
-    pcl::PointXYZI bod = cloud_fil->points.at(i);
-    #pragma omp parallel for
-    for(int j = 0; j < cloud_fil->points.size(); j++)
-    {
-      pcl::PointXYZI por = cloud_fil->points.at(j);
-
-      if( (por.x - bod.x) < 0.01 &&  (bod.x - por.x) < 0.01  &&  (por.y - bod.y) < 0.01 &&  (bod.y - por.y) < 0.01  && bod.z > por.z)
-      {
-        top =true;
-      }
-    }
-    if (top == false)
-      clow->points.push_back(bod);
-  }
-
-  //min and max points
-  pcl::PointXYZI minp, maxp;
-  pcl::getMinMax3D(*clow,minp, maxp);
-
-  m_pose.x = (minp.x+maxp.x)/2;
-  m_pose.y = (minp.y+maxp.y)/2;
-  m_pose.intensity = 1;
-
-  //nejblizsi bod z terenu
+  int point_number = 5;
 
   pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
-  kdtree.setInputCloud (teren.get_Cloud());
+  kdtree.setInputCloud (terrain.get_Cloud());
 
-  std::vector<int> pointId(2);
-  std::vector<float> pointSD(2);
-  pcl::PointXYZI serchP;
-  serchP.x = m_pose.x;
-  serchP.y = m_pose.y;
-  serchP.z = m_minp.z;
-  if ( kdtree.nearestKSearch (serchP, 2, pointId, pointSD) > 0 )
+  std::vector<int> pointId(point_number);
+  std::vector<float> pointSD(point_number);
+
+  if (kdtree.nearestKSearch (m_pose, point_number, pointId, pointSD) > 0 )
   {
-    if( m_minp.z > teren.get_Cloud()->points.at(pointId.front()).z)
+    float med_Z = 0;
+    for(int i = 0; i < point_number; i++)
     {
-      m_pose.z = teren.get_Cloud()->points.at(pointId.front()).z;
+      med_Z += terrain.get_Cloud()->points.at(pointId.at(i)).z;
     }
-    else{m_pose.z = m_minp.z;}
+
+    m_pose.z = med_Z / point_number;
   }
-  else
-    m_pose.z = m_minp.z;
+
 }
 pcl::PointXYZI Tree::get_pose()
 {
@@ -914,7 +854,6 @@ int Tree::set_concavehull(float maxEdgeLenght = 1.5)
 
   Hull *c = new Hull(m_Cloud,aa,col);
   int i = c->set_concaveZkracovanim(maxEdgeLenght);
-
 
   set_concavehull(c->get_concavehull());
 

@@ -15,6 +15,8 @@
 //////////////////////////////////////////////////////////////////////
 #include "gui.h"
 
+
+
 ////INPUTDIALOG
 InputDialog::InputDialog( QWidget *parent)
 : QDialog(parent)
@@ -28,6 +30,7 @@ InputDialog::InputDialog( QWidget *parent)
   isOC2 = false;
   isII1 = false;
   isType = false;
+  isICHB = false;
 //buttons
   buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
@@ -53,6 +56,11 @@ void InputDialog::ok()
     int_value1 = intInput->text().toInt();
   if(isType == true)
     output_type = outputType->currentText();
+  if(isICHB == true)
+  {
+    if(CHBox->isChecked())
+    CHB = true;
+  }
 }
 void InputDialog::DialogSize(int w = 500, int h = 300)
 {
@@ -124,7 +132,19 @@ void InputDialog::set_inputCloud3(QString label, QStringList li)
   InputLayout->addWidget(inputCloud3);
   isIC3 =true;
 }
+void InputDialog::set_inputCheckBox(QString label)
+{
+  QLabel *labelbox = new QLabel();
+  labelbox->setText(label);
 
+  CHBox = new QCheckBox();
+
+  labelbox->setBuddy(CHBox);
+//layout
+  InputLayout->addWidget(labelbox);
+  InputLayout->addWidget(CHBox);
+  isICHB =true;
+}
 void InputDialog::set_description(QString text)
 {
   // text about function
@@ -156,7 +176,7 @@ void InputDialog::set_outputCloud1(QString label, QString example)
   connect(outputCloud1,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
   outputCloud1->setText(example);
 //layout
-  InputLayout->addWidget(labelOC1 );
+  InputLayout->addWidget(labelOC1);
   InputLayout->addWidget(outputCloud1);
   isOC1 =true;
 }
@@ -371,6 +391,10 @@ int InputDialog::get_intValue()
 QString InputDialog::get_outputType()
 {
   return output_type;
+}
+bool InputDialog::get_CheckBox()
+{
+  return CHB;
 }
 //ExportAttr dialog
 ExportAttr::ExportAttr(QWidget *parent)

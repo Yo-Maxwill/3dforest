@@ -160,7 +160,6 @@ int Project::set_treeConcaveCloud(QString name,float edge)
 }
 Cloud Project::set_ConcaveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float edge, QString name, QColor color)
 {
-
     Hull *h = new Hull (cloud, name, color);
     QString m = QString("Pred h->set_concaveZkracovanim(edge)").arg(name);
     int errors = h->set_concaveZkracovanim(edge);
@@ -188,6 +187,26 @@ void Project::set_treePosition(QString name)
     if (get_TreeCloud(i).get_name() == name)
     {
       m_stromy.at(i).set_position();
+    }
+  }
+}
+void Project::set_treePosition(QString name, Cloud terrain)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_position(terrain);
+    }
+  }
+}
+void Project::set_treeheigth(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_height();
     }
   }
 }
@@ -251,6 +270,14 @@ QString Project::get_Path()
 Cloud Project::get_TerrainCloud(int i)
 {
   return m_terrainCloud.at(i);
+}
+Cloud Project::get_TerrainCloud(QString name)
+{
+  for(int i = 0; i< m_terrainCloud.size(); i++)
+  {
+    if (get_TerrainCloud(i).get_name() == name)
+      return m_terrainCloud.at(i);
+  }
 }
 Cloud Project::get_VegeCloud(int i)
 {

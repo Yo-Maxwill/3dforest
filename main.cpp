@@ -29,7 +29,7 @@
   Q_INIT_RESOURCE(3dforest);
   app.setOrganizationName("VUKOZ v.v.i.");
   app.setApplicationName("3D Forest - Forest lidar data processing tool");
-  app.setWindowIcon(QIcon(":/images/icon.png"));
+  app.setWindowIcon(QIcon(":/images/icon.ico"));
 
   MainWindow mainWin;
   mainWin.show();

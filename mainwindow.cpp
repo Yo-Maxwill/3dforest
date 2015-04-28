@@ -51,7 +51,7 @@
 {
 
   Q_INIT_RESOURCE(3dforest);
-  setWindowTitle ( QString("3D Forest - Forest lidar data processing tool") );
+  setWindowTitle ( tr("3D Forest - Forest lidar data processing tool") );
   m_cloud1 = new Cloud();
   m_cloud = new Cloud();
   Proj = new Project();
@@ -1093,7 +1093,8 @@ void MainWindow::manualAdjust()
   InputDialog *in = new InputDialog(this);
   in->set_path(Proj->get_Path());
   in->set_title("Manual adjustment of terrain cloud");
-  in->set_description("Manual editing of point cloud representing terrain. For editing please press key 'x' and drag and draw rectangle with mouse."
+  in->set_description("Manual editing of point cloud representing terrain. For editing please press key 'x' and draw rectangle with left mouse button. "
+                      "For return to normal mouse move press again 'x'."
                         " Selected points will be deleted and saved in output cloud ");
   in->set_inputCloud1("Input terrain cloud:",get_terrainNames());
   in->set_outputCloud1("Output cloud of deleted points:","terrain-rest");
@@ -1422,6 +1423,7 @@ void MainWindow::treeAtributes()
   {
       //progressbar
     pBar = new QProgressBar(statusBar());
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -1458,7 +1460,7 @@ void MainWindow::treeAtributes()
       for(int i = 1; i < names.size(); i++ )
       {
 
-        Tree *c = new Tree(Proj->get_TreeCloud(i));
+        Tree *c = new Tree(Proj->get_TreeCloud(names.at(i)));
         out << c->get_name();
 
         if(exdialog->get_Points() == true)
@@ -1885,6 +1887,7 @@ void MainWindow::dbhHTDisplay(QString name)
     coef->values.push_back((float)x.r/100);
     std::stringstream Cname ;
     Cname << name.toUtf8().constData() << "_cylinder_HT";
+    m_vis->removeShape(Cname.str());
     m_vis->addCylinder(*coef,Cname.str());
 
       //addtext3D with R
@@ -1895,6 +1898,7 @@ void MainWindow::dbhHTDisplay(QString name)
     QString h= QString("%1").arg(x.r*2.0);
     std::stringstream name2 ;
     name2 << name.toUtf8().constData() << "_value_HT";
+    m_vis->removeText3D(name2.str());
     m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.2,0.5,0,name2.str());
   }
   else
@@ -1969,7 +1973,6 @@ void MainWindow::dbhLSR()
 
   if(dl == QDialog::Accepted)
   {
-
     pBar = new QProgressBar(statusBar());
     pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
@@ -2016,6 +2019,7 @@ void MainWindow::dbhLSRDisplay(QString name)
     coef->values.push_back((float)x.r/100);
     std::stringstream Cname ;
     Cname << name.toUtf8().constData() << "_cylinder_LSR";
+    m_vis->removeShape(Cname.str());
     m_vis->addCylinder(*coef,Cname.str());
 
       //addtext3D with R
@@ -2026,6 +2030,7 @@ void MainWindow::dbhLSRDisplay(QString name)
     QString h= QString("%1").arg(x.r*2.0);
     std::stringstream name2 ;
     name2 << name.toUtf8().constData() << "_value_LSR";
+    m_vis->removeText3D(name2.str());
     m_vis->addText3D(h.toUtf8().constData(),bod,0.6,0.6,0.5,0,name2.str());
   }
   else
@@ -2101,6 +2106,7 @@ void MainWindow::height()
   if(dl == QDialog::Accepted)
   {
     pBar = new QProgressBar(statusBar());
+    pBar->setMaximumSize(200,16);
     statusBar()->addWidget(pBar);
     pBar->setValue(0);
 
@@ -2108,7 +2114,7 @@ void MainWindow::height()
     {
       for(int i = 1; i < names.size(); i++ )
       {
-        Proj->get_TreeCloud(i).set_height();
+        Proj->get_TreeCloud(names.at(i)).get_height();
         heightDisplay(names.at(i));
 
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
@@ -2117,13 +2123,11 @@ void MainWindow::height()
     }
     else
     {
-
-      Proj->get_TreeCloud(in->get_inputCloud1()).set_height();
-
+      Proj->get_TreeCloud(in->get_inputCloud1()).get_height();
       heightDisplay(in->get_inputCloud1());
 
-        pBar->setValue(100);
-        pBar->update();
+      pBar->setValue(100);
+      pBar->update();
     }
     statusBar()->removeWidget(pBar);
   }
@@ -2137,17 +2141,20 @@ void MainWindow::heightDisplay(QString name)
   maxp.x = Proj->get_TreeCloud(name).get_pose().x;
   maxp.y = Proj->get_TreeCloud(name).get_pose().y;
   maxp.z = Proj->get_TreeCloud(name).get_pose().z + Proj->get_TreeCloud(name).get_height();
+  m_vis->removeShape(Hname.str());
   m_vis->addLine(minp,maxp,Hname.str());
 
   std::stringstream name2 ;
     name2 << name.toUtf8().constData() << "_heighttext";
 
   QString h = QString("%1").arg(Proj->get_TreeCloud(name).get_height());
+  m_vis->removeText3D(name2.str());
   m_vis->addText3D(h.toUtf8().constData(),maxp,0.6,0.6,0.5,0,name2.str());
+
+
 
   disconnect(heightT,SIGNAL(triggered()),this,SLOT(height_DisplayAll()));
   connect(heightT,SIGNAL(triggered()),this,SLOT(height_HideAll()));
-
 }
 void MainWindow::height_DisplayAll()
 {
@@ -2239,11 +2246,12 @@ void MainWindow::lengthDisplay(QString name)
 {
   std::stringstream Lname ;
   Lname << name.toUtf8().constData() << "_length";
+  m_vis->removeShape(Lname.str());
   m_vis->addLine(Proj->get_TreeCloud(name).get_lpoint(true),Proj->get_TreeCloud(name).get_lpoint(false),Lname.str());
-
   std::stringstream Lname2 ;
   Lname2 << name.toUtf8().constData() << "_lengthText";
   QString h= QString("%1").arg(Proj->get_TreeCloud(name).get_length());
+  m_vis->removeText3D(Lname2.str());
   m_vis->addText3D(h.toUtf8().constData(),Proj->get_TreeCloud(name).get_lpoint(false),0.6,0.6,0.5,0,Lname2.str());
 
   disconnect(lengthT,SIGNAL(triggered()),this,SLOT(length_DisplayAll()));
@@ -2327,6 +2335,7 @@ void MainWindow::position()
         if(in->get_CheckBox()==true)
         {
           Proj->set_treeDBHCloud(names.at(i));
+
           Proj->set_treeheigth(names.at(i));
         }
         pBar->setValue((i+1)*100/Proj->get_sizeTreeCV());
@@ -2350,19 +2359,16 @@ void MainWindow::position()
 }
 void MainWindow::positionDisplay(QString name)
 {
-  pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
-  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().x); //x
-  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().y); //y
-  coef->values.push_back((float)Proj->get_TreeCloud(name).get_pose().z); //z
-  coef->values.push_back((float)0.05);   //r
-  std::stringstream Sname;
+  QColor col = Proj->get_TreeCloud(name).get_color();
 
+  std::stringstream Sname;
   Sname << name.toUtf8().constData() << "_sphere";
-  m_vis->addSphere(*coef,Sname.str());
+
+  if(!m_vis->updateSphere(Proj->get_TreeCloud(name).get_pose(),0.1,1,1,1,Sname.str()))
+    m_vis->addSphere(Proj->get_TreeCloud(name).get_pose(),0.1,1,1,1,Sname.str());
 
   disconnect(positionT,SIGNAL(triggered()),this,SLOT(position_DisplayAll()));
   connect(positionT,SIGNAL(triggered()),this,SLOT(position_HideAll()));
-
 }
 void MainWindow::position_DisplayAll()
 {
@@ -3182,7 +3188,7 @@ QStringList names;
   in->set_title("Cloud boundaries");
   in->set_path(Proj->get_Path());
   in->set_description("Method for computing concave hull of given tree."
-                        " This method serve only for display estimated polygon of concave hull. ");
+                        " This method serve only for display estimated polygon of concave hull.");
   in->set_inputCloud1("Input cloud:",get_allNames());
   in->set_outputCloud1("Output cloud name:","hull");
   in->set_inputInt("Input Maximal Edge length cm:","150");
@@ -3202,23 +3208,23 @@ QStringList names;
     QString name = Proj->get_Cloud(in->get_inputCloud1()).get_name();
     QColor color = Proj->get_Cloud(in->get_inputCloud1()).get_color();
 
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
-        cloud = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud();
-        Cloud *cl = new Cloud (Proj->set_ConcaveCloud(cloud,(float)in->get_intValue()/100,name,color));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+    cloud = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud();
+    Cloud *cl = new Cloud (Proj->set_ConcaveCloud(cloud,(float)in->get_intValue()/100,name,color));
 
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloudHull(new pcl::PointCloud<pcl::PointXYZI>);
-        cloudHull = cl->get_Cloud();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloudHull(new pcl::PointCloud<pcl::PointXYZI>);
+    cloudHull = cl->get_Cloud();
 
-        Proj->save_newCloud("ost",in->get_outputCloud1(),cloudHull);
-        QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
-        openOstFile(fullnameV);
+    Proj->save_newCloud("ost",in->get_outputCloud1(),cloudHull);
+    QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+    openOstFile(fullnameV);
 
-      pBar->setValue(100);
-      pBar->update();
+    pBar->setValue(100);
+    pBar->update();
 
-    }
-    statusBar()->removeWidget(pBar);
-    concaveT->setEnabled(true);
+  }
+  statusBar()->removeWidget(pBar);
+  concaveT->setEnabled(true);
 }
 void MainWindow::set_ConvexCloud()
 {
@@ -3347,7 +3353,7 @@ void MainWindow::createActions()
 
 //VEGETATION
 
-  manualSelAct = new QAction(tr("Manual selection"), this);
+  manualSelAct = new QAction(tr("Manual tree selection"), this);
   manualSelAct->setStatusTip(tr("Manual selection of trees from vegetation cloud. User iteratively delete points that do not belong to the tree."));
   connect(manualSelAct, SIGNAL(triggered()), this, SLOT(manualSelect()));
 

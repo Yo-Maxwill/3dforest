@@ -166,7 +166,7 @@ public:
   void set_position();
     //! Set tree position.
     /*! Compute and set tree position based on digital terrain model. \param teren cloud representing DMT */
-  void set_position(Cloud teren);
+  void set_position(Cloud terrain);
     //! Set cloud length.
     /*! Compute and set tree cloud length. */
   void set_length();
