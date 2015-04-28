@@ -833,15 +833,14 @@ void Tree::set_convexhull()
   Hull *c = new Hull(m_Cloud,aa,col);
   c->set_convexhull();
   set_convexhull(c->get_convexhull());
-  c->set_areavex(c->get_convexhull());
+ // c->set_areavex(c->get_convexhull());
 
   m_areaconvex = c->get_areaconvex();
-
 }
 void Tree::set_convexhull(Cloud c)
 {
   m_convexhull->set_Cloud(c.get_Cloud());
-  set_areavex( c);
+ // set_areavex( c);
 }
 Cloud Tree::get_vexhull()
 {
@@ -857,7 +856,7 @@ int Tree::set_concavehull(float maxEdgeLenght = 1.5)
 
   set_concavehull(c->get_concavehull());
 
-  c->set_areacave(c->get_concavehull());
+  //c->set_areacave(c->get_concavehull());
   m_areaconcave = c->get_areaconcave();
 
   return i;
@@ -870,42 +869,7 @@ Cloud Tree::get_concavehull()
 {
   return *m_concavehull;
 }
-void Tree::set_areavex(Cloud c)
-{
-  // for each point
-  float sum;
-  for(int i = 1; i < c.get_Cloud()->points.size(); i++)
-  {
-    pcl::PointXYZI A,B;
-    A = c.get_Cloud()->points.at(i);
-    B = c.get_Cloud()->points.at(i-1);
 
-    sum+= (A.x*B.y - B.x*A.y);
-  }
-  pcl::PointXYZI A,B;
-  A = c.get_Cloud()->points.at(0);
-  B = c.get_Cloud()->points.at(c.get_Cloud()->points.size()-1);
-  sum+= (A.x*B.y - B.x*A.y);
-  m_areaconvex = std::fabs(sum/2);
-}
-void Tree::set_areacave(Cloud c)
-{
-  // for each point
-  float sum;
-  for(int i = 1; i < c.get_Cloud()->points.size(); i++)
-  {
-    pcl::PointXYZI A,B;
-    A = c.get_Cloud()->points.at(i);
-    B = c.get_Cloud()->points.at(i-1);
-
-    sum+= (A.x*B.y - B.x*A.y);
-  }
-  pcl::PointXYZI A,B;
-  A = c.get_Cloud()->points.at(0);
-  B = c.get_Cloud()->points.at(c.get_Cloud()->points.size()-1);
-  sum+= (A.x*B.y - B.x*A.y);
-  m_areaconcave = std::fabs(sum/2);
-}
 float Tree::get_areaconvex()
 {
   return m_areaconvex;

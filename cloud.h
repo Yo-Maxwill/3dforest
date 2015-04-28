@@ -199,12 +199,6 @@ public:
     //! Set concave planar projection.
     /*! Compute points representing concave planar projection and save them into m_concaveHull \param c cloud of points representing concave hull*/
   void set_concavehull(Cloud c);
-    //! Set convex planar projection area.
-    /*! Compute area of convex planar projection and save them into m_convexarea \param c cloud of points representing convex hull*/
-  void set_areavex(Cloud c);
-    //! Set concave planar projection area.
-    /*! Compute area of concave planar projection and save them into m_concavearea \param c cloud of points representing concave hull*/
-  void set_areacave(Cloud c);
     //! Get convex planar projection area.
     /*! \return float area of polygon representing convex planar projection in square meters*/
   float get_areaconvex();

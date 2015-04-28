@@ -153,7 +153,7 @@ int Project::set_treeConcaveCloud(QString name,float edge)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      errors =m_stromy.at(i).set_concavehull(edge);
+      errors = m_stromy.at(i).set_concavehull(edge);
     }
   }
   return errors;

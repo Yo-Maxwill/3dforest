@@ -39,21 +39,24 @@ Hull::Hull (Cloud cloud)
 vexhull(new Cloud()),
 concavehull(new Cloud())
 {
-
+  m_areaconcave = 0;
+  m_areaconvex = 0;
 }
 Hull::Hull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col)
 : Cloud(cloud, name, col),
 vexhull(new Cloud()),
 concavehull(new Cloud())
 {
-
+  m_areaconcave = 0;
+  m_areaconvex = 0;
 }
 Hull::Hull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
 : Cloud(cloud, name),
 vexhull(new Cloud()),
 concavehull(new Cloud())
 {
-
+  m_areaconcave = 0;
+  m_areaconvex = 0;
 }
 void Hull::set_Hull(Hull hull)
 {
@@ -408,6 +411,9 @@ void Hull::set_areavex(Cloud c)
   B = c.get_Cloud()->points.at(c.get_Cloud()->points.size()-1);
   sum+= (A.x*B.y - B.x*A.y);
   m_areaconvex = std::fabs(sum/2);
+  //QString a  = QString("velikost convex hulu bodu: %1 \n volikost plochy: %2").arg(c.get_Cloud()->points.size()).arg(m_areaconvex);
+  //QMessageBox::information(0,("fofo"),a);
+
 }
 void Hull::set_areacave(Cloud c)
 {
@@ -426,6 +432,8 @@ void Hull::set_areacave(Cloud c)
   B = c.get_Cloud()->points.at(c.get_Cloud()->points.size()-1);
   sum+= (A.x*B.y - B.x*A.y);
   m_areaconcave = std::fabs(sum/2);
+  //QString a  = QString("velikost concavehulu bodu: %1").arg(c.get_Cloud()->points.size());
+  //QMessageBox::information(0,("fofo"),a);
 }
 float Hull::get_areaconvex()
 {
