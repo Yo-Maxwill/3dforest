@@ -139,6 +139,10 @@ private slots:
     /*! Compute DBH for given tree with method of Least Square Regression for circle fitting. User can select single tree or all_trees.
         Result is displayed as a cylinder in 1,3 m from position with beige value of estimated DBH.*/
   void dbhLSR();
+  //! Compare DBH computed by two methods and if they are different more that 1 cm  put them in the list .
+    /*! Compute DBH for given tree with method of Least Square Regression for circle fitting. User can select single tree or all_trees.
+        Result is displayed as a cylinder in 1,3 m from position with beige value of estimated DBH.*/
+  void dbhCheck();
     //! Display DBH computed using Least Square Regression.
     /*! For given cloud name show dbh_cloud and cylinder with text of DBH value*/
     /*! \param name name of tree cloud.*/
@@ -163,6 +167,10 @@ private slots:
     /*! Compute tree position using median coordinate of all point that are up to given height above lowest point of cloud.
         Position is displayed as a sphere with centre at position and radius of 10 cm. */
   void position();
+  //! Compute tree position using hough transform.
+    /*! Compute tree position using median coordinate of all point that are up to given height above lowest point of cloud.
+        Position is displayed as a sphere with centre at position and radius of 10 cm. */
+  void positionHT();
     //! Display position as s sphere for given tree.
     /*! For given cloud name show sphere at tree position.*/
     /*! \param name name of tree cloud.*/
@@ -218,6 +226,20 @@ private slots:
   void concavehull_DisplayAll();
     //! Hide concave planar projection of all trees.
   void concavehull_HideAll();
+    //! Compute and display stem curve.
+    /*! Compute and display stem curve rings */
+  void stemCurvature();
+    //! Display stem curve.
+    /*! Display stem curve rings */
+    /*! \param name name of tree cloud.*/
+  void stemCurvatureDisplay(QString name);
+    //! Displaystem curven for all trees.
+    /*! Display rings in 1 meter range for whole stem.  */
+  void stemCurvature_DisplayAll();
+    //! Hide stem curve rings of all trees.
+  void stemCurvature_HideAll();
+  //! Export stem curve into text file.
+  void stemCurvatureExport();
     //! Manual editing of tree DBH cloud.
     /*! Choose tree cloud for manual editing of cloud representing points for estimating DBH. */
   void dbhCloudEdit();
@@ -248,12 +270,18 @@ private slots:
     //! Clip of two cloud - special purpose function only.
     /*! finish editing clipping */
   void clipStop();
-  void set_ConcaveCloud();
   //! Create concave hull of cloud.
     /*! output is new ost cloud*/
-  void set_ConvexCloud();
-  //! Create convex hull of cloud.
+  void set_ConcaveCloud();
+    //! Create convex hull of cloud.
     /*! output is new ost cloud*/
+  void set_ConvexCloud();
+    //! save vtkwidget into tiff file.
+    /*! output actual visualizatin in vtkcanvas into file*/
+  void save_tiff();
+    //! Change background color of vTK widget.
+    /*! select color for background*/
+  void bgColor();
 
 // ABOUT
     //! Information about application
@@ -367,7 +395,7 @@ private:
 
 //QVTKWIDGET - display and hide clouds
   QVTKWidget *qvtkwidget;               /**< Define QVTKWidget */
-  boost::shared_ptr<Visualizer> m_vis;  /**< Name of Visualizer */
+  Visualizer *m_vis;                    /**< Visualizer */
   boost::signals2::connection area;     /**< Boost signal for connecting area picking events */
   boost::signals2::connection point_ev; /**< Boost signal for connecting point picking events */
     //! Display cloud
@@ -486,6 +514,9 @@ private:
     /*! Return names of all base clouds in project
         \return QStringList of all base cloud names */
   QStringList get_baseNames();
+  //! Check if given name eist in project.
+    /*!
+        \return QString ogiven new name*/
   QString name_Exists();
 
   QProgressBar *pBar;          /**< ProgressBar definition */
@@ -524,13 +555,17 @@ private:
   QAction *dbhLSRAct;         /**< Compute DBH using LSR and display Act */
   QAction *heightAct;         /**< Compute Height and display Act */
   QAction *posAct;            /**< Compute Position and display Act */
+  QAction *posHTAct;            /**< Compute Position and display Act */
   QAction *manualSelAct;      /**< Manual selection of trees Act */
   QAction *treeEditAct;       /**< Manual editing of tree cloud Act */
   QAction *dbhEditAct;        /**< Manual editing of tree DBH cloud Act */
+  QAction *dbhCheckAct;       /**< Check DBH computation of both methods  */
   QAction *lengAct;           /**< Compute cloud length and display Act */
   QAction *skeletonAct;       /**< Compute tree skeleton and display Act */
   QAction *convexAct;         /**< Compute convex hull Act */
   QAction *concaveAct;        /**< Compute concave hull Act */
+  QAction *stemCurvatureAct;  /**< Compute stem curve Act */
+  QAction *exportStemCurvAct; /**< Export given tree stem curve Act*/
 
   //MISC ACTIONS
   QAction *plusAct;           /**< Merge two cloud into single one Act */
@@ -540,6 +575,8 @@ private:
   QAction *clipedAct;         /**< Clipping Act 2 */
   QAction *convexCloudAct;    /**< ConvexCloud Act */
   QAction *concaveCloudAct;   /**< ConcaveCloud Act */
+  QAction *tiffAct;           /**< save vtkwidget into tiff file Act */
+  QAction *bgcolorAct;         /**< Change background color Act */
 
 
   //ABOUT ACTIONS
@@ -557,11 +594,12 @@ private:
   QAction *convexT;           /**< display/hide  points representing convex projection of tree. Used in treeBar */
   QAction *concaveT;          /**< display/hide  points representing concave projection of tree. Used in treeBar */
   QAction *skeletonT;         /**< display/hide  lines connected in tree skeleton. Used in treeBar */
-
+  QAction *stemCurveT;         /**< display/hide  tree rings representing stem curve*/
   Project *Proj;              /**< Project definition */
   Cloud *m_cloud;             /**< temporary cloud serves mainly in editing mode */
   Cloud *m_cloud1;            /**< temporary cloud serves mainly in editing mode */
   Cloud *m_cloud2;            /**< temporary cloud serves mainly in editing mode*/
+
  };
 
 #endif // MAINWINDOW_H_INCLUDED

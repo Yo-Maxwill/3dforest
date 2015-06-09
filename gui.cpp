@@ -14,8 +14,33 @@
 //    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////
 #include "gui.h"
-
-
+#include "cloud.h"
+#include <vtkActor.h>
+#include <vtkArrayCalculator.h>
+#include <vtkCamera.h>
+#include <vtkClipDataSet.h>
+#include "vtkCylinderSource.h"
+#include <vtkCutter.h>
+#include <vtkDataSetMapper.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkLookupTable.h>
+#include <vtkNew.h>
+#include <vtkPlane.h>
+#include <vtkPointData.h>
+#include <vtkPointSource.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRibbonFilter.h>
+#include <vtkStreamTracer.h>
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkVertexGlyphFilter.h>
+#include <vtkInteractorStyleTrackballActor.h>
+#include <vtkWin32RenderWindowInteractor.h>
 
 ////INPUTDIALOG
 InputDialog::InputDialog( QWidget *parent)
@@ -1398,7 +1423,7 @@ void MyTree::onItemChange(QTreeWidgetItem *item,int i)
 }
 void MyTree::onDeleteItem(QString name)
 {
-  QMessageBox *msgBox =  new QMessageBox(this);
+  QMessageBox *msgBox =  new QMessageBox(0);
 	msgBox->setText("DELETE");
 	QString a = QString("DO YOU WANT TO DELETE CLOUD -- %1 -- FROM PROJECT?").arg(name);
 	msgBox->setInformativeText(a);
@@ -1410,6 +1435,7 @@ void MyTree::onDeleteItem(QString name)
     itemdelete(name);
     emit deleteItem(name);
   }
+  delete msgBox;
 }
 void MyTree::onColor(QString name)
 {
@@ -1486,7 +1512,104 @@ QTreeWidgetItemIterator it(this);
 }
 
 ////VISUALIZER
-Visualizer::Visualizer(QString name)
+Visualizer::Visualizer()
 {
-  PCLVisualizer (name.toUtf8().constData());
+  PCLVisualizer ("3D Viewer");
+  //setUseVbos(true);
 }
+
+//Vis::Vis()
+//{
+//   m_renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+//
+//  // Setup renderer
+//  m_renderer = vtkSmartPointer<vtkRenderer>::New();
+//  m_renderer->SetBackground(0.1, 0.2, 0.4);
+//  m_renderWindow->AddRenderer(m_renderer);
+//
+//}
+//vtkSmartPointer<vtkRenderWindow> Vis::get_renderWindow()
+//{
+//  return m_renderWindow;
+//}
+//bool Vis::addCloud(Cloud cl)
+//{
+//  vtkSmartPointer<vtkPoints> points =
+//  vtkSmartPointer<vtkPoints>::New();
+//
+//  for(int i = 0; cl.get_Cloud()->points.size() > i; i++)
+//  {
+//    points->InsertNextPoint(cl.get_Cloud()->points.at(i).x, cl.get_Cloud()->points.at(i).y, cl.get_Cloud()->points.at(i).z);
+//  }
+//  vtkSmartPointer<vtkPolyData> polydata =
+//    vtkSmartPointer<vtkPolyData>::New();
+//
+//  polydata->SetPoints(points);
+//
+//  vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter =
+//    vtkSmartPointer<vtkVertexGlyphFilter>::New();
+//#if VTK_MAJOR_VERSION <= 5
+//  glyphFilter->SetInputConnection(polydata->GetProducerPort());
+//#else
+//  glyphFilter->SetInputData(polydata);
+//#endif
+//  glyphFilter->Update();
+//
+//  // Visualize
+//  // Create a mapper and actor
+//  vtkSmartPointer<vtkPolyDataMapper> mapper =
+//    vtkSmartPointer<vtkPolyDataMapper>::New();
+//  mapper->SetInputConnection(glyphFilter->GetOutputPort());
+//
+//  vtkSmartPointer<vtkActor> actor =
+//    vtkSmartPointer<vtkActor>::New();
+//  actor->SetMapper(mapper);
+//
+//
+//  vtkSmartPointer<vtkWin32RenderWindowInteractor> renderWindowInteractor =
+//    vtkSmartPointer<vtkWin32RenderWindowInteractor>::New();
+//  renderWindowInteractor->SetRenderWindow(m_renderWindow);
+//
+//  vtkSmartPointer<vtkInteractorStyleTrackballActor> style =
+//    vtkSmartPointer<vtkInteractorStyleTrackballActor>::New();
+//
+//  renderWindowInteractor->SetInteractorStyle( style );
+//
+//  renderWindowInteractor->Start();
+//
+//
+//  m_renderer->AddActor(actor);
+//  m_renderer->SetBackground(0.1, 0.2, 0.4);
+//  m_renderWindow->Render();
+//
+//}
+//void Vis::addCylinder()
+//{
+//  vtkCylinderSource *cylinder = vtkCylinderSource::New();
+//  cylinder->SetResolution(8);
+//
+//  // The mapper is responsible for pushing the geometry into the graphics
+//  // library. It may also do color mapping, if scalars or other attributes
+//  // are defined.
+//  //
+//  vtkPolyDataMapper *cylinderMapper = vtkPolyDataMapper::New();
+//  cylinderMapper->SetInputConnection(cylinder->GetOutputPort());
+//
+//  // The actor is a grouping mechanism: besides the geometry (mapper), it
+//  // also has a property, transformation matrix, and/or texture map.
+//  // Here we set its color and rotate it -22.5 degrees.
+//  vtkActor *cylinderActor = vtkActor::New();
+//  cylinderActor->SetMapper(cylinderMapper);
+//  cylinderActor->GetProperty()->SetColor(1.0000, 0.3882, 0.2784);
+//  cylinderActor->RotateX(30.0);
+//  cylinderActor->RotateY(-45.0);
+//
+//  m_renderer->AddActor(cylinderActor);
+//  m_renderer->SetBackground(0.1, 0.2, 0.4);
+//  m_renderWindow->Render();
+//
+//
+//  // We'll zoom in a little by accessing the camera and invoking a "Zoom"
+//  // method on it.
+//  m_renderer->ResetCamera();
+//}

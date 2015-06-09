@@ -22,7 +22,7 @@
 #include <QtGui/QTreeWidget>
 #include <QtGui/QToolBar>
 #include <pcl/visualization/pcl_visualizer.h>
-
+#include "cloud.h"
 
 //INPUTDIALOG
 //! Introduction dialog of methods.
@@ -577,9 +577,21 @@ class Visualizer : public pcl::visualization::PCLVisualizer
 
 public:
     //!  Default contructor
-    /*!  Constructor of dialog  \param name name of the vizualizer */
-  Visualizer(QString name);
+    /*!  Constructor of VTKWidget  */
+  Visualizer();
 };
 
+//class Vis
+//{
+//  vtkSmartPointer<vtkRenderWindow> m_renderWindow;
+//  vtkSmartPointer<vtkRenderer> m_renderer;
+//public:
+//    //!  Default contructor
+//    /*!  Constructor of dialog   */
+//  Vis();
+//  vtkSmartPointer<vtkRenderWindow> get_renderWindow();
+//  bool addCloud(Cloud cl);
+//  void addCylinder();
+//};
 
 #endif // GUI_H_INCLUDED

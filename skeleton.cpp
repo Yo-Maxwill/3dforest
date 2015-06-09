@@ -14,6 +14,7 @@
 //    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////
 #include "skeleton.h"
+
 #include <pcl/kdtree/kdtree_flann.h>
 //BOOOST
 #include <boost/graph/adjacency_list.hpp>

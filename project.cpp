@@ -62,7 +62,6 @@ m_x=x;
 m_y=y; //coordinate system
 m_z=z;
 m_projectName = name;
-
 }
 void Project::cleanAll()
 {
@@ -114,18 +113,11 @@ void Project::set_VegeCloud(Cloud cloud)
   m_vegeCloud.push_back(cloud);
 }
  void Project::set_Tree(Cloud cloud)
- {
-  m_stromy.push_back(cloud);
+{
+  Tree t (cloud);
+  m_stromy.push_back(t);
 
-  if(m_terrainCloud.size()>0)
-  {
-    m_stromy.back().set_position();
-    m_stromy.back().set_height();
-  }
-
-  m_stromy.back().set_dbhCloud();
-
- }
+}
 void Project::set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   for(int i = 0; i< m_stromy.size(); i++)
@@ -200,6 +192,16 @@ void Project::set_treePosition(QString name, Cloud terrain)
     }
   }
 }
+void Project::set_treePositionHT(QString name, Cloud terrain)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_positionHT(terrain);
+    }
+  }
+}
 void Project::set_treeheigth(QString name)
 {
   for(int i = 0; i< m_stromy.size(); i++)
@@ -219,9 +221,37 @@ void Project::set_treeDBHCloud(QString name)
       m_stromy.at(i).set_dbhCloud();
       m_stromy.at(i).set_dbhHT();
       m_stromy.at(i).set_dbhLSR();
-
     }
   }
+}
+
+void Project::set_treeDBH_HT(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_dbhHT();
+    }
+  }
+}
+void Project::set_treeDBH_HT(int i)
+{
+  m_stromy.at(i).set_dbhHT();
+}
+void Project::set_treeDBH_LSR(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_dbhLSR();
+    }
+  }
+}
+void Project::set_treeDBH_LSR(int i)
+{
+  m_stromy.at(i).set_dbhLSR();
 }
 void Project::set_skeleton(QString name, Cloud c)
 {
@@ -240,6 +270,16 @@ void Project::set_length(QString name)
     if (get_TreeCloud(i).get_name() == name)
     {
       m_stromy.at(i).set_length();
+    }
+  }
+}
+void Project::set_treeStemCurvature(QString name)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_stemCurvature();
     }
   }
 }
@@ -279,9 +319,33 @@ Cloud Project::get_TerrainCloud(QString name)
       return m_terrainCloud.at(i);
   }
 }
+Cloud Project::get_VegeCloud(QString name)
+{
+  for(int i = 0; i< m_vegeCloud.size(); i++)
+  {
+    if (get_VegeCloud(i).get_name() == name)
+      return m_vegeCloud.at(i);
+  }
+}
 Cloud Project::get_VegeCloud(int i)
 {
   return m_vegeCloud.at(i);
+}
+void Project::set_VegeCloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+{
+  for(int i = 0; i< m_vegeCloud.size(); i++)
+  {
+    if (get_VegeCloud(i).get_name() == name)
+    {
+      if (i == 0)
+        m_vegeCloud.erase(m_vegeCloud.begin());
+      else
+        m_vegeCloud.erase(m_vegeCloud.begin()+i);
+    }
+  }
+  Cloud *c = new Cloud(cloud,name);
+  m_vegeCloud.push_back(*c);
+  delete c;
 }
 int Project::get_sizebaseCV()
 {
@@ -326,8 +390,6 @@ Cloud Project::get_Cloud(QString name)
     if (get_baseCloud(i).get_name()== name)
     return m_baseCloud.at(i);
   }
-
-
   for(int i = 0; i< m_terrainCloud.size(); i++)
   {
     if (get_TerrainCloud(i).get_name()== name)
@@ -482,7 +544,7 @@ void Project::delete_Cloud(QString name)
       return;
     }
   }
-  vecsize= m_terrainCloud.size();
+  vecsize = m_terrainCloud.size();
   for(int i = 0; i< m_terrainCloud.size(); i++)
   {
     if (get_TerrainCloud(i).get_name()== name)
@@ -511,7 +573,7 @@ void Project::delete_Cloud(QString name)
   vecsize= m_ostCloud.size();
   for(int i = 0; i< m_ostCloud.size(); i++)
   {
-    if (get_ostCloud(i).get_name() == name)
+    if (m_ostCloud.at(i).get_name() == name)
     {
       if (i == 0)
         m_ostCloud.erase(m_ostCloud.begin());
@@ -526,6 +588,7 @@ void Project::delete_Cloud(QString name)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
+      //
       if (i == 0)
         m_stromy.erase(m_stromy.begin());
       else
@@ -549,6 +612,7 @@ void Project::remove_file(QString name)
     QString filep = QString ("%1/%2").arg(m_path).arg(name);
     QFile::remove(filep);
   }
+  delete msgBox;
 }
 void Project::set_color(QString name, QColor col)
 {

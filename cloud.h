@@ -68,6 +68,9 @@ public:
     //! Constructor.
     /*! Empty costructor  */
   Cloud();
+    //! Destructor.
+    /*! Empty destructor  */
+  ~Cloud();
     //! Copy Constructor.
     /*! Copy contructor */
   Cloud operator=(Cloud &kopie);
@@ -102,27 +105,27 @@ public:
   /*! Class for holding information about single tree with all parameters. */
 class Tree : public Cloud
 {
-  Cloud *m_dbhCloud;          /**< pcl::pointcloud for points representing dbh_cloud */
-  Cloud *m_convexhull;        /**< cloud of points representing convex hull of tree */
-  Cloud *m_concavehull;       /**< cloud of points representing concave hull of tree */
-  Cloud *m_skeleton;          /**< cloud of points representing skeleton of tree */
-  stred m_dbh_HT;             /**< stred of the DBH with radius computed by HT */
-  stred m_dbh_LSR;            /**< stred of the DBH with radius computed by LSR*/
-  float m_height;             /**< tree height */
-  float m_lenght;             /**< tree length */
-  float m_areaconvex;         /**< Area of tree projection from top view */
-  float m_areaconcave;        /**< Area of tree projection from top view */
-  pcl::PointXYZI m_pose;      /**< tree position */
-  pcl::PointXYZI m_minp;      /**< tree point with lowest coordinates, corner of boundary box */
-  pcl::PointXYZI m_maxp;      /**< tree point with highest coordinates, corner of boundary box  */
-  pcl::PointXYZI m_lmax;      /**< lowest point of tree for the longest axis */
-  pcl::PointXYZI m_lmin;      /**< highest point of tree for the longest axis */
-
+  Cloud *m_dbhCloud;                  /**< pcl::pointcloud for points representing dbh_cloud */
+  Cloud *m_convexhull;                /**< cloud of points representing convex hull of tree */
+  Cloud *m_concavehull;               /**< cloud of points representing concave hull of tree */
+  Cloud *m_skeleton;                  /**< cloud of points representing skeleton of tree */
+  stred m_dbh_HT;                     /**< stred of the DBH with radius computed by HT */
+  stred m_dbh_LSR;                    /**< stred of the DBH with radius computed by LSR*/
+  float m_height;                     /**< tree height */
+  float m_lenght;                     /**< tree length */
+  float m_areaconvex;                 /**< Area of tree projection from top view */
+  float m_areaconcave;                /**< Area of tree projection from top view */
+  pcl::PointXYZI m_pose;              /**< tree position */
+  pcl::PointXYZI m_minp;              /**< tree point with lowest coordinates, corner of boundary box */
+  pcl::PointXYZI m_maxp;              /**< tree point with highest coordinates, corner of boundary box  */
+  pcl::PointXYZI m_lmax;              /**< lowest point of tree for the longest axis */
+  pcl::PointXYZI m_lmin;              /**< highest point of tree for the longest axis */
+  std::vector<stred> m_stemCurvature; /**< vector of all rings presenting stem curve */
 
 public:
     //! Constructor.
-    /*! Costructor of tree. \param cloud tree pointCloud \param name of the tree \param col color of pointCloud \param s DBH value with estimated centre */
-  Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col, stred s);
+    /*! Costructor of tree. \param cloud tree pointCloud \param name of the tree \param col color of pointCloud  */
+  Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col);
     //! Constructor.
     /*! Costructor of tree. \param cloud Cloud */
   Tree (Cloud cloud);
@@ -164,9 +167,15 @@ public:
     //! Set tree position.
     /*! Compute and set tree position. */
   void set_position();
+  //! Set tree position.
+    /*! Compute and set tree position. */
+  void set_positionRHT();
     //! Set tree position.
-    /*! Compute and set tree position based on digital terrain model. \param teren cloud representing DMT */
+    /*! Compute and set tree position based on digital terrain model. \param terrain cloud representing DMT */
   void set_position(Cloud terrain);
+  //! Set tree position.
+    /*! Compute and set tree position. */
+  void set_positionHT(Cloud terrain);
     //! Set cloud length.
     /*! Compute and set tree cloud length. */
   void set_length();
@@ -220,6 +229,11 @@ public:
     //! Get skeleton of tree.
     /*! \return cloud representing tree skeleton */
   Cloud get_skeleton();
+    //! Get stem curve rings.
+    /*! \return vector of stem curve rings */
+  std::vector<stred> get_stemCurvature();
+    //! Set stem curve rings.
+  void set_stemCurvature();
 };
 
 #endif // CLOUD_H_INCLUDED

@@ -165,6 +165,12 @@ public:
     //! Get size of vegetation cloud vector.
     /*! \return size of vector containing vegetation clouds */
   int get_sizevegeCV();
+    //! get vegetation cloud with given name.
+    /*! \param QString name of the cloud \return Cloud with given name */
+  Cloud get_VegeCloud(QString name);
+   //! Set vegetation cloud with given name and pointcloud.
+    /*! \param  name of the cloud \param cloud pointcloud */
+  void set_VegeCloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
 
 //TREECLOUD
     //! Set new tree cloud.
@@ -197,18 +203,34 @@ public:
     //! Set tree position based on terrain.
     /*! \param name tree name \param cloud terrain cloud */
   void set_treePosition(QString name, Cloud terrain);
+  void set_treePositionHT(QString name, Cloud terrain);
     //! Set tree DBH cloud.
     /*! \param name tree name */
   void set_treeheigth(QString name);
     //! Set tree DBH cloud.
     /*! \param name tree name */
   void set_treeDBHCloud(QString name);
+    //! Set tree DBH using RHT.
+    /*! \param name tree name */
+  void set_treeDBH_HT(QString name);
+    //! Set tree DBH using RHT.
+    /*! \param i for i-th tree in vector */
+  void set_treeDBH_HT(int i);
+    //! Set tree DBH using LSR.
+    /*! \param name tree name */
+  void set_treeDBH_LSR(QString name);
+    //! Set tree DBH using LSR.
+    /*! \param i for i-th tree in vector */
+  void set_treeDBH_LSR(int i);
     //! Set tree length.
     /*! \param name tree name */
   void set_length(QString name);
     //! Set tree skeleton.
     /*! \param name tree name  \param c Cloud of point representing skeleton.*/
   void set_skeleton(QString name, Cloud c);
+    //! Set Stem curve for given cloud name.
+    /*! \param name tree name */
+  void set_treeStemCurvature(QString name);
 //OSTCLOUDset_dbhCloud(cl);
     //! Set new ost cloud.
     /*! \param cloud cloud of new ost cloud  */
