@@ -34,19 +34,7 @@ struct stred {
     {return (i < str.i);}
 				};
 
-  //! Struct consist for hold tree centre and diameter.
-  /*! Struct of holding information about computed tree DBH with coordinates of centre (a,b) radius (r) and parameters of LSR computing . */
-struct stredLSR {
-				float a;  /**< the X-coordinate of the center of the fitting circle */
-				float b;  /**< the Y-coordinate of the center of the fitting circle */
-				float r;  /**< the radius of the fitting circle */
-        float s;  /**< the root mean square error (the estimate of sigma) */
-        float i;  /**< the total number of outer iterations (updating the parameters) */
-        float j;  /**< the total number of inner iterations (adjusting lambda) */
-        float g;  /**<  */
-   bool operator < (const stred& str) const
-    {return (i < str.i);}
-				};
+
 
   //! Basic data class of pointcloud representation.
   /*! Class represents points cloud with color, point size and name.  */
@@ -150,17 +138,6 @@ public:
     //! Set dbh cloud using LSR.
     /*! Compute DBH using Least Square Regression computing. and save it into m_dbh */
   void set_dbhLSR();
-    //! Compute algebraic circle fit.
-    /*! Compute algebraic circle fit for given pointCloud. \param cloud pointCloud representing DBH pointCloud. \return stred of computed fit */
-  stred set_dbhLSRALG(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    //! Compute geometric circle fit.
-    /*! Compute geometricc circle fit for given pointCloud.
-        \param circ input algebraic circle copmputed from set_dbh_LSRALG \param cloud pointCloud representing DBH pointCloud. \return stred of computed fit */
-  stred set_dbhLSRGEOM(stred circ, pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    //! Compute  the root mean square error - sigma
-    /*! Compute the square root of the average square of the distance for given pointCloud and computed circle.
-    \param cloud pointCloud representing DBH pointCloud. \param circle computd stred \return value of sigma */
-  float Sigma(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, stredLSR circle);
     //! Set tree height.
     /*! Compute and set tree height. */
   void set_height();

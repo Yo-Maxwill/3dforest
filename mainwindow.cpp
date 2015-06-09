@@ -1992,7 +1992,7 @@ void MainWindow::dbhHTDisplay(QString name)
     pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
     coef->values.push_back((float)x.a);
     coef->values.push_back((float)x.b);
-    coef->values.push_back((float)x.z);
+    coef->values.push_back((float)x.z-0.05);
     coef->values.push_back((float)0);
     coef->values.push_back((float)0);
     coef->values.push_back((float)0.1);
@@ -2128,7 +2128,7 @@ void MainWindow::dbhLSRDisplay(QString name)
     pcl::ModelCoefficients::Ptr coef (new pcl::ModelCoefficients ());
     coef->values.push_back((float)x.a);
     coef->values.push_back((float)x.b);
-    coef->values.push_back((float)x.z);
+    coef->values.push_back((float)x.z-0.05);
     coef->values.push_back((float)0);
     coef->values.push_back((float)0);
     coef->values.push_back((float)0.1);

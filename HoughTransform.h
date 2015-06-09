@@ -44,7 +44,6 @@ class HoughTransform
    //! get the result circle.
     /*! \return stred ring computed by class. */
   stred get_circle();
-
 };
 
 #endif // HOUGHTRANSFORM_H_INCLUDED
