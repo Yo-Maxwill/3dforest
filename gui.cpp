@@ -1270,7 +1270,7 @@ int ImportPage::nextId() const
         //ulozit do proj.3df
         out << coords.at(0) << " " << new_file << " " << coords.at(2)<< " " << coords.at(3)<< " " << coords.at(4)<< "\n";
       }
-      else //type, path
+      else if (coords.size() > 0)
       {
         QStringList apth = coords.at(1).split("\\");
         QString new_file = QString("%1\\%2").arg(pathDir).arg(apth.at(apth.size()-1));
@@ -1279,6 +1279,10 @@ int ImportPage::nextId() const
         QFile::copy(old_file, new_file);
         //ulozit do proj.3df
         out << coords.at(0) << " " << new_file <<"\n";
+      }
+      else
+      {
+        continue;
       }
     }
   }
@@ -1425,7 +1429,7 @@ void MyTree::onDeleteItem(QString name)
 {
   QMessageBox *msgBox =  new QMessageBox(0);
 	msgBox->setText("DELETE");
-	QString a = QString("DO YOU WANT TO DELETE CLOUD -- %1 -- FROM PROJECT?").arg(name);
+	QString a = QString("Do you want to delete cloud -- %1 -- from project?").arg(name);
 	msgBox->setInformativeText(a);
 	msgBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 	msgBox->setDefaultButton(QMessageBox::Yes);

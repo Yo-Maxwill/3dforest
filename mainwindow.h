@@ -70,6 +70,9 @@ private slots:
     //! Import PCD file.
     /*! Import existing file into project as a tree cloud.  */
   void importTreeCloud();
+  //! Import PCD file.
+    /*! Import existing file into project as a tree cloud.  */
+  void importOstCloud();
   //file export
     //! Export cloud.
     /*! Export cloud into text file  */
@@ -255,6 +258,9 @@ private slots:
     //! subtract two clouds.
     /*! Choose two input clouds and from the bigger one subtract all point that are common with the second one. Result save into new file.  */
   void minusCloud();
+  //! divide cloud into two clouds.
+    /*! spit cloud into two cloud based on field.  */
+  void splitCloud();
     //! Voxelize cloud.
     /*! For given cloud make new voxelized cloud with given resolution of voxel. */
   void voxelize();
@@ -317,6 +323,11 @@ private slots:
     /*! Restore points removed during area picking event. Function is connected to undo button. */
   void undo();
 
+  // PROGRESSBAR
+    void showProgressBar100percent();
+    QProgressBar* createNewProgressBar();
+    void showProgressBarAt(QProgressBar *pBar,int a);
+
 private:
   //application widgets and actions
     //! Create actions
@@ -334,64 +345,32 @@ private:
 //import various formats
     //! Import text file.
     /*! Import existing text file into project as a base cloud.  */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr importTXT(QString file);
+  void importTXT(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
     //! Import LAS file.
     /*! Import existing las file into project as a base cloud.  */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr importLAS(QString file);
+  void importLAS(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
     //! Import PCD file.
     /*! Import existing text file into project as a base cloud.  */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr importPCD(QString file);
+  void importPCD(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
     //! Import PTS Leica file.
     /*! Import existing pts file into project as a base cloud. Fields of this file is: X Y Z intensity  */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr importPTS(QString file);
+  void importPTS(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
     //! Import PTX Leica file.
     /*! Import existing ptx file into project as a base cloud.  */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr importPTX(QString file);
+  void importPTX(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
 //opening methods
     //! Open project file
     /*! Open project file load transformation matrix, all clouds and display it.
     \param path  Path to the proj file */
   void openProject(QString path);
-    //! Open terrain file
-    /*! Open terrain file with randomly selected color of cloud and save it into project terrain cloud vector.
-    \param file path to the file */
-  void openTerrainFile(QString file);
-    //! Open vegetation file
-    /*! Open vegetation file with randomly selected color of cloud and save it into project vegetation cloud vector.
-    \param file path to the file */
-  void openVegeFile(QString file);
-    //! Open ost file
-    /*! Open ost  file with randomly selected color of cloud and save it into project ost cloud vector.
-    \param file path to the file */
-  void openOstFile(QString file);
-    //! Open tree file
-    /*! Open tree file with randomly selected color of cloud and save it into project tree cloud vector.
-    \param file path to the file */
-  void openTreeFile(QString file);
-    //! Open base cloud file
-    /*! Open tree file with randomly selected color of cloud and save it into project base cloud vector.
-    \param file path to the file */
-  void openCloudFile(QString file);
-    //! Open terrain file
-    /*! Open terrain file with selected color of cloud and save it into project terrain cloud vector.
-    \param file path to the file \param col QColor defining cloud color */
-  void openTerrainFile(QString file, QColor col);
-    //! Open vegetation file
-    /*! Open vegetation file with selected color of cloud and save it into project vegetation cloud vector.
-    \param file path to the file \param col QColor defining cloud color */
-  void openVegeFile(QString file, QColor col);
-    //! Open ost file
-    /*! Open ost file with selected color of cloud and save it into project tree cloud vector.
-    \param file path to the file \param col QColor defining cloud color */
-  void openOstFile(QString file, QColor col);
-    //! Open tree file
-    /*! Open tree file with selected color of cloud and save it into project tree cloud vector.
-    \param file  path to the file \param col QColor defining cloud color */
-  void openTreeFile(QString file, QColor col);
-    //! Open base cloud file
-    /*! Open tree file with selected color of cloud and save it into project base cloud vector.
-    \param file  path to the file \param col QColor defining cloud color */
-  void openCloudFile(QString file, QColor col);
+    //! Open point cloud file
+    /*! Open point cloud file with randomly selected color of cloud and set in project as given type.
+    \param file path to the file \param type type of the cloud*/
+  void openCloudFile(QString file, QString type);
+    //! Open point cloud file with given color
+    /*! Open point cloud file with selected color of cloud and set in project as given type.
+    \param file path to the file \param type type of the cloud \param col QColor defining cloud color */
+  void openCloudFile(QString file, QString type, QColor col);
 
 //QVTKWIDGET - display and hide clouds
   QVTKWidget *qvtkwidget;               /**< Define QVTKWidget */
@@ -438,10 +417,7 @@ private:
 
 
 // save functions
-    //! Save cloud as a ost type.
-    /*! Save selected cloud as a "ost" type in project.
-        \param s_cloud  input cloud */
-  void saveOstCloud(Cloud *s_cloud);
+  void saveCloud(Cloud *s_cloud, QString type);
     //! Save cloud as a tree type.
     /*! Save selected pointcloud as a new tree in project.
         \param tree_cloud input pointcloud */
@@ -450,22 +426,10 @@ private:
     /*! Save selected pointcloud as a new tree in project .
         \param tree_cloud input pointcloud \param name name of the cloud \param overwrt overwrite existing file */
   void saveTreeCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr tree_cloud, QString name,bool overwrt);
-    //! Save cloud as a tree type.
-    /*! Save selected cloud as a new tree in project.
-        \param s_cloud Input Cloud */
-  void saveTreeCloud(Cloud *s_cloud);
-    //! Save cloud as a vegetation type.
-    /*! Save selected cloud as a new vegetation cloud in project.
-        \param s_cloud Input Cloud */
-  void saveVegeCloud(Cloud *s_cloud);
     //! Save cloud as a vegetation type.
     /*! Save selected cloud as a new vegetation cloud in project.
         \param s_cloud Input Cloud \param overwrt overwrite existing file  */
-  void saveVegeCloud(Cloud *s_cloud, bool overwrt );
-    //! Save cloud as a terrain type.
-    /*! Save selected cloud as a new terrain cloud in project.
-        \param s_cloud Input Cloud */
-  void saveTerrainCloud(Cloud *s_cloud);
+  void saveVegeCloud(Cloud *s_cloud, bool overwrt  );
 
     //! Segment input_cloud into vegetation and ground.
     /*! Method for segmenting input cloud into vegetation and ground cloud with given resolution.
@@ -476,7 +440,7 @@ private:
     /*! From given pointCloud select all points that have in given resolution the lowest/highest z coordinate.
         \param c Input pointCloud \param res Resolution \param v if true select lowest point else highest
         \return  pointCloud */
-  pcl::PointCloud<pcl::PointXYZI>::Ptr lowPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr c,float res, bool v);
+  void lowPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr input,pcl::PointCloud<pcl::PointXYZI>::Ptr output,float res);
     //! Join two cloud into one.
     /*! join two input clouds into new one.
     \param  input1 first input cloud \param  input2 second input cloud \param  output name of output cloud
@@ -577,6 +541,7 @@ private:
   QAction *concaveCloudAct;   /**< ConcaveCloud Act */
   QAction *tiffAct;           /**< save vtkwidget into tiff file Act */
   QAction *bgcolorAct;         /**< Change background color Act */
+  QAction *spitCloudAct;         /**< Change background color Act */
 
 
   //ABOUT ACTIONS

@@ -24,6 +24,7 @@
 #include <pcl/common/common_headers.h>
 #include "skeleton.h"
 #include "cloud.h"
+#include "tree.h"
 
 
   //! Basic class representing pointCloud data.
@@ -78,6 +79,9 @@ public:
     //! Save new cloud in project.
     /*! Save copy old file into project folder and add record in proj file \param type tape of the cloud \param path path to old file */
   void save_newCloud(QString type, QString path);
+  //! Save new cloud in project.
+    /*! Save copy old file into project folder and add record in proj file \param type tape of the cloud \param path path to old file */
+  void save_newCloud(QString type, Cloud& input);
     //! Save new cloud in project.
     /*! Save new cloud in file and in proj file \param type type of the cloud \param name name of the cloud  \param c new pointCloud*/
   void save_newCloud(QString type, QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c );
@@ -181,10 +185,10 @@ public:
   void set_TreeCloudat(int,Cloud);
     //! Get tree cloud.
     /*! \param i get tree cloud on ith position in vector \return Tree on given position  */
-  Tree get_TreeCloud(int i);
+  Tree& get_TreeCloud(int i);
     //! Get tree cloud.
     /*! \param name name of the tree \return Tree with given name  */
-  Tree get_TreeCloud(QString name);
+  Tree& get_TreeCloud(QString name);
     //! Get size of tree cloud vector.
     /*! \return size of vector containing tree clouds */
   int get_sizeTreeCV();

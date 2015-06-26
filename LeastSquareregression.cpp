@@ -28,7 +28,7 @@ LeastSquaredRegression::~LeastSquaredRegression ()
 {
   m_cloud.reset();
 }
-void LeastSquaredRegression::set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+void LeastSquaredRegression::setCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   m_cloud = cloud;
 }
@@ -37,7 +37,7 @@ void  LeastSquaredRegression::compute()
     algebraicCircle();
     geometricCirlce();
 }
-stred LeastSquaredRegression::get_circle()
+stred LeastSquaredRegression::getCircle()
 {
   return m_circle;
 }
@@ -158,7 +158,7 @@ void LeastSquaredRegression::geometricCirlce()
 //       starting with the given initial circle (initial guess)
   New = {m_circle.a,m_circle.b,m_circle.r,0,0,0,0};
 //       compute the root-mean-square error
-  New.s = Sigma(New);
+  New.s = sigma(New);
 
 //       initializing lambda, iteration counters, and the exit code
 
@@ -249,7 +249,7 @@ try_again:
 
 //       compute the root-mean-square error
 
-    New.s = Sigma(New);
+    New.s = sigma(New);
 
 //       check if improvement is gained
 
@@ -276,7 +276,7 @@ enough:
     stred c = {circlef.a,circlef.b,meanZ,1,rr};
     m_circle = c;
 }
-float LeastSquaredRegression::Sigma (stredLSR circle)
+float LeastSquaredRegression::sigma (stredLSR circle)
 {
   float sum=0.,dx,dy;
   float n = (float) m_cloud->points.size();

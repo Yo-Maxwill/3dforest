@@ -50,13 +50,13 @@ class LeastSquaredRegression
   ~LeastSquaredRegression ();
     //! set cloud to the class.
     /*! set the point cloud for compute ring. \param cloud pointcloud*/
-  void set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+  void setCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     //! computation of the ring.
     /*! calculate the ring for given cloud and save result into m_circle*/
   void  compute();
    //! get the result circle.
     /*! \return stred ring computed by class. */
-  stred get_circle();
+  stred getCircle();
     //! Compute algebraic circle fit and save it into m_circle
     /*! Compute lgebraic circle fit for given pointCloud.*/
   void algebraicCircle();
@@ -66,7 +66,7 @@ class LeastSquaredRegression
     //! Compute  the root mean square error - sigma
     /*! Compute the square root of the average square of the distance for given pointCloud and computed circle.
      \param circle computed stredLSR \return value of sigma */
-  float Sigma(stredLSR circle);
+  float sigma(stredLSR circle);
 };
 
 #endif // LEASTSQUAREREGRESSION_H_INCLUDED

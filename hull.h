@@ -7,7 +7,7 @@
 //
 //    3DFOREST is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
@@ -21,58 +21,100 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
 #include "cloud.h"
-  //! Class for computing convex/concave hull of given cloud.
-  /*! Algorithms for computing convex hull, concave hull in 2D or 3D space. */
-class Hull : public Cloud
+
+//! Class for convex hull cumputing.
+/*! Class for computinh convex polygon and holding its attributes. */
+class ConvexHull
 {
-    Hull *m_hull;                      /**<  */
-    Cloud *vexhull;                    /**< Cloud representing convex hull */
-    Cloud *concavehull;                /**< Cloud representing concave hull */
-    float m_areaconvex;                /**< Area of convex hull */
-    float m_areaconcave;               /**< Area of concave hull */
-    float maxEdgeLenght;               /**< Maximal length of edge */
-    float vertical;                    /**< Vertical angle  */
-    float direction;                   /**< Horizontal angle */
+protected:
+    pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud;    /**< input point cloud */
+    pcl::PointCloud<pcl::PointXYZI>::Ptr m_convexhull;    /**< cloud representing convex hull */
+    float m_polygonArea;    /**< area of convex hull */
 
 public:
-      //! Default constructor
-      /*! Constructor for creating Hull \param cloud pointcloud \param name name of the cloud \param col color of the cloud */
-    Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col);
-      //! Constructor
-      /*! Constructor for creating Hull \param cloud pointcloud \param name name of the cloud */
-    Hull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
-      //! Constructor
-      /*! Constructor for creating Hull \param Cloud of points*/
-    Hull (Cloud cloud);
-      //! Set convex hull for cloud
-      /*! For m_cloud create convex hull and save it onto m_convexhull*/
-    void set_convexhull();
-      //! Set convex hull for cloud
-      /*! \param c cloud representing hull points*/
-    void set_convexhull(Cloud c);
-    void set_concavehull(float maxEdgeLenght);
-    int set_concaveZkracovanim(float maxEdgeLenght);
-    void set_concavehull(Cloud c);
-    bool if_intersect(const pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float x, float y,int &q);
-    void set_areavex(Cloud c);
-    void set_areacave(Cloud c);
-    float get_areaconvex();
-    float get_areaconcave();
+  //! Constructor.
+    /*! Costructor of ConvexHull  */
+    ConvexHull();
+    //! Constructor.
+    /*! Costructor of ConvexHull \param pcl point cloud \param name */
+    ConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Destructor.
+    /*! Destructor of ConvexHull. */
+    ~ConvexHull();
 
-    Cloud get_convexhull();
-    Cloud get_concavehull();
-    Hull get_Hull();
-    void set_Hull(Hull hull);
-    void returnConvexhull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr cloudb);
-    float returnDistance(pcl::PointXYZI boda, pcl::PointXYZI bodb);
-    float return_clockwiseAngle(pcl::PointXYZI boda, pcl::PointXYZI bodc, pcl::PointXYZI bodb);
-    void erasePointFromCloud (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI bod);
-    float returnPreponaDist (float a, float b);
-    void PointToHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI boda, pcl::PointXYZI bodb, pcl::PointXYZI bodx);
+    void set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! execute computation.
+    /*! Compute convex hull and area */
+    void compute();
+    //! Get polygon.
+    /*! Get cloud cloud containing points in convex polygon \param pointer to cloud */
+    void getPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Get polygon area.
+    /*! Get convex polygon area in square meters \return float */
+    float getPolygonArea();
+
+private:
+    //! Create convex hull.
+    /*! Compute convex hull \param pcl point cloud with points \param pcl pointcloud for resulting polygon */
+    void createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr cloudForHull);
+    //! Return point lowest YZ.
+    /*! Return pcl point with xy coordinates equal to point with lowes y coordinate in cloud, z coordinate is equal to lowest z value in cloud
+     \param pcl point cloud with points \return pcl point */
+    pcl::PointXYZI returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Return second point to polygon.
+    /*! Return second point to polygon line \param pcl point cloud with points \param pcl point \return pcl point */
+    pcl::PointXYZI returnSecondPointToPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI firstPoint);
+    //! Return next point to hull.
+    /*! Return next point into polygon \param pcl point cloud  \param pcl point \param pcl point \return pcl point */
+    pcl::PointXYZI returnNextPointToHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI pointA, pcl::PointXYZI pointB);
+    void createConvexIfOnlyFourPointsInCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
 };
+//! Class for concave hull cumputing.
+/*! Class for computinh concave polygon and holding its attributes. */
+class ConcaveHull
+{
+protected:
+    pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud;    /**< input point cloud */
+    pcl::PointCloud<pcl::PointXYZI>::Ptr m_concavehull;       /**< cloud representing concave hull */
+    float m_polygonArea;        /**< area of concave hull */
+    float m_searchingDistance;  /**<Start searching distance to find edge breaking point */
 
+public:
+    //! Constructor.
+    /*! Costructor of ConcaveHull \param name \param pcl pointcloud \param float */
+    ConcaveHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float searchDist=1.0);
+    //! Destructor.
+    /*! Destructor of ConcaveHull. */
+    ~ConcaveHull();
+    //! Get polygon.
+    /*! Get cloud cloud containing points in convex polygon \param pointer to cloud */
+    void getPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Get polygon area.
+    /*! Get concave polygon area in square meters \return float */
+    float getPolygonArea();
+    //! Get polygon swapped ZI.
+    /*! Get cloud cloud containing points in concave polygon with swapped z and intensity values \return pointer to cloud */
+    void getPolygonSwappedZI(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    //! Get triangle at.
+    /*! Get get triangle at iterator \return pcl::point cloud */
+    pcl::PointCloud<pcl::PointXYZI>::Ptr getTriangleAt(int i);
+    //! Get triangulated polygon.
+    /*! Get pointer to triangulated polygon \return TriangulatedPolygon */
+    float getSearchDist();
+    //! Compute Attributes.
+    /*! Compute concave hull and area */
+    void compute();
 
-
-
+private:
+    //! Compute concave hull.
+    /*! Compute concave hull */
+    void computeConcaveHull();
+    //! Edges breaking.
+    /*! Walk areound polygon and break edges. \param pcl poin cloud \param pcl poin cloud \param float */
+    void edgesBreaking (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud,float maxEdgeLenght);
+    //! Return edge breaking point.
+    /*! Find best point to break edge, if any point suit for conditions. \param pcl poin cloud \param pcl point \param pcl point \param float \return pcl point */
+    pcl::PointXYZI returnEdgeBreakingPoint(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI boda, pcl::PointXYZI bodb,float maxEdgeLenght);
+};
 
 #endif // HULL_H_INCLUDED

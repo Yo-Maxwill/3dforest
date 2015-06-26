@@ -114,6 +114,7 @@ void Project::set_VegeCloud(Cloud cloud)
 }
  void Project::set_Tree(Cloud cloud)
 {
+
   Tree t (cloud);
   m_stromy.push_back(t);
 
@@ -130,47 +131,19 @@ void Project::set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr clo
 }
 void Project::set_treeConvexCloud(QString name)
 {
-  for(int i = 0; i< m_stromy.size(); i++)
-  {
-    if (get_TreeCloud(i).get_name() == name)
-    {
-      m_stromy.at(i).set_convexhull();
-    }
-  }
+
 }
 int Project::set_treeConcaveCloud(QString name,float edge)
 {
-    int errors =0;
-  for(int i = 0; i< m_stromy.size(); i++)
-  {
-    if (get_TreeCloud(i).get_name() == name)
-    {
-      errors = m_stromy.at(i).set_concavehull(edge);
-    }
-  }
-  return errors;
+
 }
 Cloud Project::set_ConcaveCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float edge, QString name, QColor color)
 {
-    Hull *h = new Hull (cloud, name, color);
-    QString m = QString("Pred h->set_concaveZkracovanim(edge)").arg(name);
-    int errors = h->set_concaveZkracovanim(edge);
 
-    if(errors>0)
-      {
-        QString m = QString(" Warning: %1 edge are longer than Maximum Edge Lenght.\n In cloud: %2").arg(errors).arg(name);
-        QMessageBox::information(0,("Warning"),m);
-      }
-    return h->get_concavehull();
 }
 Cloud Project::set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor color)
 {
 
-    Hull *h = new Hull (cloud, name, color);
-    QString m = QString("Pred h->set_concaveZkracovanim(edge)").arg(name);
-    h->set_convexhull();
-
-    return h->get_convexhull();
 }
 void Project::set_treePosition(QString name)
 {
@@ -367,11 +340,11 @@ int Project::get_sizevegeCV()
 {
   return m_vegeCloud.size();
 }
-Tree Project::get_TreeCloud(int i)
+Tree& Project::get_TreeCloud(int i)
 {
 return m_stromy.at(i);
 }
-Tree Project::get_TreeCloud(QString name)
+Tree& Project::get_TreeCloud(QString name)
 {
   for(int i = 0; i< m_stromy.size(); i++)
   {
@@ -463,6 +436,7 @@ QString Project::save_Cloud(QString path)
 QString Project::save_Cloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c)
 {
   QString path_out = QString ("%1\\%2.pcd").arg(get_Path()).arg(name);
+
   pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *c);
   return path_out;
 }
@@ -529,74 +503,56 @@ void Project::delete_Cloud(QString name)
   QFile::rename(fileout,filepath);
 
   remove_file(name);
-//  odstranit z vectoru
-  int vecsize;
-  vecsize= m_baseCloud.size();
-  for(int i = 0; i < m_baseCloud.size(); i++)
+
+  std::vector<Cloud> baseCloud;
+  for (int i = 0; i < m_baseCloud.size(); i++)
   {
-    if (get_baseCloud(i).get_name() == name)
-    {
-      if (i == 0)
-        m_baseCloud.erase(m_baseCloud.begin());
-      else
-        m_baseCloud.erase(m_baseCloud.begin()+i);
-      //m_baseCloud.resize(vecsize - 1);
-      return;
-    }
+     if(m_baseCloud.at(i).get_name() != name)
+     {
+       baseCloud.push_back(m_baseCloud.at(i));
+     }
   }
-  vecsize = m_terrainCloud.size();
-  for(int i = 0; i< m_terrainCloud.size(); i++)
+  m_baseCloud.swap(baseCloud);
+
+  std::vector<Cloud> terrainCloud;
+  for (int i = 0; i < m_terrainCloud.size(); i++)
   {
-    if (get_TerrainCloud(i).get_name()== name)
-    {
-      if (i == 0)
-        m_terrainCloud.erase(m_terrainCloud.begin());
-      else
-        m_terrainCloud.erase(m_terrainCloud.begin()+i);
-      //m_terrainCloud.resize(vecsize - 1);
-      return;
-    }
+     if(m_terrainCloud.at(i).get_name() != name)
+     {
+       terrainCloud.push_back(m_terrainCloud.at(i));
+     }
   }
-  vecsize= m_vegeCloud.size();
-  for(int i = 0; i< m_vegeCloud.size(); i++)
+  m_terrainCloud.swap(terrainCloud);
+
+  std::vector<Cloud> vegeCloud;
+  for (int i = 0; i < m_vegeCloud.size(); i++)
   {
-    if (get_VegeCloud(i).get_name() == name)
-    {
-      if (i == 0)
-        m_vegeCloud.erase(m_vegeCloud.begin());
-      else
-        m_vegeCloud.erase(m_vegeCloud.begin()+i);
-     // m_vegeCloud.resize(vecsize - 1);
-      return;
-    }
+     if(m_vegeCloud.at(i).get_name() != name)
+     {
+       vegeCloud.push_back(m_vegeCloud.at(i));
+     }
   }
-  vecsize= m_ostCloud.size();
-  for(int i = 0; i< m_ostCloud.size(); i++)
+  m_vegeCloud.swap(vegeCloud);
+
+  std::vector<Cloud> ostCloud;
+  for (int i = 0; i < m_ostCloud.size(); i++)
   {
-    if (m_ostCloud.at(i).get_name() == name)
-    {
-      if (i == 0)
-        m_ostCloud.erase(m_ostCloud.begin());
-      else
-        m_ostCloud.erase(m_ostCloud.begin()+i);
-     // m_ostCloud.resize(vecsize - 1);
-      return;
-    }
+     if(m_ostCloud.at(i).get_name() != name)
+     {
+       ostCloud.push_back(m_ostCloud.at(i));
+     }
   }
-  vecsize= m_stromy.size();
-  for(int i = 0; i< m_stromy.size(); i++)
+  m_ostCloud.swap(ostCloud);
+
+  std::vector<Tree> stromy;
+  for (int i = 0; i < m_stromy.size(); i++)
   {
-    if (get_TreeCloud(i).get_name() == name)
-    {
-      //
-      if (i == 0)
-        m_stromy.erase(m_stromy.begin());
-      else
-        m_stromy.erase(m_stromy.begin()+i);
-      //m_stromy.resize(vecsize - 1);
-      return;
-    }
+     if(m_stromy.at(i).get_name() != name)
+     {
+       stromy.push_back(m_stromy.at(i));
+     }
   }
+  m_stromy.swap(stromy);
 }
 void Project::remove_file(QString name)
 {
