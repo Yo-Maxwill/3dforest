@@ -663,7 +663,6 @@ void MainWindow::openCloudFile(QString file, QString type)
     Proj->set_OstCloud(*c);
 
   dispCloud(*c);
-  treeWidget->allItemOFF();
   addTreeItem(c->get_name());
   m_vis->resetCamera();
   delete c;
@@ -689,7 +688,6 @@ void MainWindow::openCloudFile(QString file, QString type, QColor col)
     Proj->set_OstCloud(*c);
 
   dispCloud(*c);
-  treeWidget->allItemOFF();
   addTreeItem(c->get_name());
   m_vis->resetCamera();
   delete c;
@@ -949,7 +947,7 @@ void MainWindow::voxelgrid()
     QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud2());
     cloud_vege.reset();
 
-    openCloudFile(fullnameT, "terrain");
+    openCloudFile(fullnameT, "teren");
     openCloudFile(fullnameV, "vege");
   }
   delete in;
@@ -3321,12 +3319,11 @@ void MainWindow::IDW()
 {
    //inputDialog
   InputDialog *in = new InputDialog(this);
-  in->set_title("Terrain voxel");
+  in->set_title("Inverse distance weight algorithm for terrain.");
   in->set_path(Proj->get_Path());
-  in->set_description("compute interpolated surface points in given resolution. ");
-  in->set_inputCloud1("Input ground points cloud:",get_allNames());
-  in->set_inputCloud2("Input ground cloud:",get_allNames());
-  in->set_inputCloud3("Input original cloud:",get_allNames());
+  in->set_description("compute interpolated surface points in given resolution.  ");
+  in->set_inputCloud1("Input terrain cloud:", get_terrainNames());
+  in->set_inputInt("Resolution in cm:","20");
   in->set_outputCloud1("Output cloud of ground:","idw-");
   in->set_stretch();
   int dl = in->exec();
@@ -3336,100 +3333,77 @@ void MainWindow::IDW()
 
   if(dl == QDialog::Accepted)
   {
-      // vypocet vyskoveho rozdilu jeho ulozeni do intensity
-      //pro kazdy bod v ground_points najdi nejblissi bod v reference_cloud uloz ho do cloud_vyr
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vyr (new pcl::PointCloud<pcl::PointXYZI>);
+    //get resolution of input cloud
+    pcl::PointXYZI minp,maxp;
+    pcl::getMinMax3D(*Proj->get_Cloud(in->get_inputCloud1()).get_Cloud(),minp,maxp);
+    float res = in->get_intValue()/100.0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_idw (new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::KdTreeFLANN<pcl::PointXYZI> kdtreee;
-    kdtreee.setInputCloud (Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
 
-    for(int i=0; i < Proj->get_Cloud(in->get_inputCloud2()).get_Cloud()->points.size();i++)
-    {
-      std::vector<int> pointIDv;
-      std::vector<float> pointSDv;
-      pcl::PointXYZI searchPointV;
-      searchPointV=Proj->get_Cloud(in->get_inputCloud2()).get_Cloud()->points.at(i);
-
-      if(kdtreee.nearestKSearch(searchPointV,1,pointIDv,pointSDv) >0)
-      {
-        float z = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.at( pointIDv.at(0) ).z;
-
-        pcl::PointXYZI in;
-        in.x = searchPointV.x;
-        in.y = searchPointV.y;
-        in.z = searchPointV.z;
-        in.intensity = searchPointV.z - z;
-        //ulozit jako novy cloud
-        //#pragma omp critical
-        cloud_vyr->points.push_back(in);
-      }
-    }
-    cloud_vyr->width = cloud_vyr->points.size ();
-    cloud_vyr->is_dense=true;
-    cloud_vyr->height=1;
-
-// tady začíná IDW
-    // pro kazdy bod v m_cloud najdi 10 nejblizsich bodu z cloud_vyr:
-    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+     pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
     std::vector<int> pointIv;
     std::vector<float> pointSv;
     pcl::PointXYZI searchPointVV;
-    kdtree.setInputCloud (cloud_vyr);
-    //#pragma omp parallel for
-    for(int j=0; j < Proj->get_Cloud(in->get_inputCloud3()).get_Cloud()->points.size();j++)
+    kdtree.setInputCloud (Proj->get_Cloud(in->get_inputCloud1()).get_Cloud());
+
+    for(float i = minp.x; i <  (maxp.x+res); i= i + res)
     {
-      searchPointVV=Proj->get_Cloud(in->get_inputCloud3()).get_Cloud()->points.at(j);
-      if(kdtree.nearestKSearch(searchPointVV,10,pointIv,pointSv) >0)
+      for(float j = minp.y; j <  (maxp.y+res);j = j + res)
       {
-        float max_dist = 0;
-        float w_sum = 0;
-        float idw_sum = 0;
+        // pro dany bod najdi 12 nejblizsich bodu
+        searchPointVV.x = i;
+        searchPointVV.y = j;
+        searchPointVV.z = (minp.z + maxp.z) /2;
+
+        if(kdtree.nearestKSearch(searchPointVV,10,pointIv,pointSv) >0)
+        {
+          float max_dist = 0;
+          float w_sum = 0;
+          float idw_sum = 0;
+          float intensity = Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.at(pointIv.at(0)).intensity;
         //max distance
-        for(int k =0; k < pointSv.size();k++)
-        {
-          if(sqrt(pointSv.at(k)) > max_dist)
-            max_dist = sqrt(pointSv.at(k));
-        }
+          for(int k =0; k < pointSv.size();k++)
+          {
+            if(sqrt(pointSv.at(k)) > max_dist)
+              max_dist = sqrt(pointSv.at(k));
+          }
       //w_sum
-        for(int l =0; l < pointSv.size();l++)
-        {
-          float dist = sqrt(pointSv.at(l));
-          float w;
-          if(dist == 0)
-            { w=0.0000000000001;}
-          else
-            { w = pow((max_dist - dist)/(max_dist*dist),2);}
-          w_sum += w;
-        }
+          for(int l = 0; l < pointSv.size();l++)
+          {
+            float dist = sqrt(pointSv.at(l));
+            float w;
+            if(dist == 0)
+              { w=0.0000000000001;}
+            else
+              { w = pow((max_dist - dist)/(max_dist*dist),2);}
+            w_sum += w;
+          }
       //idw_sum
-        for(int m =0; m < pointSv.size();m++)
-        {
-          float dist = sqrt(pointSv.at(m));
-          float w;
-          if(dist == 0)
-            { w=0.0000000000001;}
-          else
-            {w = pow((max_dist - dist)/(max_dist*dist),2)/w_sum;}
-          float f =   cloud_vyr->points.at(pointIv.at(m)).intensity;
-          float idw = f*w;
-          idw_sum+=idw;
+          for(int m =0; m < pointSv.size();m++)
+          {
+            float dist = sqrt(pointSv.at(m));
+            float w;
+            if(dist == 0)
+              { w=0.0000000000001;}
+            else
+              {w = pow((max_dist - dist)/(max_dist*dist),2)/w_sum;}
+            float f =   Proj->get_Cloud(in->get_inputCloud1()).get_Cloud()->points.at(pointIv.at(m)).z;
+            float idw = f*w;
+            idw_sum+=idw;
+          }
+        pcl::PointXYZI bod;
+        bod.x= searchPointVV.x;
+        bod.y= searchPointVV.y;
+        bod.z= idw_sum;
+        bod.intensity= intensity;
+        //#pragma omp critical
+        cloud_idw->points.push_back(bod);
         }
-      pcl::PointXYZI bod;
-      bod.x= searchPointVV.x;
-      bod.y= searchPointVV.y;
-      bod.z= searchPointVV.z - idw_sum;
-      //#pragma omp critical
-      cloud_idw->points.push_back(bod);
       }
     }
-    cloud_idw->width = cloud_idw->points.size ();
-    cloud_idw->is_dense=true;
-    cloud_idw->height=1;
-
-    // export do pcd
-    Proj->save_newCloud("ost",in->get_outputCloud1(),cloud_idw);
-    QString fullnameV = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
-    openCloudFile(fullnameV, "vege");
+    Proj->save_newCloud("teren",in->get_outputCloud1(),cloud_idw);
+    QString fullnameT = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(in->get_outputCloud1());
+    cloud_idw.reset();
+    openCloudFile(fullnameT, "teren");
   }
   delete in;
 }
@@ -3858,7 +3832,7 @@ void MainWindow::createActions()
   connect(voxAct, SIGNAL(triggered()), this, SLOT(voxelize()));
 
   IDWAct = new QAction(tr("IDW"), this);
-  IDWAct->setStatusTip(tr("Method only for special purpose! Serve as a computation of Inverse Distance Weight. Weight are computed from diff of reference terrain and ground point and apply to cloud. "));
+  IDWAct->setStatusTip(tr("apply IDW to terrain "));
   connect(IDWAct, SIGNAL(triggered()), this, SLOT(IDW()));
 
   clipedAct = new QAction(tr("Clip"), this);
@@ -3931,6 +3905,7 @@ void MainWindow::createMenus()
   terenMenu->addAction(voxelAct);
   terenMenu->addSeparator();
   terenMenu->addAction(manualADAct);
+  terenMenu->addAction(IDWAct);
 
 //VEGETATION
   vegeMenu = menuBar()->addMenu(tr("&Vegetation"));
