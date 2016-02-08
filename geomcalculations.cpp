@@ -1,4 +1,16 @@
 #include "geomcalculations.h"
+#include <stdlib.h>
+#include "hull.h"
+
+#include <vtkCellArray.h>
+#include <vtkProperty.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkPolygon.h>
+#include <vtkSmartPointer.h>
+#include <vtkDelaunay2D.h>
 
 // GEOMETRIC CALCULATIONS
 float GeomCalc::computeDistance2Dxy(pcl::PointXYZI boda, pcl::PointXYZI bodb)
@@ -34,18 +46,29 @@ float GeomCalc::computeClockwiseAngle(pcl::PointXYZI pointA, pcl::PointXYZI poin
 }
 cloudHighestAndLowestZValue GeomCalc::findHighestAndLowestPoints (pcl::PointCloud<pcl::PointXYZI>::Ptr cloudXYZI)
 {
-    float zmin = 9999;
-    float zmax =-9999;
-    for(pcl::PointCloud<pcl::PointXYZI>::iterator it = cloudXYZI->begin(); it != cloudXYZI->end(); it++)
+    cloudHighestAndLowestZValue HL;
+    HL.Highest = -9999;
+    HL.Lowest = 9999;
+    for(int i=0; i<cloudXYZI->points.size();i++)
        {
-           if (it->z < zmin){zmin = it->z;}
-           if (it->z > zmax){zmax = it->z;}
+           if (cloudXYZI->points.at(i).z < HL.Lowest){
+                HL.Lowest = cloudXYZI->points.at(i).z;
+                HL.lowestPoint = cloudXYZI->points.at(i);
+           }
+           if (cloudXYZI->points.at(i).z > HL.Highest){
+                HL.Highest = cloudXYZI->points.at(i).z;
+                HL.highestPoint = cloudXYZI->points.at(i);
+           }
+       }
+   return HL;
+}
+void GeomCalc::cloudIntesityEqualToZCoordinate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+{
+
+    for(pcl::PointCloud<pcl::PointXYZI>::iterator it = cloud->begin(); it != cloud->end(); it++)
+       {
            it->intensity = it->z;
        }
-    cloudHighestAndLowestZValue HL;
-    HL.Highest = zmax;
-    HL.Lowest = zmin;
-   return HL;
 }
 pointsWithLongestDist GeomCalc::findPointsWithLongestDistance (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
@@ -94,9 +117,9 @@ float GeomCalc::findLongestPerpendicularDistance (pcl::PointCloud<pcl::PointXYZI
 }
 float GeomCalc::computeTriangleArea (pcl::PointXYZI pointA, pcl::PointXYZI pointB,pcl::PointXYZI pointC)
 {
-    float AB = GeomCalc::computeDistance2Dxy(pointA,pointB);
-    float BC = GeomCalc::computeDistance2Dxy(pointB,pointC);
-    float AC = GeomCalc::computeDistance2Dxy(pointA,pointC);
+    float AB = GeomCalc::computeDistance3D(pointA,pointB);
+    float BC = GeomCalc::computeDistance3D(pointB,pointC);
+    float AC = GeomCalc::computeDistance3D(pointA,pointC);
     float s = (AB+BC+AC)/2;
     return sqrt(s*(s-AB)*(s-BC)*(s-AC));
 }
@@ -177,7 +200,92 @@ bool GeomCalc::isPointInTriangle(pcl::PointXYZI testedPoint,pcl::PointXYZI a,pcl
     }
     return false;
 }
+float GeomCalc::getTriangleSideRatio(pcl::PointXYZI pointA, pcl::PointXYZI pointB,pcl::PointXYZI pointC)
+{
+    float a = GeomCalc::computeDistance3D(pointA,pointB);
+    float b = GeomCalc::computeDistance3D(pointB,pointC);
+    float c = GeomCalc::computeDistance3D(pointA,pointC);
+    float sideRatioSum = 0;
 
+    if(a>b && a>c){sideRatioSum = 1+(a/b)+(a/c);}
+    else if(b>a && b>c){sideRatioSum = 1+(b/a)+(b/c);}
+    else {sideRatioSum = 1+(c/a)+(c/b);}
+
+    return sideRatioSum;
+}
+float GeomCalc::computePolygonLenght(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
+{
+    float lenght;
+    for(int i=1; i<polygon->points.size();i++)
+    {
+        lenght +=GeomCalc::computeDistance2Dxy(polygon->points.at(i-1),polygon->points.at(i));
+    }
+    return lenght;
+}
+pcl::PolygonMesh GeomCalc::triangulatePolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
+{
+ /*   pcl::PointCloud<pcl::PointXYZI> cloudAll;
+    for(int i=0; i<polygon->points.size();i++)
+    {
+        cloudAll.points.push_back(polygon->points.at(i));
+    }
+    pcl::PCLPointCloud2 cloudAll2;
+    pcl::toPCLPointCloud2(cloudAll,cloudAll2);
+
+    pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+    pcl::PolygonMesh::Ptr in;
+    mesh->cloud = cloudAll2;
+    pcl::Vertices vertice;
+    for(int i=0; i<mesh->cloud.width; i++)
+    {
+        vertice.vertices.push_back(i);
+        i++;
+    }
+    mesh->polygons.push_back(vertice);
+
+    pcl::EarClipping ec;
+
+    ec.setInputMesh(mesh);
+
+    pcl::PolygonMesh out;
+    ec.process(out);
+  return out;*/
+/*
+   vtkSmartPointer<vtkPoints> pointsVTK = vtkSmartPointer< vtkPoints >::New();
+    for(int i=0; i<polygon->points.size();i++)
+    {
+        pcl::PointXYZI p = polygon->points.at(i);
+        pointsVTK->InsertNextPoint(p.x, p.y, p.z);
+    }
+     // Create the polygon
+    vtkSmartPointer<vtkPolygon> polygonVTK = vtkSmartPointer<vtkPolygon>::New();
+    polygonVTK->GetPointIds()->SetNumberOfIds(4);
+    for(int i=0; i<polygon->points.size();i++)
+    {
+        polygonVTK->GetPointIds()->SetId(i, i);
+    }
+  // Add the polygon to a list of polygons
+    vtkSmartPointer<vtkCellArray> polygons = vtkSmartPointer<vtkCellArray>::New();
+    polygons->InsertNextCell(polygonVTK);
+
+    //VTK Points to polydata
+    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+    polydata->SetPoints(pointsVTK);
+    polydata->SetPolys(polygons);
+
+
+
+
+
+
+    //To polydata
+    vtkPolyData* polydataOut = surfaceFilter->GetOutput();
+    //volume and surface
+    //Convert to pclMesh
+    pcl::PolygonMesh triangles;
+    pcl::VTKUtils::vtk2mesh(polydataOut,triangles);
+    return triangles;*/
+}
 //CLOUD OPERATIONS
 void CloudOperations::cloudXYZItoXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloudXYZI, pcl::PointCloud<pcl::PointXYZ>::Ptr cloudXYZ)
 {
@@ -243,11 +351,69 @@ void CloudOperations::ifFirstLastAreEqualEraseOne(pcl::PointCloud<pcl::PointXYZI
         polygon->points.erase(polygon->points.begin());
     }
 }
+void CloudOperations::sortPolygonFromIterator(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon, int it)
+{
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
+    for(int i=0; i<it; i++)
+    {
+        pcl::PointXYZI pt = polygon->points.at(i);
+        cloud->points.push_back(pt);
+    }
+    polygon->points.erase(polygon->points.begin(),polygon->points.begin()+it);
+    for(int i=1; i<cloud->points.size(); i++)
+    {
+        pcl::PointXYZI pt = cloud->points.at(i);
+        polygon->points.push_back(pt);
+    }
+    pcl::PointXYZI first = polygon->points.at(0);
+    polygon->points.push_back(first);
+}
+pcl::PolygonMesh CloudOperations::PolygonToMesh(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
+{
+    // pcl cloud to VTK points
+    vtkSmartPointer<vtkPoints> pointsVTK = vtkSmartPointer< vtkPoints >::New();
+    for(int i=0; i<polygon->points.size();i++)
+    {
+        pcl::PointXYZI p = polygon->points.at(i);
+        pointsVTK->InsertNextPoint(p.x, p.y, p.z);
+    }
+    //VTK Points to polydata
+    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+    polydata->SetPoints(pointsVTK);
+
+    vtkSmartPointer<vtkCellArray> aCellArray = vtkSmartPointer<vtkCellArray>::New();
+
+    vtkSmartPointer<vtkPolygon> aPolygon = vtkSmartPointer<vtkPolygon>::New();
+
+    for(int i=0;i<polygon->points.size()-1;i++)
+    {
+        aPolygon->GetPointIds()->InsertNextId(i);
+    }
+    aCellArray->InsertNextCell(aPolygon);
+
+    vtkSmartPointer<vtkPolyData> boundary = vtkSmartPointer<vtkPolyData>::New();
+    boundary->SetPoints(polydata->GetPoints());
+    boundary->SetPolys(aCellArray);
+
+    vtkSmartPointer<vtkDelaunay2D> delaunay = vtkSmartPointer<vtkDelaunay2D>::New();
+    delaunay->SetInputData(polydata);
+    delaunay->SetSourceData(boundary);
+    delaunay->Update();
+
+    vtkPolyData* polydataOut = delaunay->GetOutput();
+
+    pcl::PolygonMesh triangles;
+    pcl::VTKUtils::vtk2mesh(polydataOut,triangles);
+
+    return triangles;
+}
 
 // TRIANGULATED POLYGON
 TriangulatedPolygon::TriangulatedPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
 {
     polygonTriangulation(polygon);
+    QString xx = QString("triangles %1").arg(m_triangles.size());
+    QMessageBox::information(0,("WARNING"),xx);
 }
 //GET
 pcl::PointCloud<pcl::PointXYZI>::Ptr TriangulatedPolygon::getTriangleAt(int i)
@@ -276,6 +442,7 @@ void TriangulatedPolygon::polygonTriangulation (pcl::PointCloud<pcl::PointXYZI>:
     if(polygon->points.size()==3){
         m_triangles.push_back(polygon);
     }
+    //m_triangles.push_back(polygon);
 }
 void TriangulatedPolygon::addNewTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon,int iter)
 {
@@ -299,26 +466,91 @@ void TriangulatedPolygon::addNewTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr po
     }
 }
 
+// POLYGONS TO PCL MESH TRANSFORMATION
+TrianglesToPclMeshTransformation::TrianglesToPclMeshTransformation()
+{
+    m_mesh = new pcl::PolygonMesh;
+}
+TrianglesToPclMeshTransformation::TrianglesToPclMeshTransformation(pcl::PointCloud<pcl::PointXYZI>::Ptr cl)
+{
+     m_mesh = new pcl::PolygonMesh;
+    // pcl cloud to VTK points
+    vtkSmartPointer<vtkPoints> pointsVTK = vtkSmartPointer< vtkPoints >::New();
+    for(int i=0; i<cl->points.size();i++)
+    {
+        pcl::PointXYZI p = cl->points.at(i);
+        pointsVTK->InsertNextPoint(p.x, p.y, p.z);
+    }
+    //VTK Points to polydata
+    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+    polydata->SetPoints(pointsVTK);
+
+    vtkSmartPointer<vtkCellArray> aCellArray = vtkSmartPointer<vtkCellArray>::New();
+
+    vtkSmartPointer<vtkPolygon> aPolygon = vtkSmartPointer<vtkPolygon>::New();
+
+    for(int i=0;i<cl->points.size()-1;i++)
+    {
+        aPolygon->GetPointIds()->InsertNextId(i);
+    }
+    aCellArray->InsertNextCell(aPolygon);
 
 
 
+    vtkSmartPointer<vtkPolyData> boundary = vtkSmartPointer<vtkPolyData>::New();
+    boundary->SetPoints(polydata->GetPoints());
+    boundary->SetPolys(aCellArray);
+
+    vtkSmartPointer<vtkDelaunay2D> delaunay = vtkSmartPointer<vtkDelaunay2D>::New();
+    delaunay->SetInputData(polydata);
+    delaunay->SetSourceData(boundary);
+    delaunay->Update();
+
+    vtkPolyData* polydataOut = delaunay->GetOutput();
+
+    pcl::PolygonMesh triangles;
+    pcl::VTKUtils::vtk2mesh(polydataOut,triangles);
+
+    *m_mesh = triangles;
+}
+void TrianglesToPclMeshTransformation::addTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr triangle)
+{
+    m_triangles.push_back(triangle);
+}
+void TrianglesToPclMeshTransformation::createMesh()
+{
+    pcl::PointCloud<pcl::PointXYZI> cloudAll;// (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PCLPointCloud2 cloudAll2;
+    for(int i=0; i<m_triangles.size();i++)
+    {
+        pcl::PointXYZI a = m_triangles.at(i)->points.at(0);
+        pcl::PointXYZI b = m_triangles.at(i)->points.at(1);
+        pcl::PointXYZI c = m_triangles.at(i)->points.at(2);
+        cloudAll.points.push_back(a);
+        cloudAll.points.push_back(b);
+        cloudAll.points.push_back(c);
+    }
+    pcl::toPCLPointCloud2(cloudAll,cloudAll2);
+    pcl::PolygonMesh mesh;
+    m_mesh->cloud = cloudAll2;
+    for(int i=2; i<=m_mesh->cloud.width; i++)
+    {
+        pcl::Vertices vertice;
+        vertice.vertices.push_back(i-2);
+        vertice.vertices.push_back(i-1);
+        vertice.vertices.push_back(i);
+        m_mesh->polygons.push_back(vertice);
+        i +=2;
+    }
+}
+pcl::PolygonMesh TrianglesToPclMeshTransformation::getMesh()
+{
+    return *m_mesh;
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//QString ax = QString(" EDGES %1  Gsize %2").arg(m_edges.size()).arg(greaterSection->points.size());
+//QMessageBox::information(0,("WARNING"),ax);
 
 
 

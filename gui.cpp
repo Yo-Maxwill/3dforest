@@ -15,32 +15,7 @@
 //////////////////////////////////////////////////////////////////////
 #include "gui.h"
 #include "cloud.h"
-#include <vtkActor.h>
-#include <vtkArrayCalculator.h>
-#include <vtkCamera.h>
-#include <vtkClipDataSet.h>
-#include "vtkCylinderSource.h"
-#include <vtkCutter.h>
-#include <vtkDataSetMapper.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkLookupTable.h>
-#include <vtkNew.h>
-#include <vtkPlane.h>
-#include <vtkPointData.h>
-#include <vtkPointSource.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRibbonFilter.h>
-#include <vtkStreamTracer.h>
-#include <vtkSmartPointer.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkXMLUnstructuredGridReader.h>
-#include <vtkVertexGlyphFilter.h>
-#include <vtkInteractorStyleTrackballActor.h>
-#include <vtkWin32RenderWindowInteractor.h>
+
 
 ////INPUTDIALOG
 InputDialog::InputDialog( QWidget *parent)
@@ -54,8 +29,11 @@ InputDialog::InputDialog( QWidget *parent)
   isOC1 = false;
   isOC2 = false;
   isII1 = false;
+  isII2 = false;
   isType = false;
+  isPath = false;
   isICHB = false;
+  isList =false;
 //buttons
   buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
@@ -77,14 +55,22 @@ void InputDialog::ok()
     output_cloud1 = outputCloud1->text();
   if(isOC2 == true)
     output_cloud2 = outputCloud2->text();
+  if(isPath == true)
+    output_path = outputPath->text();
   if(isII1 == true)
     int_value1 = intInput->text().toInt();
+  if(isII2 == true)
+    int_value2 = intInput2->text().toInt();
   if(isType == true)
     output_type = outputType->currentText();
   if(isICHB == true)
   {
     if(CHBox->isChecked())
     CHB = true;
+  }
+  if(isList ==true)
+  {
+    inputList =  listWidget->selectedItems();
   }
 }
 void InputDialog::DialogSize(int w = 500, int h = 300)
@@ -128,7 +114,20 @@ void InputDialog::set_inputCloud1(QString label, QStringList li)
   InputLayout->addWidget(inputCloud1);
   isIC1 =true;
 }
-
+void InputDialog::set_inputList(QString label, QStringList li)
+{
+//input cloud
+  QLabel *labelList = new QLabel();
+  labelList->setText(label);
+  listWidget= new QListWidget(this);
+  listWidget->insertItems(0,li);
+  listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  listWidget->sortItems();
+//layout
+  InputLayout->addWidget(labelList);
+  InputLayout->addWidget(listWidget);
+  isList =true;
+}
 void InputDialog::set_inputCloud2(QString label, QStringList li)
 {
 //input cloud
@@ -240,6 +239,24 @@ void InputDialog::set_inputInt(QString label, QString x)
   connect(intInput,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
   isII1 = true;
 }
+void InputDialog::set_inputInt2(QString label, QString x)
+{
+  QLabel *labelint2 = new QLabel();
+  labelint2->setText(label);
+  intInput2 = new QLineEdit;
+  intInput2->setText(x);
+  intInputBool2=true;
+  intInput2->setCursorPosition(0);
+  labelint2->setBuddy(intInput2);
+  //resolution
+  InputLayout->addWidget(labelint2);
+  InputLayout->addWidget(intInput2);
+
+//ACTION
+  connect(intInput2,SIGNAL(textChanged(QString)),this,SLOT(validateInt(QString)));
+  connect(intInput2,SIGNAL(textChanged(QString)),this,SLOT(validate(QString)));
+  isII2 = true;
+}
 void InputDialog::set_outputType(QString label, QStringList li)
 {
   //input cloud
@@ -255,6 +272,35 @@ void InputDialog::set_outputType(QString label, QStringList li)
   InputLayout->addWidget(outputType);
   isType = true;
 }
+void InputDialog::set_outputPath(QString label, QString example,QString type)
+{
+  //input cloud
+  QLabel *labelPath = new QLabel();
+  labelPath->setText(label);
+
+  outputPath = new QLineEdit();
+  labelPath->setBuddy(outputPath);
+  outputPath->setMaximumWidth(300);
+  outputPath->setText(example);
+
+  directoryButton = new QPushButton(tr("Browse"));
+  directoryButton->setBaseSize(40,16);
+  m_type = type;
+  connect(directoryButton, SIGNAL(clicked()), this, SLOT(saveNewFile()));
+//layout
+  InputLayout->addWidget(labelPath);
+  outputPathLayout = new QHBoxLayout();
+  InputLayout->addLayout(outputPathLayout);
+  outputPathLayout->addWidget(outputPath);
+  outputPathLayout->addWidget(directoryButton);
+  isPath = true;
+}
+void InputDialog::saveNewFile()
+{
+  QString fileName;
+  fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "", m_type);
+  outputPath->setText(fileName);
+}
 void InputDialog::set_stretch()
 {
  InputLayout->addStretch();
@@ -265,6 +311,7 @@ void InputDialog::set_stretch()
  }
 void InputDialog::validateInt(QString text)
 {
+  if(isII1 == true)
    if (text.contains(QRegExp("^\\d+")))
   {
     intInputBool= true;
@@ -273,6 +320,16 @@ void InputDialog::validateInt(QString text)
   {
     buttonBox->setEnabled(false);
     intInputBool= false;
+  }
+  if(isII2 == true)
+   if (text.contains(QRegExp("^\\d+")))
+  {
+    intInputBool2 = true;
+  }
+  else
+  {
+    buttonBox->setEnabled(false);
+    intInputBool2 = false;
   }
 }
 void InputDialog::validateOutput1(QString text)
@@ -389,13 +446,29 @@ void InputDialog::validate(QString text)
 //  }
 }
 
+QList<QString> InputDialog:: get_inputList()
+{
+  QList<QString> result;
+  for(int i=0; i < inputList.size(); i++)
+    result.push_back( inputList.at(i)->text() );
+
+  return result;
+}
 QString InputDialog::get_inputCloud1()
 {
   return input_cloud1;
 }
+void InputDialog::getinputCloud1()
+{
+  emit inputCloud_1(input_cloud1);
+}
 QString InputDialog::get_inputCloud2()
 {
   return input_cloud2;
+}
+void InputDialog::getinputCloud2()
+{
+  emit inputCloud_2(input_cloud2);
 }
 QString InputDialog::get_inputCloud3()
 {
@@ -409,10 +482,23 @@ QString InputDialog::get_outputCloud2()
 {
   return output_cloud2;
 }
+QString InputDialog::get_outputPath()
+{
+  return output_path;
+}
 int InputDialog::get_intValue()
 {
   return int_value1;
 }
+void InputDialog::getINT()
+{
+  emit inputINT(int_value1);
+}
+int InputDialog::get_intValue2()
+{
+  return int_value2;
+}
+
 QString InputDialog::get_outputType()
 {
   return output_type;
@@ -421,6 +507,10 @@ bool InputDialog::get_CheckBox()
 {
   return CHB;
 }
+
+
+
+
 //ExportAttr dialog
 ExportAttr::ExportAttr(QWidget *parent)
 : QDialog(parent)
@@ -752,11 +842,11 @@ IntroPage::IntroPage(QWidget *parent)
 {
   //Q_INIT_RESOURCE(3dforest);
   setTitle(tr("Welcome in project manager"));
-  setSubTitle(tr("Please specify if you want create new project or import existing one."));
+  setSubTitle(tr("Please specify if you want to create a new project or import existing one."));
   setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/strom.png"));
 
-  topLabel = new QLabel(tr("This wizard will guide you thru importing of projects from different location or by creating new project."
-                              "Please select if you want to import existing project or if you want to create a new one. "));
+  topLabel = new QLabel(tr("This wizard will guide you through importing of projects from different locations or "
+                           "by creating a new project. Please select if you want to import existing project or if you want to create a new one."));
   topLabel->setWordWrap(true);
 
   newProjectButton = new QRadioButton(tr("&Create new project"));
@@ -783,14 +873,15 @@ NewProjectPage::NewProjectPage(QWidget *parent)
 {
   //Q_INIT_RESOURCE(3dforest);
   setTitle(tr("New project"));
-  setSubTitle(tr("Details of the new project."));
+  setSubTitle(tr("Details of the new project"));
   setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/strom.png"));
 
-  topLabel = new QLabel(tr("Please select name and path of the new project. If any field is red, means that on given path exist folder with the same name."
-                           " In that case please change name of the project or path to the project folder."));
+  topLabel = new QLabel(tr("Please select a name and path to the new project. "
+                           "If any field is red, it means that on given location a folder with the same name already exists. "
+                           "In that case please change the name of the project or path to the project folder."));
   topLabel->setWordWrap(true);
 
-  nameLabel = new QLabel(tr("Project name name (please do not use spaces in name):"));
+  nameLabel = new QLabel(tr("Project name (please do not use spaces in name):"));
   nameEdit = new QLineEdit;
   nameLabel->setBuddy(nameEdit);
   registerField("projectName*", nameEdit);
@@ -888,7 +979,7 @@ TransformPage::TransformPage(QWidget *parent)
   setSubTitle(tr("Details of the new project - Transformation matrix"));
   setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/transform.png"));
 
-  topLabel = new QLabel(tr("Please choose transformation matrix or create new. Tranformation matrix serve as a"));
+  topLabel = new QLabel(tr("Please choose transformation matrix or create new. More info about transformation can be found in user guide."));
   topLabel->setWordWrap(true);
 
   selectButton = new QRadioButton(tr("Choose transform matrix"));
@@ -1110,10 +1201,11 @@ ImportPage::ImportPage(QWidget *parent)
 {
   //Q_INIT_RESOURCE(3dforest);
   setTitle(tr("Import project"));
-  setSubTitle(tr("setup of project"));
+  setSubTitle(tr("Setup of project"));
   setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/strom.png"));
 
-  topLabel = new QLabel(tr("Please choose project file that you want to import into new location. Location will be created in new place and all clouds will be moved into new folder."));
+  topLabel = new QLabel(tr("Please choose project file that you want to import into a new location. "
+                           "All clouds of the project will be moved into a new folder at the specified location."));
   topLabel->setWordWrap(true);
 
   oldLabel = new QLabel(tr("Path to old project file:"));
@@ -1138,7 +1230,7 @@ ImportPage::ImportPage(QWidget *parent)
   registerField("newprojectPath*", newpathEdit);
 
   newButton = new QPushButton(QPixmap(":/images/browse.png"),("Browse"));
-  removeCheckBox = new QCheckBox ( tr("remove old project?"),this);
+  removeCheckBox = new QCheckBox ( tr("Remove old project?"),this);
 
   QGridLayout *layoutgrid = new QGridLayout;
   layoutgrid->setColumnMinimumWidth(1,20);
@@ -1311,10 +1403,10 @@ FinalPage::FinalPage(QWidget *parent)
 {
   //Q_INIT_RESOURCE(3dforest);
   setTitle(tr("Welcome in project manager"));
-  setSubTitle(tr("final conclulsion."));
+  setSubTitle(tr("Final conclulsion."));
   setPixmap(QWizard::WatermarkPixmap, QPixmap(":/images/strom.png"));
 
-  topLabel = new QLabel(tr("Your project is created and ready to use!"));
+  topLabel = new QLabel(tr("Your project is created and ready to use! Enjoy use of 3D Forest and if you have any questions feel free to ask at web site http://www.3dforest.eu"));
   topLabel->setWordWrap(true);
 
 
@@ -1342,6 +1434,7 @@ MyTree::MyTree(QWidget *parent)
     q << QString ("     name");
     setHeaderLabels(q);
     header()->resizeSection(1, 120);
+    setSortingEnabled(true);
 
     //SLOTS
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)),this, SLOT(showContextMenu(const QPoint&)));
@@ -1389,6 +1482,8 @@ void MyTree::showContextMenu(const QPoint &pos)
   QAction *allOFFACT = new QAction("All Clouds OFF",menu);
   menu->addAction(allOFFACT);
   connect(allOFFACT, SIGNAL(triggered()), this, SLOT(allOFF()));
+
+
 
   QSignalMapper *signalMapper = new QSignalMapper(this);
   connect(deleteACT, SIGNAL(triggered()), signalMapper, SLOT(map()));
@@ -1515,13 +1610,445 @@ QTreeWidgetItemIterator it(this);
   }
 }
 
+
+//ExportCrownAttr dialog
+ExportCrownAttr::ExportCrownAttr(QWidget *parent)
+: QDialog(parent)
+{
+  DialogSize(500,300);
+
+
+//buttons
+  buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
+  treeLabel = new QLabel();
+  treeLabel->setText("Select tree name:");
+  inputTrees = new QComboBox();
+
+  fileLabel = new QLabel();
+  fileLabel->setText("Enter name of the file you want to save results:");
+  outputFile = new QLineEdit;
+  outputFile->setText("C:\\crown_atributes.txt");
+  outputFile->setReadOnly(true);
+  directoryButton = new QPushButton(tr("Browse"));
+
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(ok()));
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+  connect(directoryButton, SIGNAL(clicked()), this, SLOT(setExistingDirectory()));
+
+
+  DialogLayout();
+
+    points = false;
+    height = false;
+    bottomHeight = false;
+    totalHeight = false;
+    positionDev = false;
+    positionXYZ = false;
+    width = false;
+    length = false;
+    volVoxels = false;
+    volSections = false;
+    vol3DCH = false;
+    surface = false;
+    surf3DCH = false;
+    thresholdDist = false;
+    sectionHeight = false;
+}
+void ExportCrownAttr::DialogSize(int w = 500, int h = 500)
+{
+  resize(w, h);
+}
+void ExportCrownAttr::DialogLayout()
+{
+  // buttons
+  buttontLayout = new QHBoxLayout();
+  buttontLayout->setGeometry(QRect(0,0,400,50));
+  buttontLayout->setAlignment(Qt::AlignRight);
+  buttontLayout->setSpacing(10);
+  buttontLayout->addWidget(buttonBox );
+  // tree selection
+  treeLayout = new QVBoxLayout();
+  treeLayout->addWidget(treeLabel);
+  treeLayout->addWidget(inputTrees);
+  treeLayout->setSpacing(5);
+  //file selection
+  fileLayout = new QGridLayout();
+  fileLayout->addWidget(fileLabel,1,0,1,2);
+  fileLayout->addWidget(outputFile,2,1);
+  fileLayout->addWidget(directoryButton,2,2);
+  fileLayout->setSpacing(5);
+
+  //inputlayout of cloudnames and labels
+  InputLayout = new QVBoxLayout();
+  InputLayout->addLayout(treeLayout);
+  InputLayout->addLayout(fileLayout);
+  InputLayout->addWidget(separatorGroup());
+  InputLayout->addWidget(attributesGroup());
+  InputLayout->setSpacing(10);
+// input of cloud and main label
+  inputareaLayout = new QHBoxLayout();
+  inputareaLayout->addLayout(InputLayout);
+
+//mainlayout
+  mainLayout = new QVBoxLayout();
+  mainLayout->addLayout(inputareaLayout);
+  mainLayout->addLayout(buttontLayout);
+  setLayout(mainLayout);
+
+}
+void ExportCrownAttr::validate( QString name)
+{
+
+}
+QString ExportCrownAttr::get_separator()
+{
+  return m_separator;
+}
+QString ExportCrownAttr::get_outputFile()
+{
+  return outputFile->text();
+}
+bool ExportCrownAttr::getVolVoxels()
+{
+  if(volVoxels == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getVolSections()
+{
+  if(volSections == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getVol3DCH()
+{
+  if(vol3DCH == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getSurface()
+{
+  if(surface == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getSurf3DCH()
+{
+  if(surf3DCH == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getPositionDeviance()
+{
+  if(positionDev == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getPositionXYZ()
+{
+  if(positionXYZ == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getHeight()
+{
+  if(height == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getBottomHeight()
+{
+  if(bottomHeight == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getTotalHeight()
+{
+  if(totalHeight == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getLength()
+{
+  if(length == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getWidth()
+{
+  if(width == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getPoints()
+{
+  if(points == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getSectionHeight()
+{
+  if(sectionHeight == true)
+    return true;
+  else
+    return false;
+}
+bool ExportCrownAttr::getThresholdDistance()
+{
+  if(thresholdDist == true)
+    return true;
+  else
+    return false;
+}
+QString ExportCrownAttr::get_treeName()
+{
+  return inputTrees->currentText();
+}
+void ExportCrownAttr::ok()
+{
+  //separator
+  if(radio1->isChecked())
+    m_separator = (";");
+  if(radio2->isChecked())
+    m_separator = (" ");
+  if(radio3->isChecked())
+    m_separator = ("\t");
+  if(radio4->isChecked())
+    m_separator = sep->text();
+
+    //attributes
+  if(CHB_points->isChecked())
+    points = true;
+  if(CHB_height->isChecked())
+    height = true;
+  if(CHB_bottomHeight->isChecked())
+    bottomHeight = true;
+  if(CHB_totalHeight->isChecked())
+    totalHeight = true;
+  if(CHB_length->isChecked())
+    length = true;
+  if(CHB_width->isChecked())
+    width = true;
+  if(CHB_positionDev->isChecked())
+    positionDev = true;
+  if(CHB_positionXYZ->isChecked())
+     positionXYZ = true;
+  if(CHB_volVoxels->isChecked())
+     volVoxels = true;
+  if(CHB_volSections->isChecked())
+     volSections = true;
+  if(CHB_surface->isChecked())
+     surface= true;
+  if(CHB_vol3DCH->isChecked())
+     vol3DCH = true;
+  if(CHB_surface3DCH->isChecked())
+   surf3DCH = true;
+  if(CHB_sectionHeight->isChecked())
+    sectionHeight = true;
+  if(CHB_thresholdDist->isChecked())
+    thresholdDist = true;
+
+}
+QGroupBox *ExportCrownAttr::attributesGroup()
+{
+  QGroupBox *groupBox = new QGroupBox(tr("Tree crown attributes"));
+  groupBox->setFlat(true);
+
+  CHB_height = new QCheckBox(tr("Crown height"));
+  connect(CHB_height, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_bottomHeight = new QCheckBox(tr("Crown bottom height"));
+  connect(CHB_bottomHeight, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_totalHeight = new QCheckBox(tr("Crown total height"));
+  connect(CHB_totalHeight, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_length = new QCheckBox(tr("Crown length"));
+  connect(CHB_length, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_width = new QCheckBox(tr("Crown width"));
+  connect(CHB_width, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_positionDev = new QCheckBox(tr("Crown position deviance\n distance and azimuth"));
+  connect(CHB_positionDev, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_positionXYZ = new QCheckBox(tr("Crown position coordinates\n X Y Z"));
+  connect(CHB_positionXYZ, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_points = new QCheckBox(tr("Point number"));
+  connect(CHB_points, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_volVoxels = new QCheckBox(tr("Volume by voxels"));
+  connect(CHB_volVoxels, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_volSections = new QCheckBox(tr("Volume by sections"));
+  connect(CHB_volSections, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_vol3DCH = new QCheckBox(tr("Volume of 3D Convexhull"));
+  connect(CHB_vol3DCH, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_surface = new QCheckBox(tr("Surface"));
+  connect(CHB_surface, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_surface3DCH = new QCheckBox(tr("surface of 3D Convexhull"));
+  connect(CHB_surface3DCH, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_sectionHeight = new QCheckBox(tr("Section height"));
+  connect(CHB_sectionHeight, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+  CHB_thresholdDist = new QCheckBox(tr("Threshold distance"));
+  connect(CHB_thresholdDist, SIGNAL(stateChanged(int)), this, SLOT(all_attr(int)));
+
+  CHB_all = new QCheckBox(tr("All attributes"));
+  connect(CHB_all, SIGNAL(stateChanged(int)), this, SLOT(all_attributes(int)));
+
+  QGridLayout *box = new QGridLayout();
+  box->addWidget(CHB_points,1,1);
+  box->addWidget(CHB_height,1,2);
+  box->addWidget(CHB_bottomHeight,1,3);
+  box->addWidget(CHB_totalHeight ,2,1);
+  box->addWidget(CHB_length,2,2);
+  box->addWidget(CHB_width,2,3);
+  box->addWidget(CHB_positionDev,3,1);
+  box->addWidget(CHB_positionXYZ,3,2);
+  box->addWidget(CHB_volVoxels,3,3);
+  box->addWidget(CHB_volSections,4,1);
+  box->addWidget(CHB_surface,4,2);
+  box->addWidget(CHB_vol3DCH,4,3);
+  box->addWidget(CHB_surface3DCH,5,1);
+  box->addWidget(CHB_sectionHeight,5,2);
+  box->addWidget(CHB_thresholdDist,5,3);
+
+  box->addWidget(CHB_all,6,1);
+  groupBox->setLayout(box);
+  return groupBox;
+}
+QGroupBox *ExportCrownAttr::separatorGroup()
+{
+  QGroupBox *groupBox = new QGroupBox(tr("Data separator"));
+  groupBox->setFlat(true);
+
+  radio1 = new QRadioButton(tr("Semicolon"));
+  radio2 = new QRadioButton(tr("Space"));
+  radio2->setChecked(true);
+  radio3 = new QRadioButton(tr("Tabulator"));
+  radio4 = new QRadioButton(tr("Other:"));
+  sep = new QLineEdit(this);
+  sep->setFixedWidth(60);
+  sep->setReadOnly(true);
+  sep->setStyleSheet("QLineEdit{background: lightGrey;}");
+
+  connect(radio4, SIGNAL(toggled(bool)), this, SLOT(other_Separator(bool)));
+  QHBoxLayout *hbox = new QHBoxLayout;
+  hbox->addWidget(radio1);
+  hbox->addWidget(radio2);
+  hbox->addWidget(radio3);
+  hbox->addWidget(radio4);
+  hbox->addWidget(sep);
+  hbox->setSpacing(10);
+  hbox->addStretch(1);
+  groupBox->setLayout(hbox);
+  return groupBox;
+}
+void ExportCrownAttr::set_description(QString text)
+{
+  // text about function
+  QLabel *label = new QLabel();
+  label->setText(text);
+  //label->setMaximumSize(180,300);
+  label->setMinimumWidth(160);
+  label->setWordWrap(true);
+  label->setMargin(10);
+  label->setAlignment(Qt::AlignJustify | Qt::AlignTop);
+  //layout
+  inputareaLayout->addWidget(label);
+
+}
+void ExportCrownAttr::set_trees(QStringList li)
+{
+  inputTrees->insertItems(0,li);
+}
+void ExportCrownAttr::setExistingDirectory()
+{
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("Text file (*.txt)"));
+  outputFile->setText(fileName);
+}
+void ExportCrownAttr::other_Separator(bool checked)
+{
+  if(checked == true)
+  {
+    sep->setReadOnly(false);
+    sep->setStyleSheet("QLineEdit{background: white;}");
+  }
+
+  else
+  {
+    sep->setReadOnly(true);
+    sep->setStyleSheet("QLineEdit{background: lightGrey;}");
+    sep->setText("");
+  }
+}
+void ExportCrownAttr::all_attributes(int checked)
+{
+  if(checked == 2)
+  {
+    CHB_height->setChecked(true);
+    CHB_bottomHeight->setChecked(true);
+    CHB_totalHeight->setChecked(true);
+    CHB_length->setChecked(true);
+    CHB_width->setChecked(true);
+    CHB_positionDev->setChecked(true);
+    CHB_positionXYZ->setChecked(true);
+    CHB_points->setChecked(true);
+    CHB_volVoxels->setChecked(true);
+    CHB_volSections->setChecked(true);
+    CHB_vol3DCH->setChecked(true);
+    CHB_surface->setChecked(true);
+    CHB_surface3DCH->setChecked(true);
+    CHB_sectionHeight->setChecked(true);
+    CHB_thresholdDist->setChecked(true);
+  }
+}
+void ExportCrownAttr::all_attr(int checked)
+{
+  if(checked == 0)
+  {
+    CHB_all->setChecked(false);
+  }
+}
+//// THREAD
+
+
+
 ////VISUALIZER
 Visualizer::Visualizer()
 {
-  PCLVisualizer ("3D Viewer");
-  //setUseVbos(true);
+  PCLVisualizer ("3D Viewer", false);
+  //coordinateMark();
 }
-
+void Visualizer::coordinateMark()
+{
+//  if ( !axes_widget_ )
+//    {
+//    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New ();
+//    axes->SetTotalLength(2.1,2.1,2.1);
+//    axes->SetCylinderRadius(0.5);
+//
+//    axes_widget_ = vtkSmartPointer<vtkOrientationMarkerWidget>::New ();
+//    axes_widget_->SetOutlineColor (0.93, 0.57, 0.13);
+//    axes_widget_->SetOrientationMarker (axes);
+//    axes_widget_->SetInteractor (interactor_);
+//    axes_widget_->SetViewport (0., 0., 0.15, 0.15);
+//    axes_widget_->SetEnabled (true);
+//    axes_widget_->InteractiveOff ();
+//  }
+//  else
+//  {
+//    axes_widget_->SetEnabled (true);
+//    pcl::console::print_warn (stderr, "Orientation Widget Axes already exists, just enabling it");
+//  }
+}
 //Vis::Vis()
 //{
 //   m_renderWindow = vtkSmartPointer<vtkRenderWindow>::New();

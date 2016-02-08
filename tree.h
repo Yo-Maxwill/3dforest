@@ -19,14 +19,18 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/PolygonMesh.h>
 #include "cloud.h"
 #include "hull.h"
+#include "crown.h"
+#include "crownDetection.h"
 
 class Tree : public Cloud
 {
   Cloud *m_dbhCloud;                  /**< pcl::pointcloud for points representing dbh_cloud */
-  Cloud *m_convexhull;           /**< cloud of points representing convex hull of tree */
-  Cloud *m_concavehull;         /**< cloud of points representing concave hull of tree */
+  ConvexHull *m_convexhull;           /**< cloud of points representing convex hull of tree */
+  ConcaveHull *m_concavehull;         /**< cloud of points representing concave hull of tree */
+  pcl::PolygonMesh *m_triangulatedConcaveHull; /**< */
   Cloud *m_skeleton;                  /**< cloud of points representing skeleton of tree */
   stred m_dbh_HT;                     /**< stred of the DBH with radius computed by HT */
   stred m_dbh_LSR;                    /**< stred of the DBH with radius computed by LSR*/
@@ -40,6 +44,7 @@ class Tree : public Cloud
   pcl::PointXYZI m_lmax;              /**< lowest point of tree for the longest axis */
   pcl::PointXYZI m_lmin;              /**< highest point of tree for the longest axis */
   std::vector<stred> m_stemCurvature; /**< vector of all rings presenting stem curve */
+  Crown *m_crown;             /**< Tree crown cloud */
 
 public:
     //! Constructor.
@@ -59,7 +64,7 @@ public:
   void set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     //! Set dbh value.
     /*! Compute DBh value and centre of the circle using Randomized Hough Transform. */
-  void set_dbhHT();
+  void set_dbhHT(int i=200);
     //! Get dbh value.
     /*! Compute DBH value and centre of the circle using Randomized Hough Transform. \return stred structure consist of DBH, centre */
   stred get_dbhHT();
@@ -74,16 +79,14 @@ public:
   void set_height();
     //! Set tree position.
     /*! Compute and set tree position. */
-  void set_position();
-  //! Set tree position.
-    /*! Compute and set tree position. */
-  void set_positionRHT();
+  void set_position(int height = 60);
     //! Set tree position.
     /*! Compute and set tree position based on digital terrain model. \param terrain cloud representing DMT */
-  void set_position(Cloud terrain);
+  void set_position(Cloud terrain, int num_points = 5, int height = 60);
   //! Set tree position.
     /*! Compute and set tree position. */
-  void set_positionHT(Cloud terrain);
+  void set_positionHT(Cloud terrain, int iter = 200, int num_points = 10);
+  void set_positionHT(int iter = 200);
     //! Set cloud length.
     /*! Compute and set tree cloud length. */
   void set_length();
@@ -102,30 +105,6 @@ public:
     //! Get lowest/highest point of tree.
     /*! \param low if true get lowest point else highest \return pcl::point representing lowest/highest point of tree cloud.*/
   pcl::PointXYZI get_lpoint(bool);
-    //! Set convex planar projection.
-    /*! Compute points representing convex planar projection and save them into m_convexHull*/
-  void set_convexhull();
-    //! Set convex planar projection.
-    /*! Compute points representing convex planar projection and save them into m_convexHull \param c cloud of points representing convex hull*/
-  void set_convexhull(Cloud c);
-    //! Set concave planar projection.
-    /*! Compute points representing concave planar projection and save them into m_concaveHull \param maxEdgeLenght cmaximal length of edge*/
-  int set_concavehull(float maxEdgeLenght);
-    //! Set concave planar projection.
-    /*! Compute points representing concave planar projection and save them into m_concaveHull \param c cloud of points representing concave hull*/
-  void set_concavehull(Cloud c);
-    //! Get convex planar projection area.
-    /*! \return float area of polygon representing convex planar projection in square meters*/
-  float get_areaconvex();
-    //! Get concave planar projection area.
-    /*! \return float area of polygon representing concave planar projection in square meters*/
-  float get_areaconcave();
-    //! Get convex planar projection cloud.
-    /*! \return cloud representing convex planar projection */
-  Cloud get_vexhull();
-    //! Get concave planar projection cloud.
-    /*! \return cloud representing concave planar projection */
-  Cloud get_concavehull();
     //! Set skeleton for tree.
     /*! Compute tree skeleton based and save it onto m_skeleton*/
   void set_skeleton();
@@ -139,17 +118,17 @@ public:
     /*! \return vector of stem curve rings */
   std::vector<stred> get_stemCurvature();
     //! Set stem curve rings.
-  void set_stemCurvature();
-  // CONVEX & CONCAVE HULL
+  void set_stemCurvature(int iter = 200);
+// CONVEX & CONCAVE HULL
     //! Get convexhull.
     /*! Get tree convexhull. \return ConvexHull*/
-    Cloud getConvexhull();
+    ConvexHull& getConvexhull();
     //! Set convexhull.
     /*! Set tree convexhull. */
     void setConvexhull();
     //! Get concavehull.
     /*! Get tree concavehull. \return ConcaveHull */
-    Cloud getConcavehull();
+    ConcaveHull& getConcavehull();
     //! Set concavehull.
     /*! Set tree concavehull. \param float */
     void setConcavehull(float searchDist);
@@ -159,6 +138,18 @@ public:
     //! Get concave area to info line.
     /*! Get concave area to info line. \return float */
     float getConcaveAreaToInfoLine();
+    pcl::PolygonMesh getTriangulatedConcaveHull();
+//CROWN
+    //! Set tree crown automatic.
+    /*! Set tree crown automatic. */
+    void set_TreeCrownAutomatic();
+    //! Set tree crown manual.
+    /*! Set tree crown manual. \param pcl point cloud \param pcl point cloud */
+    void set_TreeCrownManual(pcl::PointCloud<pcl::PointXYZI>::Ptr crown,pcl::PointCloud<pcl::PointXYZI>::Ptr stem);
+    //! Get tree crown.
+    /*! Get tree crown. \return *crown */
+    Crown& get_TreeCrown();
+    bool isCrownExist();
 
 private:
      pcl::PointXYZI getMinP();

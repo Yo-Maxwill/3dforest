@@ -25,6 +25,7 @@
 #include "skeleton.h"
 #include "cloud.h"
 #include "tree.h"
+#include "alphaShapes.h"
 
 
   //! Basic class representing pointCloud data.
@@ -42,6 +43,7 @@ class Project
   std::vector<Cloud> m_vegeCloud;       /**< Vector of vegetation clouds */
   std::vector<Cloud> m_ostCloud;        /**< Vector of ost clouds */
   std::vector<Tree> m_stromy;           /**< Vector of Tree clouds */
+  std::vector<PolyhedronIntersections3D> m_intersections3D;           /**< Vector of Tree clouds */
 
 public:
     //! Constructor.
@@ -203,11 +205,12 @@ public:
   int set_treeConcaveCloud(QString name,float edge);
     //! Set tree position.
     /*! \param name tree name */
-  void set_treePosition(QString name);
+  void set_treePosition(QString name, int height);
     //! Set tree position based on terrain.
     /*! \param name tree name \param cloud terrain cloud */
-  void set_treePosition(QString name, Cloud terrain);
-  void set_treePositionHT(QString name, Cloud terrain);
+  void set_treePosition(QString name, Cloud terrain,  int num_points, int height);
+  void set_treePositionHT(QString name, Cloud terrain, int iter, int num_points );
+  void set_treePositionHT(QString name, int iter);
     //! Set tree DBH cloud.
     /*! \param name tree name */
   void set_treeheigth(QString name);
@@ -234,7 +237,7 @@ public:
   void set_skeleton(QString name, Cloud c);
     //! Set Stem curve for given cloud name.
     /*! \param name tree name */
-  void set_treeStemCurvature(QString name);
+  void set_treeStemCurvature(QString name, int iter = 200);
 //OSTCLOUDset_dbhCloud(cl);
     //! Set new ost cloud.
     /*! \param cloud cloud of new ost cloud  */
@@ -253,6 +256,12 @@ public:
     /*! \param cloud input pointCloud \param name name of the cloud \param color color of the cloud */
     /*! \return Cloud with point of convex planar projection */
   Cloud set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor color);
+
+//POLYHEDRON INTERSECTIONS 3D
+    int getIntersectionsSize();
+    PolyhedronIntersections3D& getIntersectionsAt(int i);
+    void computeCrownIntersections();
+    bool isIntersectionPossible(pcl::PointXYZI pos1, float lenght1, pcl::PointXYZI pos2, float lenght2);
 
 private:
     //! Delete file from disc.

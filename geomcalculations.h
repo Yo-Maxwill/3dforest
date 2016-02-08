@@ -5,12 +5,35 @@
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/surface/gp3.h>
+#include <pcl/surface/poisson.h>
+#include <pcl/surface/marching_cubes_hoppe.h>
+#include <pcl/surface/ear_clipping.h>
+
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <cmath>
+
+#include <vtkTriangleFilter.h>
+#include <vtkDataSetSurfaceFilter.h>
+#include <vtkSurfaceReconstructionFilter.h>
+#include <vtkSmartPointer.h>
+#include <vtkDelaunay2D.h>
+#include <pcl/surface/vtk_smoothing/vtk_utils.h>
+#include <vtkMassProperties.h>
+
+
+
+
 
     //! Struct hold cloud highest and lowest Z value.
     /*! Struct holding highest and lowest value of the cloud */
 struct cloudHighestAndLowestZValue{
 float Highest;
 float Lowest;
+pcl::PointXYZI lowestPoint;
+pcl::PointXYZI highestPoint;
 };
 
     //! Struct hold points with longest distance.
@@ -64,12 +87,16 @@ public:
     //! Is any point in triangle.
     /*! Check if any point lies inside the given triangle. \param pcl point cloud \param pcl point \param pcl point \param pcl point \return bool */
     static bool isAnyPointInTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr points,pcl::PointXYZI a,pcl::PointXYZI b,pcl::PointXYZI c);
-     //! Is point in triangle.
+    //! Is point in triangle.
     /*! Check if point lies inside the given triangle. \param pcl point \param pcl point \param pcl point \param pcl point \return bool */
     static bool isPointInTriangle(pcl::PointXYZI testedPoint,pcl::PointXYZI a,pcl::PointXYZI b,pcl::PointXYZI c);
     //! Is XY equal.
     /*! Check if XY coordinates of given points are equal. \param pcl point \param pcl point \return bool */
     static bool isXYequal (pcl::PointXYZI pointA, pcl::PointXYZI pointB);
+    static float getTriangleSideRatio(pcl::PointXYZI pointA, pcl::PointXYZI pointB,pcl::PointXYZI pointC);
+    static float computePolygonLenght(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
+    static void cloudIntesityEqualToZCoordinate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
+    static pcl::PolygonMesh triangulatePolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
 };
 
     //! Class for cloud operations
@@ -93,6 +120,8 @@ public:
     //! If first and last point are equal erase one .
     /*! If first and last point are equal erase the first point in polygon. \param pcl point cloud */
     static void ifFirstLastAreEqualEraseOne(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
+    static void sortPolygonFromIterator(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon, int it);
+    static pcl::PolygonMesh PolygonToMesh(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
 };
 
     //! Class for polygon triangulation
@@ -120,7 +149,23 @@ private:
     //! Add new triangle.
     /*! Add new triangle to m_triangles. \param pcl point cloud \param int iterator */
     void addNewTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon,int iter);
+
 };
+
+class TrianglesToPclMeshTransformation
+{
+protected:
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> m_triangles;  /**< Vector of polygons */
+    pcl::PolygonMesh *m_mesh;
+public:
+    TrianglesToPclMeshTransformation();
+    TrianglesToPclMeshTransformation(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
+    void addTriangle(pcl::PointCloud<pcl::PointXYZI>::Ptr triangle);
+    void createMesh();
+    pcl::PolygonMesh getMesh();
+};
+
+
 #endif // GEOMCALCULATIONS_H_INCLUDED
 
 

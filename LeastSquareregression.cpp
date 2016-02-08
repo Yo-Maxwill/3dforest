@@ -77,10 +77,20 @@ void LeastSquaredRegression::algebraicCircle()
     Mxz += Xi*Zi;
     Myz += Yi*Zi;
   }
+  if(Mxx ==0)
+    Mxx=0.000001;
   Mxx /= n;
+  if(Myy ==0)
+    Myy=0.000001;
   Myy /= n;
+  if(Mxy ==0)
+    Mxy=0.000001;
   Mxy /= n;
+  if(Mxz ==0)
+    Mxz=0.000001;
   Mxz /= n;
+  if(Myz ==0)
+    Myz=0.000001;
   Myz /= n;
 //    computing the coefficients of the characteristic polynomial
   Mz = Mxx + Myy;
@@ -133,9 +143,9 @@ void LeastSquaredRegression::algebraicCircle()
 }
 void LeastSquaredRegression::geometricCirlce()
 {
-  int code,i,iter,inner,IterMAX=99;
+  int code,i,iter,inner,IterMAX=500;
   float n = (float) m_cloud->points.size();
-  float factorUp=10.,factorDown=0.04,lambda,ParLimit=1.e+6;
+  float factorUp=10.,factorDown=0.004,lambda,ParLimit=1.e+6;
   float dx,dy,ri,u,v;
   float Mu,Mv,Muu,Mvv,Muv,Mr,UUl,VVl,Nl,F1,F2,F3,dX,dY,dR;
   float epsilon=3.e-8;
@@ -152,8 +162,14 @@ void LeastSquaredRegression::geometricCirlce()
     meanY += ith.y;
     meanZ += ith.z;
   }
+  if(meanX ==0)
+    meanX=0.000000001;
   meanX /= n;
+  if(meanY ==0)
+    meanY=0.000000001;
   meanY /= n;
+  if(meanZ ==0)
+    meanZ=0.000000001;
   meanZ /= n;
 //       starting with the given initial circle (initial guess)
   New = {m_circle.a,m_circle.b,m_circle.r,0,0,0,0};
@@ -180,7 +196,11 @@ NextIteration:
       pcl::PointXYZI ith = m_cloud->points.at(i);
 
         dx = ith.x - Old.a;
+        if(dx ==0)
+          dx=0.0000000001;
         dy = ith.y - Old.b;
+        if(dy ==0)
+          dy=0.000000001;
         ri = sqrt(dx*dx + dy*dy);
         u = dx/ri;
         v = dy/ri;
@@ -271,7 +291,7 @@ enough:
     Old.i = iter;    // total number of outer iterations (updating the parameters)
     Old.j = inner;   // total number of inner iterations (adjusting lambda)
     stredLSR circlef = Old;
-    float r= circlef.r*1000;
+    float r = circlef.r*1000;
     float rr = ceil(r)/10.0;
     stred c = {circlef.a,circlef.b,meanZ,1,rr};
     m_circle = c;
@@ -287,5 +307,7 @@ float LeastSquaredRegression::sigma (stredLSR circle)
     dy = ith.y - circle.b;
     sum += ((sqrt(dx*dx+dy*dy) - circle.r)*(sqrt(dx*dx+dy*dy) - circle.r));
   }
+  if(sum ==0)
+      sum=0.0000000001;
   return sqrt(sum/n);
 }
