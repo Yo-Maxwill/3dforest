@@ -31,6 +31,10 @@
 class InputDialog :public QDialog
 {
   Q_OBJECT
+  signals:
+    void inputCloud_1( QString);
+    void inputCloud_2( QString);
+    void inputINT(int);
 
 public:
     //!  Default contructor
@@ -46,6 +50,7 @@ public:
     /*!  set input cloud name from list of names.
         \param label label of edit line \param li list of cloud names */
   void set_inputCloud1(QString label, QStringList li);
+  void set_inputList(QString label,QStringList li);
     //!  set second input cloud name
     /*!  set second input cloud name from list of names.
         \param label label of edit line \param li list of cloud names */
@@ -66,10 +71,16 @@ public:
     /*!  set second output cloud name. On line is example of possible name
         \param label label of edit line \param example possible name of new cloud */
   void set_outputCloud2(QString label, QString example);
+
+  void set_outputPath(QString label, QString example, QString type);
     //!  Set input int value
     /*!  Set integer value
         \param label label of edit line \param example possible name of new cloud */
   void set_inputInt(QString label, QString example);
+  //!  Set input int value
+    /*!  Set integer value
+        \param label label of edit line \param example possible name of new cloud */
+  void set_inputInt2(QString label, QString example);
     //!  Set method description
     /*!  Set method overview, its inputs, example or description.
         \param text label of the method */
@@ -92,9 +103,11 @@ public:
     //!  get name of input cloud.
     /*!  \return name of input cloud */
   QString get_inputCloud1();
+
     //!  get name of second input cloud.
     /*!  \return name of second input cloud */
   QString get_inputCloud2();
+
     //!  get name of third input cloud.
     /*!  \return name of third input cloud */
   QString get_inputCloud3();
@@ -104,12 +117,19 @@ public:
     //!  get name of  second output cloud.
     /*!  \return name of second output cloud */
   QString get_outputCloud2();
+
+  QString get_outputPath();
+  QList<QString> get_inputList();
     //!  get type of output cloud.
     /*!  \return name QString of cloud type*/
   QString get_outputType();
     //!  get int value .
     /*!  \return integer value entered by user */
   int get_intValue();
+
+  //!  get int value .
+    /*!  \return integer value entered by user */
+  int get_intValue2();
     //!  get type of output cloud.
     /*!  \return true if checkbox is seleted*/
   bool get_CheckBox();
@@ -133,6 +153,12 @@ private slots:
     /*!  Controls if user enters only symbols without spaces.
      \param text input integer valule */
   void validateOutput2(QString);
+  void saveNewFile();
+
+public slots:
+  void getINT();
+  void getinputCloud1();
+  void getinputCloud2();
 
 private:
   QString input_cloud1;           /**< Input cloud name */
@@ -141,11 +167,18 @@ private:
   QString output_cloud1;          /**< Output cloud name */
   QString output_cloud2;          /**< Second output cloud name */
   QString output_type;            /**< Second output cloud name */
+  QString output_path;            /**< output path file */
+  QList<QListWidgetItem*> inputList;
 
   float float_value1;             /**< input float value */
   float float_value2;             /**< input float value 2 */
   int int_value1;                 /**< input integer value */
   int int_value2;                 /**< input second integer value */
+  QListWidget * listWidget;
+  bool isList;
+
+
+
   QString path;                   /**< Project path */
   QComboBox * inputCloud1;        /**< List of input cloud names */
   bool isIC1;                     /**< bool value if input cloud is in proper format */
@@ -159,9 +192,17 @@ private:
   QLineEdit *outputCloud2;        /**< output cloud name */
   bool isOC2;                     /**< bool value if output cloud name is in proper format */
   bool output2Bool;               /**< bool value if output cloud name is empty */
+  QLineEdit *outputPath;        /**< output cloud name */
+  QPushButton *directoryButton;   /**< Button for selecting directory for project */
+  bool isPath;                     /**< bool value if output cloud name is in proper format */
+  bool outputPathBool;               /**< bool value if output cloud name is empty */
+  QString m_type;                 /**<File type */
   QLineEdit *intInput;            /**< input integer value */
   bool intInputBool;              /**< bool value if output cloud name is empty */
   bool isII1;                     /**< bool value if output cloud name is in proper format  */
+  QLineEdit *intInput2;            /**< input integer value */
+  bool intInputBool2;              /**< bool value if output cloud name is empty */
+  bool isII2;                     /**< bool value if output cloud name is in proper format  */
   QComboBox * outputType;          /**< List of output cloud types*/
   bool isType;
   bool isICHB;
@@ -173,6 +214,7 @@ private:
   QVBoxLayout *InputLayout;       /**< default layout of input lines */
   QHBoxLayout *inputareaLayout;   /**< default layout of input area */
   QVBoxLayout *mainLayout;        /**< default layout */
+  QHBoxLayout *outputPathLayout;  /**< default layout for path selection */
 };
 //EXPORT ATTRIBUTES
 //! Dialog for exporting tree atributes.
@@ -551,6 +593,7 @@ private slots:
     /*!  All items check off and emit signal to remove all clouds. */
   void allOFF();
 
+
 signals:
     //!  Emited  when checkbox changed state to on
   void checkedON(QString);
@@ -569,16 +612,22 @@ private:
   QString name; /**< name of the cloud */
 };
 
+//THREAD
+
+
+
+
 //VISUALIZER
 //!  Visualizer widget for displaying clouds, lines, points, etc.
 /*!  Central widget for displaing clouds. and other stuff.  */
 class Visualizer : public pcl::visualization::PCLVisualizer
 {
-
+  vtkSmartPointer<vtkOrientationMarkerWidget> axes_widget_;
 public:
     //!  Default contructor
     /*!  Constructor of VTKWidget  */
   Visualizer();
+  void coordinateMark();
 };
 
 //class Vis
@@ -594,4 +643,160 @@ public:
 //  void addCylinder();
 //};
 
+//EXPORT ATTRIBUTES
+//! Dialog for exporting crown atributes.
+/*! Dialog based class for providing export dialog for selected crown and attributes.
+    Dialog consist from selection of tree,crown parameter selection and separator of comlun,. Dialog saves result into desired text file */
+class ExportCrownAttr : public QDialog
+{
+  Q_OBJECT
+
+public:
+    //!  Default contructor
+    /*!  Constructor of dialog  \param parent  parent widget */
+  ExportCrownAttr(QWidget *parent = 0 );
+  //!  Default contructor
+    /*!  Constructor of dialog  \param parent  parent widget \param nameList tree list of names */
+  ExportCrownAttr( QStringList nameList, QWidget *parent = 0 );
+    //!  Set size of dialog
+    /*!  sets dialog size  \param w dialog width \param h dialog height */
+  void DialogSize(int w, int h );
+    //!  Set  dialog layout
+    /*!  sets default dialog layout of widgets */
+  void DialogLayout();
+    //!  Set output file name.
+    /*!  set output cloud name. On line is example of possible name
+        \param label label of edit line \param example possible name of new cloud */
+  void set_outputCloud1(QString label, QString example);
+    //!  Set dialog description .
+    /*!  Displayed description of function.
+     \param text explanation */
+  void set_description(QString text);
+    //!  Set tree for attributes export.
+    /*!  Sets list of all tree names into combobox for selection.
+     \param li list of all trees*/
+  void set_trees(QStringList li);
+    //!  Get tree name.
+    /*!  return selected tree name.
+     \return name of selected tree*/
+  QString get_treeName();
+    //!  Get separator.
+    /*!  return separator of fields in resulting file.
+     \return QString of separator*/
+  QString get_separator();
+    //!  Get output file.
+    /*!  return the path to the new file containng results.
+     \return QString file path*/
+  QString get_outputFile();
+    //!  True if DBH_HT is selected.
+    /*! \return bool */
+  bool getPoints();
+    //!  True if DBH_LSR is selected.
+    /*! \return bool */
+  bool getHeight();
+    //!  True if Position is selected.
+    /*! \return bool */
+  bool getBottomHeight();
+    //!  True if Height is selected.
+    /*! \return bool */
+  bool getTotalHeight();
+    //!  True if Length is selected.
+    /*! \return bool */
+  bool getPositionDeviance();
+    //!  True if Points is selected.
+    /*! \return bool */
+  bool getPositionXYZ();
+    //!  True if compute area of convex planar projection is selected.
+    /*! \return bool */
+  bool getLength();
+  //!  True if compute area of concave planar projection is selected.
+    /*! \return bool */
+  bool getWidth();
+  bool getVolVoxels();
+  bool getVolSections();
+  bool getSurface();
+  bool getVol3DCH();
+  bool getSurf3DCH();
+  bool getSectionHeight();
+  bool getThresholdDistance();
+
+private slots:
+    //!  Called when directory button pressed
+    /*!  Choose existing directory  for proejct creation*/
+  void setExistingDirectory();
+    //!  when pressed button ok .
+    /*!  set variables when user press OK button */
+  void ok();
+    //!  Validate user input .
+    /*!  Controls if all inputs are in right format \param text input changed text */
+  void validate(QString);
+    //!  Slot if other separator is selected.
+    /*!  Controls field other separator is selected. \param checked if other separator field is checked */
+  void other_Separator(bool checked);
+
+  void all_attributes(int checked);
+
+  void all_attr(int checked);
+
+private:
+  QLabel *treeLabel;              /**< Description of tree selection combobox*/
+  QComboBox * inputTrees;         /**< List of input tree names */
+  QLabel *fileLabel;              /**< Desription of QlineEdit for output file */
+  QLineEdit *outputFile;          /**< Output file name */
+  QPushButton *directoryButton;   /**< Button for selecting directory for project */
+  QDialogButtonBox *buttonBox;    /**< Default buttons */
+  QHBoxLayout *buttontLayout;     /**< horizontal layout */
+  QVBoxLayout *InputLayout;       /**< Default layout of input lines */
+  QHBoxLayout *inputareaLayout;   /**< Default layout of input area */
+  QVBoxLayout *mainLayout;        /**< Default layout */
+  QVBoxLayout *treeLayout;        /**< Default layout */
+  QGridLayout *fileLayout;        /**< Default layout of check boxesn and attributes*/
+  QRadioButton *radio1;           /**< separator button - semicolon*/
+  QRadioButton *radio2;           /**< separator button - space*/
+  QRadioButton *radio3;           /**< separator button - tabulator*/
+  QRadioButton *radio4;           /**< separator button - other*/
+  QLineEdit *sep;                 /**< optional separator */
+  QCheckBox *CHB_height;          /**< checkbox for DBH HT*/
+  QCheckBox *CHB_bottomHeight;         /**< checkbox for DBH LSR*/
+  QCheckBox *CHB_totalHeight;          /**< checkbox for Height*/
+  QCheckBox *CHB_length;          /**< checkbox for Length*/
+  QCheckBox *CHB_width;        /**< checkbox for Position*/
+  QCheckBox *CHB_positionDev;         /**< checkbox for area of convex planar projection*/
+  QCheckBox *CHB_positionXYZ;        /**< checkbox for area of concave planar projection*/
+  QCheckBox *CHB_points;          /**< checkbox for point number*/
+  QCheckBox *CHB_volVoxels;
+  QCheckBox *CHB_volSections;
+  QCheckBox *CHB_vol3DCH;
+  QCheckBox *CHB_surface;
+  QCheckBox *CHB_surface3DCH;
+  QCheckBox *CHB_sectionHeight;
+  QCheckBox *CHB_thresholdDist;
+  QCheckBox *CHB_all;             /**< checkbox for all attributes*/
+
+  bool points;                    /**< true if checkbox for DBH HT is selected*/
+  bool height;                   /**< true if checkbox for DBH LSR is selected*/
+  bool bottomHeight;
+  bool totalHeight;
+  bool positionDev;                  /**< true if checkbox for Position is selected*/
+  bool positionXYZ;
+  bool width;                    /**< true if checkbox for Height is selected*/
+  bool length;                    /**< true if checkbox for Lengthis selected*/
+  bool volVoxels;                    /**< true if checkbox for point number is selected*/
+  bool volSections;                /**< true if checkbox for area of convex planar projection is selected*/
+  bool vol3DCH;               /**< true if checkbox for area of concave planar projection is selected*/
+  bool surface;
+  bool surf3DCH;
+  bool thresholdDist;
+  bool sectionHeight;
+
+
+    //!  Group of tree attributes checkboxes.
+    /*!  \return group of attributes checkboxes in defined layout*/
+  QGroupBox *attributesGroup();
+    //!  Group of separator checkboxes.
+    /*!  \return group of separator widgets in defined layout*/
+  QGroupBox *separatorGroup();
+  QString m_separator;            /**< QString containg selected separator*/
+
+};
 #endif // GUI_H_INCLUDED

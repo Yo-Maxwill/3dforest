@@ -28,23 +28,24 @@ Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
   m_dbhCloud = new Cloud(cloud_, a);
 
-
   QString aaaa = QString("%1_skeleton").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
   m_skeleton = new Cloud(cloud_4, aaaa);
 
-  QString convex = QString("%1_convex").arg(m_name);
-  m_convexhull = new Cloud(cloud_, convex);
+  pcl::PointXYZI bod;
+  bod.x = -1;
+  bod.y = -1;
+  bod.z = -1;
 
-  QString concave = QString("%1_concave").arg(m_name);
-  m_concavehull = new Cloud(cloud_, concave);
-
-  set_position();
-  set_height();
-  set_dbhCloud();
-  set_dbhHT();
-  set_dbhLSR();
-  set_length();
+  m_pose = bod;
+  m_dbh_HT = {-1,-1,-1,-1,-0.5};
+  m_dbh_LSR = {-1,-1,-1,-1,-0.5};
+  m_height = -1;
+  m_lenght = -1;
+  m_convexhull = 0;
+  m_concavehull = 0;
+  m_crown = 0;
+  m_triangulatedConcaveHull = new pcl::PolygonMesh;
 
 }
 Tree::Tree (Cloud cloud)
@@ -55,41 +56,56 @@ Tree::Tree (Cloud cloud)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
   m_dbhCloud = new Cloud(cloud_, a);
 
-
   QString aaaa = QString("%1_skeleton").arg(m_name);
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_4(new pcl::PointCloud<pcl::PointXYZI>);
   m_skeleton = new Cloud(cloud_4, aaaa);
 
-  QString convex = QString("%1_convex").arg(m_name);
-  m_convexhull = new Cloud(cloud_, convex);
+  pcl::PointXYZI bod;
+  bod.x = -1;
+  bod.y = -1;
+  bod.z = -1;
 
-  QString concave = QString("%1_concave").arg(m_name);
-  m_concavehull = new Cloud(cloud_, concave);
-
-  set_position();
-  set_height();
-  set_dbhCloud();
-  m_dbh_HT = {1,-1,-1,-1,-0.5};
-  set_dbhHT();
-  set_dbhLSR();
+  m_pose = bod;
+  m_dbh_HT = {-1,-1,-1,-1,-0.5};
+  m_dbh_LSR = {-1,-1,-1,-1,-0.5};
+  m_height = -1;
+  m_lenght =-1;
+  m_convexhull = 0;
+  m_concavehull = 0;
+  m_crown = 0;
+  m_triangulatedConcaveHull = new pcl::PolygonMesh;
   set_length();
 }
 Tree Tree::operator=(Tree &kopie)
 {
   Tree t(kopie);
-
-
-  pcl::getMinMax3D(*get_Cloud(),t.m_minp,t.m_maxp);
-  t.set_Psize(kopie.get_Psize());
-  set_position();
-  set_height();
-  set_dbhCloud();
-  set_length();
+  t.m_Cloud = kopie.m_Cloud;
+  t.m_dbhCloud = kopie.m_dbhCloud;
+  t.m_name = kopie.m_name;
+  t.m_pose = kopie.m_pose;
+  t.m_dbh_HT = kopie.m_dbh_HT;
+  t.m_dbh_LSR = kopie.m_dbh_LSR;
+  t.m_height = kopie.m_height;
+  t.m_lenght = kopie.m_lenght;
+  t.m_areaconvex = kopie.m_areaconvex;
+  t.m_areaconcave = kopie.m_areaconcave;
+  t.m_minp = kopie.m_minp;
+  t.m_maxp = kopie.m_maxp;
+  t.m_lmax = kopie.m_lmax;
+  t.m_lmin = kopie.m_lmin;
+  t.m_stemCurvature = kopie.m_stemCurvature;
+  t.m_convexhull = kopie.m_convexhull;
+  t.m_concavehull = kopie.m_concavehull;
+  t.m_triangulatedConcaveHull = kopie.m_triangulatedConcaveHull;
+  t.m_crown = kopie.m_crown;
   return t;
 }
 void Tree::set_height() //check if tree is connected to terrain!!!
 {
-  m_height = m_maxp.z - m_pose.z;
+  if(m_pose.x == -1 && m_pose.y == -1 &&m_pose.z == -1 )
+    m_height = -1;
+  else
+    m_height = m_maxp.z - m_pose.z;
 }
 void Tree::set_dbhCloud()
 {
@@ -109,7 +125,7 @@ void Tree::set_dbhCloud()
       dbhCloud->points.push_back(bod);
     }
   }
-  if(dbhCloud->points.size() > 20)
+  if(dbhCloud->points.size() > 50)
   {
     //voxelize
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_fil (new pcl::PointCloud<pcl::PointXYZI>);
@@ -137,17 +153,21 @@ void Tree::set_dbhCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   m_dbhCloud->set_Cloud(cloud);
 }
-void Tree::set_dbhHT()
+void Tree::set_dbhHT(int i)
 {
-  if(m_dbhCloud->get_Cloud()->points.size() > 5)
+  if(m_pose.x == -1 && m_pose.y == -1 &&m_pose.z == -1 )
+    return;
+
+  if(m_dbhCloud->get_Cloud()->points.size() > 2)
   {
     HoughTransform ht = m_dbhCloud->get_Cloud();
+    ht.set_iterations(i);
     ht.compute();
     m_dbh_HT = ht.get_circle();
   }
   else
   {
-    m_dbh_HT = {1,-1,-1,-1,-0.5};
+    m_dbh_HT = {-1,-1,-1,-1,-0.5};
   }
 }
 stred Tree::get_dbhHT()
@@ -160,7 +180,10 @@ stred Tree::get_dbhLSR()
 }
 void Tree::set_dbhLSR()
 {
-  if(m_dbhCloud->get_Cloud()->points.size() > 5)
+  if(m_pose.x == -1 && m_pose.y == -1 &&m_pose.z == -1 )
+    return;
+
+  if(m_dbhCloud->get_Cloud()->points.size() > 2)
   {
     LeastSquaredRegression lsr;
     lsr.setCloud(m_dbhCloud->get_Cloud());
@@ -172,18 +195,22 @@ void Tree::set_dbhLSR()
     m_dbh_LSR = {1,-1,-1,-1,-0.5};
   }
 }
-void Tree::set_position()
+void Tree::set_position(int height)
 {
+  float h = (float)height/100;
+
+  if(m_dbhCloud->get_Cloud()->points.size() > 0)
+    m_dbhCloud->get_Cloud()->points.clear();
   std::vector<float> x_coor;
   std::vector<float> y_coor;
-  std::vector<float> z_coor;
+
   for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
   {
-    if (ith->z < (m_minp.z + 0.6) )
+    if (ith->z < (m_minp.z + h) )
     {
       x_coor.push_back(ith->x);
       y_coor.push_back(ith->y);
-      z_coor.push_back(ith->z);
+
     }
   }
 
@@ -191,39 +218,91 @@ void Tree::set_position()
   {
     std::sort(x_coor.begin(),x_coor.end());
     std::sort(y_coor.begin(),y_coor.end());
-    std::sort(z_coor.begin(),z_coor.end());
+
 
     m_pose.x = x_coor.at(x_coor.size()/2);
     m_pose.y = y_coor.at(y_coor.size()/2);
-    m_pose.z = z_coor.at(0);
+    m_pose.z = m_minp.z;
     m_pose.intensity = 1;
   }
   else
   {
     m_pose = m_minp;
   }
+  set_length();
+  set_dbhCloud();
+
+  if(m_dbh_HT.a!= -1 && m_dbh_HT.b!= -1 && m_dbh_HT.r!= -1 )
+    set_dbhHT();
+  if(m_dbh_LSR.a!= -1 && m_dbh_LSR.b!= -1 && m_dbh_LSR.r!= -1 )
+    set_dbhLSR();
+  if(m_height != -1)
+    set_height();
+  if(!m_stemCurvature.empty())
+    set_stemCurvature();
 }
-void Tree::set_position(Cloud terrain)
+void Tree::set_position(Cloud terrain, int num_points, int height)
 {
-  int point_number = 5;
+  float  h = (float)height/100;
+  if(m_dbhCloud->get_Cloud()->points.size() > 0)
+    m_dbhCloud->get_Cloud()->points.clear();
+  std::vector<float> x_coor;
+  std::vector<float> y_coor;
+
+  pcl::PointXYZI posit;
+  posit = m_minp;
+  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
+  {
+    if (ith->z < (m_minp.z + h) )
+    {
+      x_coor.push_back(ith->x);
+      y_coor.push_back(ith->y);
+
+    }
+  }
+
+  if( x_coor.size() > 1)
+  {
+    std::sort(x_coor.begin(),x_coor.end());
+    std::sort(y_coor.begin(),y_coor.end());
+
+
+    m_pose.x = x_coor.at(x_coor.size()/2);
+    m_pose.y = y_coor.at(y_coor.size()/2);
+    m_pose.z = m_minp.z;
+    m_pose.intensity = 1;
+  }
+  else
+  {
+    m_pose = m_minp;
+  }
 
   pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
   kdtree.setInputCloud (terrain.get_Cloud());
 
-  std::vector<int> pointId(point_number);
-  std::vector<float> pointSD(point_number);
+  std::vector<int> pointId(num_points);
+  std::vector<float> pointSD(num_points);
 
-  if (kdtree.nearestKSearch (m_pose, point_number, pointId, pointSD) > 0 )
+  if (kdtree.nearestKSearch (m_pose, num_points, pointId, pointSD) > 0 )
   {
     float med_Z = 0;
-    for(int i = 0; i < point_number; i++)
+    for(int i = 0; i < num_points; i++)
     {
       med_Z += terrain.get_Cloud()->points.at(pointId.at(i)).z;
     }
 
-    m_pose.z = med_Z / point_number;
+    m_pose.z = med_Z / num_points;
   }
-
+  set_length();
+  set_dbhCloud();
+  if(m_dbh_HT.a!= -1 && m_dbh_HT.b!= -1 && m_dbh_HT.r!= -1 )
+    set_dbhHT();
+  if(m_dbh_LSR.a!= -1 && m_dbh_LSR.b!= -1 && m_dbh_LSR.r!= -1 )
+    set_dbhLSR();
+  if(m_height != -1)
+    set_height();
+  if(!m_stemCurvature.empty())
+    set_stemCurvature();
 }
 pcl::PointXYZI Tree::get_pose()
 {
@@ -237,6 +316,7 @@ float Tree::get_height()
 }
 void Tree::set_length()
 {
+
   pcl::PointXYZI pmin,pmax;
   m_lmin.x=9000000;
   m_lmin.y=9000000;
@@ -305,6 +385,7 @@ void Tree::set_length()
 }
 float Tree::get_length()
 {
+  set_length();
   float AA = ceilf(m_lenght * 100) / 100; //zaokrouhleni
   return AA;
 }
@@ -322,58 +403,54 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Tree::get_dbhCloud()
 // CONVEX & CONCAVE HULL
 void Tree::setConvexhull()
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
-  ConvexHull *cv = new ConvexHull(m_Cloud);
-  cv->compute();
-  cv->getPolygon(cloud_);
-
-  m_convexhull->set_Cloud(cloud_);
-  m_areaconvex = cv->getPolygonArea();
-  cloud_.reset();
-  delete cv;
+   QString aa = QString("%1_convex").arg(m_name);
+    m_convexhull = new ConvexHull(CloudOperations::getCloudCopy(m_Cloud),aa);
 }
-Cloud Tree::getConvexhull()
+ConvexHull& Tree::getConvexhull()
 {
+    if(m_convexhull == 0)
+    {
+       setConvexhull();
+    }
     return *m_convexhull;
-}
-float Tree::get_areaconvex()
-{
-  return m_areaconvex;
-}
-float Tree::get_areaconcave()
-{
-  return m_areaconcave;
 }
 void Tree::setConcavehull(float searchDist)
 {
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
-    ConcaveHull *cv = new ConcaveHull(m_Cloud,searchDist);
-    cv->compute();
-    cv->getPolygon(cloud_);
+   if(m_concavehull!=0)
+    {
+        delete m_concavehull;
+    }
+    QString aa = QString("%1_concave").arg(m_name);
+    m_concavehull = new ConcaveHull(CloudOperations::getCloudCopy(m_Cloud),aa,searchDist);
 
-    m_concavehull->set_Cloud(cloud_);
-    m_areaconcave = cv->getPolygonArea();
+    //TriangulatedPolygon *t = new TriangulatedPolygon(CloudOperations::getCloudCopy(m_concavehull->getPolygon().get_Cloud()));
+   // TrianglesToPclMeshTransformation *m = new TrianglesToPclMeshTransformation(m_concavehull->getPolygon().get_Cloud());
 
-    cloud_.reset();
-    delete cv;
+    *m_triangulatedConcaveHull = CloudOperations::PolygonToMesh(m_concavehull->getPolygon().get_Cloud());
 }
-Cloud Tree::getConcavehull()
+ConcaveHull& Tree::getConcavehull()
 {
+    if(m_concavehull == 0)
+    {
+        setConcavehull(1.0);
+    }
     return *m_concavehull;
+}
+pcl::PolygonMesh Tree::getTriangulatedConcaveHull()
+{
+    return *m_triangulatedConcaveHull;
 }
 float Tree::getConvexAreaToInfoLine()
 {
-  if(m_convexhull == 0)
+    if(m_convexhull == 0)
     return 0;
-  else
-    return m_areaconvex;
+    else return m_convexhull->getPolygonArea();
 }
 float Tree::getConcaveAreaToInfoLine()
 {
-  if(m_concavehull == 0)
+    if(m_concavehull == 0)
     return 0;
-  else
-    return m_areaconcave;
+    else return m_concavehull->getPolygonArea();
 }
 //Skeleton
 void Tree::set_skeleton()
@@ -388,22 +465,47 @@ Cloud Tree::get_skeleton()
 {
   return *m_skeleton;
 }
-void Tree::set_positionHT(Cloud terrain)
+void Tree::set_positionHT(int iter)
 {
+  if(m_dbhCloud->get_Cloud()->points.size() > 0)
+    m_dbhCloud->get_Cloud()->points.clear();
 // vypocitat stred v 1,3 (m_dbh) a v 0,65 m nad pozici
-  stred c13;
-  stred c065;
 
-  if(m_dbhCloud->get_Cloud()->points.size() > 5)
+  stred c13;
+  bool c13_exist,c065_exist;
+  c13_exist = c065_exist = false;
+  stred c065;
+  pcl::PointXYZI posit;
+
+  if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
+    posit = m_minp;
+  else
+    posit = m_pose;
+
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud13 (new pcl::PointCloud<pcl::PointXYZI>);
+  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator it = m_Cloud->points.begin(); it != m_Cloud->points.end(); it++)
   {
-    HoughTransform ht13 = m_dbhCloud->get_Cloud();
+    if (it->z > (posit.z + 1.2) && it->z < (posit.z + 1.4))
+    {
+      pcl::PointXYZI bod;
+      bod.x =it->x;
+      bod.y =it->y;
+      bod.z =it->z;
+      bod.intensity = it->intensity;
+
+      cloud13->points.push_back(bod);
+    }
+  }
+
+  if(cloud13->points.size() > 5)
+  {
+    HoughTransform ht13;
+    ht13.set_Cloud(cloud13);
+    ht13.set_iterations(iter);
     ht13.compute();
     c13 = ht13.get_circle();
-  }
-  else
-  {
-    QMessageBox::information(0,("tr"),("not possible to calculate circle in 1.3 m above position."));
-    return;
+    c13_exist = true;
   }
 
   //set cloud in 065 m above position
@@ -411,7 +513,7 @@ void Tree::set_positionHT(Cloud terrain)
 
   for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
   {
-    if (ith->z > (m_pose.z + 0.95) && ith->z < (m_pose.z + 1.05))
+    if (ith->z > (posit.z + 0.6) && ith->z < (posit.z + 0.7))
     {
       pcl::PointXYZI bod;
       bod.x =ith->x;
@@ -428,105 +530,340 @@ void Tree::set_positionHT(Cloud terrain)
   {
     HoughTransform ht065;
     ht065.set_Cloud(cloud065);
+    ht065.set_iterations(iter);
     ht065.compute();
     c065 = ht065.get_circle();
+    c065_exist = true;
+  }
+
+  float vx, vy, vz;
+//if exist both circles
+  if(c13_exist == true && c065_exist == true)
+  {
+    // urcit prusecik
+    //parametricka primka
+    vx = c065.a - c13.a;
+    vy = c065.b - c13.b;
+    vz = c065.z - c13.z;
+  }
+  else if(c13_exist != true && c065_exist == true)
+  {
+    pcl::PointXYZI pose;
+    pose.x = c065.a;
+    pose.y = c065.b;
+    pose.z = m_minp.z;
+
+    m_pose = pose;
+    set_length();
+    set_dbhCloud();
+    return;
+  }
+  else if(c13_exist == true && c065_exist != true)
+  {
+    pcl::PointXYZI pose;
+    pose.x = c13.a;
+    pose.y = c13.b;
+    pose.z = m_minp.z;
+
+    m_pose = pose;
+    set_length();
+    set_dbhCloud();
+    return;
   }
   else
   {
-    QMessageBox::information(0,("tr"),("not possible to calculate circle in 0.65 m above position."));
+    QMessageBox::information(0, m_name,("Too few points were found for estimation of position using Randomized Hough Transform. Using lowest points method."));
+    set_position();
+    return;
+  }
+  // rovina
+    // najit nejnizsi bod stromu a prolozit rovinu
+  pcl::PointXYZ A,B,C;
+  A.x = m_minp.x+1;
+  A.y = m_minp.y+1;
+  A.z = m_minp.z;
+
+  B.x = m_minp.x-1;
+  B.y = m_minp.y+2;
+  B.z = m_minp.z;
+
+  C.x = m_minp.x;
+  C.y = m_minp.y;
+  C.z = m_minp.z;
+
+
+    //vytvoøit rovnici roviny
+  pcl::PointXYZ AB;
+  AB.x =B.x - A.x;
+  AB.y =B.y - A.y;
+  AB.z =B.z - A.z;
+
+  pcl::PointXYZ AC;
+  AC.x =C.x - A.x;
+  AC.y =C.y - A.y;
+  AC.z =C.z - A.z;
+
+  float a = (AB.y*AC.z) - (AB.z*AC.y);
+  float b = (AB.z*AC.x) - (AB.x*AC.z);
+  float c = (AB.x*AC.y) - (AB.y*AC.x);
+  float d = -(a*A.x) - (b*A.y) - (c*A.z);
+  float up = -d - (a*c13.a) - (b*c13.b) - (c*c13.z);
+
+  float down =  a*vx + b*vy + c*vz;
+  if(down == 0)
+  {
+    QMessageBox::information(0,("df"),("rovnobezne" ));
+    return;
+  }
+  float t = up/down;
+    //dosadit do rovnic primky
+  pcl::PointXYZI pos;
+
+  pos.x = c13.a +t*vx;
+  pos.y = c13.b +t*vy;
+  pos.z = m_minp.z;
+  pos.intensity = 1;
+  m_pose = pos;
+
+  set_length();
+  set_dbhCloud();
+  if(m_dbh_HT.a!= -1 && m_dbh_HT.b!= -1 && m_dbh_HT.r!= -1 )
+    set_dbhHT();
+  if(m_dbh_LSR.a!= -1 && m_dbh_LSR.b!= -1 && m_dbh_LSR.r!= -1 )
+    set_dbhLSR();
+  if(m_height != -1)
+    set_height();
+  if(!m_stemCurvature.empty())
+    set_stemCurvature();
+}
+void Tree::set_positionHT(Cloud terrain, int iter,  int num_points)
+{
+  if(m_dbhCloud->get_Cloud()->points.size() > 0)
+    m_dbhCloud->get_Cloud()->points.clear();
+// vypocitat stred v 1,3 (m_dbh) a v 0,65 m nad pozici
+  stred c13,c065;
+  bool c13_exist,c065_exist;
+  pcl::PointXYZI posit;
+  c13_exist = c065_exist = false;
+
+  if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
+    posit = m_minp;
+  else
+    posit = m_pose;
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud13 (new pcl::PointCloud<pcl::PointXYZI>);
+  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator it = m_Cloud->points.begin(); it != m_Cloud->points.end(); it++)
+  {
+    if (it->z > (posit.z + 1.25) && it->z < (posit.z + 1.45))
+    {
+      pcl::PointXYZI bod;
+      bod.x =it->x;
+      bod.y =it->y;
+      bod.z =it->z;
+      bod.intensity = it->intensity;
+
+      cloud13->points.push_back(bod);
+    }
+  }
+  if(cloud13->points.size() > 5)
+  {
+    HoughTransform ht13;
+    ht13.set_Cloud(cloud13);
+    ht13.set_iterations(iter);
+    ht13.compute();
+    c13 = ht13.get_circle();
+    c13_exist = true;
+  }
+  cloud13.reset();
+  //set cloud in 065 m above position
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud065 (new pcl::PointCloud<pcl::PointXYZI>);
+  for (std::vector<pcl::PointXYZI, Eigen::aligned_allocator<pcl::PointXYZI> >::const_iterator ith = get_Cloud()->points.begin(); ith != get_Cloud()->points.end(); ith++)
+  {
+    if (ith->z > (posit.z + 0.6) && ith->z < (posit.z + 0.7))
+    {
+      pcl::PointXYZI bod;
+      bod.x =ith->x;
+      bod.y =ith->y;
+      bod.z =ith->z;
+      bod.intensity = ith->intensity;
+
+      cloud065->points.push_back(bod);
+    }
+  }
+
+  // calculate circle
+  if(cloud065->points.size() > 5)
+  {
+    HoughTransform ht065;
+    ht065.set_Cloud(cloud065);
+    ht065.set_iterations(iter);
+    ht065.compute();
+    c065 = ht065.get_circle();
+    c065_exist = true;
+  }
+  cloud065.reset();
+
+  float vx, vy, vz;
+  pcl::PointXYZI pose;
+//if exist both circles
+  if(c13_exist == true && c065_exist == true)
+  {
+    // urcit prusecik
+    //parametricka primka
+    vx = c065.a - c13.a;
+    vy = c065.b - c13.b;
+    vz = c065.z - c13.z;
+  }
+  else if(c13_exist != true && c065_exist == true)
+  {
+    pose.x = c065.a;
+    pose.y = c065.b;
+    pose.intensity = 1;
+  }
+  else if(c13_exist == true && c065_exist != true)
+  {
+    pose.x = c13.a;
+    pose.y = c13.b;
+    pose.intensity = 1;
+  }
+  else
+  {
+    QMessageBox::information(0, m_name, ("Too few points were found for estimation of position using Hough Transform. Using lowest points method."));
+    set_position(terrain);
+    return;
+  }
+  // rovina
+   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp (new pcl::PointCloud<pcl::PointXYZI>);
+  for(int e = 0; e < terrain.get_Cloud()->points.size(); e++)
+  {
+    pcl::PointXYZI a;
+    a.x = terrain.get_Cloud()->points.at(e).x;
+    a.y = terrain.get_Cloud()->points.at(e).y;
+    a.z = m_minp.z;
+    cloud_tmp->points.push_back(a);
+  }
+    // najit tøi nejbližší body terénu
+  pcl::PointXYZ A,B,C;
+  pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+  kdtree.setInputCloud (cloud_tmp);
+
+  std::vector<int> pointId(num_points);
+  std::vector<float> pointSD(num_points);
+  float z = 0;
+  if (kdtree.nearestKSearch (posit, num_points, pointId, pointSD) > 0 )
+  {
+    for(int i =0; i < num_points; i++)
+    {
+      z += terrain.get_Cloud()->points.at(pointId.at(i)).z;
+    }
+    z/=num_points;
+
+  A.x = m_minp.x+1;
+  A.y = m_minp.y+1;
+  A.z = z;
+
+  B.x = m_minp.x-1;
+  B.y = m_minp.y+2;
+  B.z = z;
+
+  C.x = m_minp.x;
+  C.y = m_minp.y;
+  C.z = z;
+
+  }
+    else
+  {
+    QMessageBox::information(0,("tr"),("No terrain point found in selected cloud. using calculation without terrain cloud."));
+    set_positionHT();
     return;
   }
 
-// urcit prusecik
-    //parametricka primka
-    float vx = c065.a - c13.a;
-    float vy = c065.b - c13.b;
-    float vz = c065.z - c13.z;
-
-  // rovina
-    // najit tøi nejbližší body terénu
-    pcl::PointXYZ A,B,C;
-    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
-    kdtree.setInputCloud (terrain.get_Cloud());
-
-    std::vector<int> pointId(5);
-    std::vector<float> pointSD(5);
-
-    if (kdtree.nearestKSearch (m_pose, 5, pointId, pointSD) > 0 )
-    {
-       A.x = terrain.get_Cloud()->points.at(pointId.at(0)).x;
-       A.y = terrain.get_Cloud()->points.at(pointId.at(0)).y;
-       A.z = terrain.get_Cloud()->points.at(pointId.at(0)).z;
-
-       B.x = terrain.get_Cloud()->points.at(pointId.at(1)).x;
-       B.y = terrain.get_Cloud()->points.at(pointId.at(1)).y;
-       B.z = terrain.get_Cloud()->points.at(pointId.at(1)).z;
-
-       C.x = terrain.get_Cloud()->points.at(pointId.at(2)).x;
-       C.y = terrain.get_Cloud()->points.at(pointId.at(2)).y;
-       C.z = terrain.get_Cloud()->points.at(pointId.at(2)).z;
-    }
-    else
-    {
-      QMessageBox::information(0,("tr"),("no terrain point found. canceled"));
-      return;
-    }
-
     //vytvoøit rovnici roviny
-    pcl::PointXYZ AB;
-    AB.x =B.x - A.x;
-    AB.y =B.y - A.y;
-    AB.z =B.z - A.z;
+  pcl::PointXYZ AB;
+  AB.x =B.x - A.x;
+  AB.y =B.y - A.y;
+  AB.z =B.z - A.z;
 
-    pcl::PointXYZ AC;
-    AC.x =C.x - A.x;
-    AC.y =C.y - A.y;
-    AC.z =C.z - A.z;
+  pcl::PointXYZ AC;
+  AC.x =C.x - A.x;
+  AC.y =C.y - A.y;
+  AC.z =C.z - A.z;
 
-    float a = (AB.y*AC.z) - (AB.z*AC.y);
-    float b = (AB.z*AC.x) - (AB.x*AC.z);
-    float c = (AB.x*AC.y) - (AB.y*AC.x);
-    float d = -(a*A.x) - (b*A.y) - (c*A.z);
+  float a = (AB.y*AC.z) - (AB.z*AC.y);
+  float b = (AB.z*AC.x) - (AB.x*AC.z);
+  float c = (AB.x*AC.y) - (AB.y*AC.x);
+  float d = -(a*A.x) - (b*A.y) - (c*A.z);
 
-
-    //vypocitat t
-    float up = -d - (a*c13.a) - (b*c13.b) - (c*c13.z);
-    float down =  a*vx + b*vy + c*vz;
-    if(down == 0)
-    {
-      QMessageBox::information(0,("df"),("rovnobezne" ));
-      return;
-    }
-    float t = up/down;
-    //dosadit do rovnic primky
-    pcl::PointXYZI pos;
-    pos.x = c13.a +t*vx;
-    pos.y = c13.b +t*vy;
-    pos.z = (A.z + B.z + C.z)/3;
-    pos.intensity = 1;
-
-    m_pose = pos;
-}
-void Tree::set_stemCurvature()
-{
-  m_stemCurvature.clear();
-  for(int g = 0; g < m_height; g++)
+  if(c13_exist == true && c065_exist == true)
   {
-    float h = g;
-    if(g == 0)
-      h= 0.65;
-    if(g == 1)
-      h= 1.3;
+    //vypocitat t
+  float up = -d - (a*c13.a) - (b*c13.b) - (c*c13.z);
+  float down =  a*vx + b*vy + c*vz;
+  if(down == 0)
+  {
+    QMessageBox::information(0,("df"),("rovnobezne" ));
+    return;
+  }
+  float t = up/down;
+    //dosadit do rovnic primky
+  pcl::PointXYZI pos;
+  pos.x = c13.a +t*vx;
+  pos.y = c13.b +t*vy;
 
-    HoughTransform *ht = new HoughTransform();
+  pos.z = (A.z + B.z + C.z)/3;
+  pos.intensity = 1;
+
+  m_pose = pos;
+  set_length();
+  set_dbhCloud();
+  }
+  else if(c13_exist != true && c065_exist == true)
+  {
+    pose.z = (A.z + B.z + C.z)/3;
+    m_pose = pose;
+    set_length();
+    set_dbhCloud();
+  }
+  else if(c13_exist == true && c065_exist != true)
+  {
+    pose.z = (A.z + B.z + C.z)/3;
+
+    m_pose = pose;
+    set_length();
+    set_dbhCloud();
+  }
+  if(m_dbh_HT.a!= -1 && m_dbh_HT.b!= -1 && m_dbh_HT.r!= -1 )
+    set_dbhHT();
+  if(m_dbh_LSR.a!= -1 && m_dbh_LSR.b!= -1 && m_dbh_LSR.r!= -1 )
+    set_dbhLSR();
+  if(m_height != -1)
+    set_height();
+  if(!m_stemCurvature.empty())
+    set_stemCurvature();
+}
+void Tree::set_stemCurvature(int iter )
+{
+  if(m_pose.x == -1 && m_pose.y == -1 &&m_pose.z == -1 )
+    return;
+  m_stemCurvature.clear();
+  for(int g = 0; g < (m_maxp.z - m_minp.z); g++)
+  {
+    float h;
+    if(g == 0)
+      h = 0.65;
+    else if(g == 1)
+      h = 1.3;
+    else
+      h = g;
+
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ (new pcl::PointCloud<pcl::PointXYZI>);
     //vybrat body do mracna ktere jsou
-
     for(int i = 0; i < get_Cloud()->points.size(); i++)
     {
       pcl::PointXYZI ith;
       ith = get_Cloud()->points.at(i);
-      if (ith.z > (m_pose.z + h - 0.03) && ith.z < (m_pose.z + h + 0.03) && m_dbh_HT.a -ith.x <5 &&  ith.x - m_dbh_HT.a < 5&& m_dbh_HT.b -ith.y <5 &&   ith.y - m_dbh_HT.b < 5)
+      if (ith.z > (m_pose.z + h - 0.035) && ith.z < (m_pose.z + h + 0.035))// && m_dbh_HT.a -ith.x <5 &&  ith.x - m_dbh_HT.a < 5&& m_dbh_HT.b -ith.y <5 &&   ith.y - m_dbh_HT.b < 5)
       {
         cloud_->points.push_back(ith);
       }
@@ -535,26 +872,57 @@ void Tree::set_stemCurvature()
 // if the cloud is empty
     if(cloud_->points.size() > 5)
     {
+      HoughTransform *ht = new HoughTransform();
       ht->set_Cloud(cloud_);
+      ht->set_iterations(iter);
       ht->compute();
       res = ht->get_circle();
+      delete ht;
     }
     else
       res = {-1,-1,-1,-1,-0.5};
 
 // if the circle is two times greater than previous two circles
-    if(m_stemCurvature.size() > 2 && res.r > (2* m_stemCurvature.at(m_stemCurvature.size()-2).r) && res.r > (2* m_stemCurvature.at(m_stemCurvature.size()-1).r))
+    if(m_stemCurvature.size() >= 2 && res.r > (2* m_stemCurvature.at(m_stemCurvature.size()-2).r) && res.r > (2* m_stemCurvature.at(m_stemCurvature.size()-1).r))
       res = {-1,-1,-1,-1,-0.5};
 
     m_stemCurvature.push_back(res);
     cloud_.reset();
-    delete ht;
   }
 }
 std::vector<stred> Tree::get_stemCurvature()
 {
   return m_stemCurvature;
 }
+//CROWN
+void Tree::set_TreeCrownAutomatic()
+{
+    if(m_crown != 0){delete m_crown;}
+    //create new crown object and set as tree crown
+    CrownAutomaticDetection *ad = new CrownAutomaticDetection(CloudOperations::getCloudCopy(m_Cloud),get_dbhLSR(),m_pose);
+    QString name = QString("%1_crown").arg(m_name);
+    m_crown = new Crown(ad->getCrown(),name,m_pose,ad->getStemHighestPoint());
+}
+void Tree::set_TreeCrownManual(pcl::PointCloud<pcl::PointXYZI>::Ptr crown,pcl::PointCloud<pcl::PointXYZI>::Ptr stem)
+{
+    if(m_crown != 0){delete m_crown;}
+    //create new crown object and set as tree crown
+    QString name = QString("%1_crown").arg(m_name);
+    cloudHighestAndLowestZValue hl = GeomCalc::findHighestAndLowestPoints(stem);
+    m_crown = new Crown(crown,name,m_pose,hl.highestPoint);
+}
+Crown& Tree::get_TreeCrown()
+{
+    return *m_crown;
+}
+bool Tree::isCrownExist()
+{
+    if(m_crown == 0)
+    {
+        return false;
+    }else return true;
+}
+
 //PRIVATE
 pcl::PointXYZI Tree::getMinP()
 {

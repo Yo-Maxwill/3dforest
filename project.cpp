@@ -23,7 +23,7 @@
 #include <pcl/io/ply_io.h>
 #include <pcl/io/vtk_io.h>
 #include <iostream>
-#include <string>
+//#include <string>
 #include <QtCore/QString.h>
 
 
@@ -112,7 +112,7 @@ void Project::set_VegeCloud(Cloud cloud)
 {
   m_vegeCloud.push_back(cloud);
 }
- void Project::set_Tree(Cloud cloud)
+void Project::set_Tree(Cloud cloud)
 {
 
   Tree t (cloud);
@@ -145,33 +145,43 @@ Cloud Project::set_ConvexCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QStri
 {
 
 }
-void Project::set_treePosition(QString name)
+void Project::set_treePosition(QString name, int height)
 {
   for(int i = 0; i< m_stromy.size(); i++)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_position();
+      m_stromy.at(i).set_position(height);
     }
   }
 }
-void Project::set_treePosition(QString name, Cloud terrain)
+void Project::set_treePosition(QString name, Cloud terrain,  int num_points, int height)
 {
   for(int i = 0; i< m_stromy.size(); i++)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_position(terrain);
+      m_stromy.at(i).set_position(terrain, num_points, height);
     }
   }
 }
-void Project::set_treePositionHT(QString name, Cloud terrain)
+void Project::set_treePositionHT(QString name, Cloud terrain, int iter, int num_points)
 {
   for(int i = 0; i< m_stromy.size(); i++)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_positionHT(terrain);
+      m_stromy.at(i).set_positionHT(terrain, iter, num_points);
+    }
+  }
+}
+void Project::set_treePositionHT(QString name, int iter)
+{
+  for(int i = 0; i< m_stromy.size(); i++)
+  {
+    if (get_TreeCloud(i).get_name() == name)
+    {
+      m_stromy.at(i).set_positionHT(iter);
     }
   }
 }
@@ -192,7 +202,7 @@ void Project::set_treeDBHCloud(QString name)
     if (get_TreeCloud(i).get_name() == name)
     {
       m_stromy.at(i).set_dbhCloud();
-      m_stromy.at(i).set_dbhHT();
+      m_stromy.at(i).set_dbhHT(200);
       m_stromy.at(i).set_dbhLSR();
     }
   }
@@ -204,13 +214,13 @@ void Project::set_treeDBH_HT(QString name)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_dbhHT();
+      m_stromy.at(i).set_dbhHT(200);
     }
   }
 }
 void Project::set_treeDBH_HT(int i)
 {
-  m_stromy.at(i).set_dbhHT();
+  m_stromy.at(i).set_dbhHT(200);
 }
 void Project::set_treeDBH_LSR(QString name)
 {
@@ -246,13 +256,13 @@ void Project::set_length(QString name)
     }
   }
 }
-void Project::set_treeStemCurvature(QString name)
+void Project::set_treeStemCurvature(QString name, int iter)
 {
   for(int i = 0; i< m_stromy.size(); i++)
   {
     if (get_TreeCloud(i).get_name() == name)
     {
-      m_stromy.at(i).set_stemCurvature();
+      m_stromy.at(i).set_stemCurvature(iter);
     }
   }
 }
@@ -635,7 +645,6 @@ void Project::set_PointSize(QString name, int p)
       m_stromy.at(i).set_Psize(p);
   }
 }
-
 void Project::save_color(QString name, QColor col)
 {
   //open pro file,
@@ -668,4 +677,52 @@ void Project::save_color(QString name, QColor col)
   QFile::remove(filepath);
   QFile::rename(filepathtmp,filepath);
 }
+//POLYHEDRON INTERSECTIONS 3D
+int Project::getIntersectionsSize()
+{
+    return m_intersections3D.size();
+}
+PolyhedronIntersections3D& Project::getIntersectionsAt(int i)
+{
+    return m_intersections3D.at(i);
+}
+void Project::computeCrownIntersections()
+{
+    for(int i=0; i<get_sizeTreeCV()-1;i++)
+    {
+        if(get_TreeCloud(i).isCrownExist()==true && get_TreeCloud(i).get_TreeCrown().isConvexhull3DExist()==true)
+        {
+                pcl::PolygonMesh mesh1(get_TreeCloud(i).get_TreeCrown().get3DConvexhull().getMesh());
+                QString name1 = get_TreeCloud(i).get_name();
+            for(int j=i+1;j<get_sizeTreeCV();j++)
+            {
+                if(get_TreeCloud(j).isCrownExist()==true && get_TreeCloud(j).get_TreeCrown().isConvexhull3DExist()==true)
+                {
+                    pcl::PointXYZI c1 = get_TreeCloud(i).get_TreeCrown().getCrownPosition();
+                    pcl::PointXYZI c2 = get_TreeCloud(j).get_TreeCrown().getCrownPosition();
+                    float l1 = get_TreeCloud(i).get_TreeCrown().getCrownLenghtXY();
+                    float l2 = get_TreeCloud(j).get_TreeCrown().getCrownLenghtXY();
 
+                    if(isIntersectionPossible(c1,l1,c2,l2) == true )
+                    {
+                        pcl::PolygonMesh mesh2(get_TreeCloud(j).get_TreeCrown().get3DConvexhull().getMesh());
+                        QString name2 = get_TreeCloud(j).get_name();
+                        PolyhedronIntersections3D p(mesh1,mesh2,name1,name2);
+                        if(p.getSurface() > 0 && p.getVolume()>0)
+                        {
+                            m_intersections3D.push_back(p);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+bool Project::isIntersectionPossible(pcl::PointXYZI pos1, float lenght1, pcl::PointXYZI pos2, float lenght2)
+{
+    float posDist = GeomCalc::computeDistance2Dxy(pos1,pos2);
+    float lenghtsHalf = (lenght1/2)+(lenght2/2);
+    if(lenghtsHalf>posDist){
+        return true;
+    }else return false;
+}

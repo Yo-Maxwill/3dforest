@@ -25,6 +25,7 @@ class HoughTransform
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr m_cloud; /**< base point cloud for computing */
   stred m_circle;                               /**< result of calculating the ring */
+  int m_it;                                   /**< number of iterations */
   public:
     //! Constructor.
     /*! Empty Costructor. */
@@ -41,6 +42,9 @@ class HoughTransform
     //! computation of the ring.
     /*! calculate the ring for given cloud and save result into m_circle*/
   void  compute();
+  //! setting number of iterations.
+    /*! setting number of iterations for calculation*/
+  void  set_iterations(int i = 200);
    //! get the result circle.
     /*! \return stred ring computed by class. */
   stred get_circle();

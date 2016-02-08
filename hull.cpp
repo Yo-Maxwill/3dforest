@@ -1,67 +1,46 @@
-//    This file is part of 3DFOREST  www.3dforest.eu
-//
-//    3DFOREST is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    3DFOREST is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with 3DFOREST.  If not, see <http://www.gnu.org/licenses/>.
-//////////////////////////////////////////////////////////////////////
-
 #include "hull.h"
 
 //CLASS CONVEXHULL*/
-ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
+: Cloud(cloud, name)
 {
-    m_cloud = cloud;
+    QString hullName = QString("%1_hull").arg(name);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_h(new pcl::PointCloud<pcl::PointXYZI>);
+    m_convexhull = new Cloud(cloud_h, hullName);
+    computeAttributes();
 }
 ConvexHull::~ConvexHull()
 {
-    m_convexhull.reset();
-    m_cloud.reset();
+    delete m_convexhull;
 }
 //COMPUTE
-void ConvexHull::compute()
+void ConvexHull::computeAttributes()
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  m_convexhull = cloud;
-  cloud.reset();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(CloudOperations::getCloudCopy(m_Cloud));
+    int cloudsize = cloud->points.size();
+    float lowest = GeomCalc::findHighestAndLowestPoints(cloud).Lowest;
+    if(cloudsize < 3)
+    {
+        QString a = QString("COULD NOT CREATE CONVEX HULL FROM LESS THAN 3 POINTS !!!");
+        QMessageBox::information(0,("WARNING"),a);
+    }else if(cloudsize == 3)
+    {
+        m_convexhull->set_Cloud(cloud);
+        m_polygonArea = GeomCalc::computeTriangleArea(cloud->points.at(0),cloud->points.at(1),cloud->points.at(2));
+    }else if(cloudsize == 4)
+    {
+        createConvexIfOnlyFourPointsInCloud(cloud);
+    }else{
+    pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud(new pcl::PointCloud<pcl::PointXYZI>);
+    createConvexHull(cloud,hullCloud);
 
-  int cloudsize = m_cloud->points.size();
-  if(cloudsize < 3)
-  {
-    QString a = QString("Could not create convexhull of pointcloud with less than 3 points !");
-    QMessageBox::information(0,("WARNING"),a);
-    return;
-  }
+    alignPolygonZToLowest(hullCloud,lowest);
 
-  if(cloudsize == 3)
-  {
-    m_convexhull = m_cloud;
-    m_polygonArea = GeomCalc::computeTriangleArea(m_cloud->points.at(0),m_cloud->points.at(1),m_cloud->points.at(2));
-  }
-  else if(cloudsize == 4)
-  {
-    createConvexIfOnlyFourPointsInCloud(m_cloud);
-  }
-  else
-  {
-    createConvexHull(m_cloud,m_convexhull);
-    m_polygonArea = GeomCalc::computePolygonArea(m_convexhull);
+    m_convexhull->set_Cloud(hullCloud);
 
-  }
+    m_polygonArea = GeomCalc::computePolygonArea(hullCloud);
+    }
 }
-void ConvexHull::set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
-{
-   m_cloud = cloud;
-}
-
 void ConvexHull::createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud)
 {
     //Find point with lowest y value, set its z value to lowest z value and set it as first polygon point
@@ -73,6 +52,7 @@ void ConvexHull::createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, p
     hullCloud->points.push_back(returnSecondPointToPolygon(cloud,pointLowest));
     CloudOperations::erasePointFromCloudXY(cloud,hullCloud->points.at(1));
     //Add next point into polygon until first point is not equal last point and polygon is closed
+
      for (int k=1; k<100; k++)
      {
         pcl::PointXYZI pointA = hullCloud->points.at(k-1);
@@ -84,11 +64,9 @@ void ConvexHull::createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, p
         //erase equal points from source point cloud
         CloudOperations::erasePointFromCloudXY(cloud,point);
         //Return first point in polygon into source cloud
-        if (k==3)
-          {cloud->points.push_back(pointLowest);}
+        if (k==3) {cloud->points.push_back(pointLowest);}
         //Condition for stoping the loops, polygon is closed forst, point == last point
-        if (k > 3 && point.x == pointLowest.x && point.y == pointLowest.y)
-        {break;}
+        if (k > 3 && point.x == pointLowest.x && point.y == pointLowest.y){break;}
     }
     //erase first point in polygon from source cloud, because its z value is equal to lowest z value in the cloud
     int s = cloud->points.size();
@@ -126,8 +104,9 @@ pcl::PointXYZI ConvexHull::returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::
         {
             bodYmin.y = bod.y;
             bodYmin.x = bod.x;
+            bodYmin.z = bod.z;
+            bodYmin.intensity = bod.intensity;
         }
-        if (bod.z < bodYmin.z){bodYmin.z =bod.z;}
     }
     return bodYmin;
 }
@@ -173,13 +152,20 @@ void ConvexHull::createConvexIfOnlyFourPointsInCloud(pcl::PointCloud<pcl::PointX
     {
        hullCloud->points.push_back(last);
     }
-    m_convexhull = hullCloud;
+    m_convexhull->set_Cloud(hullCloud);
     m_polygonArea = GeomCalc::computePolygonArea(hullCloud);
 }
-//GET
-void ConvexHull::getPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+void ConvexHull::alignPolygonZToLowest(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float lowest)
 {
-    *cloud = *m_convexhull;
+    for(int i=0;i<cloud->points.size();i++)
+    {
+        cloud->points.at(i).z=lowest;
+    }
+}
+//GET
+Cloud ConvexHull::getPolygon()
+{
+    return *m_convexhull;
 }
 float ConvexHull::getPolygonArea()
 {
@@ -187,60 +173,55 @@ float ConvexHull::getPolygonArea()
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /* CLASS CONCAVEHULL */
-ConcaveHull::ConcaveHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float searchDist)
+ConcaveHull::ConcaveHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, float searchDist)
+: Cloud(cloud, name)
 {
-  m_cloud = cloud;
-  m_searchingDistance = searchDist;
+    QString hullName = QString("%1_hull").arg(name);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_h(new pcl::PointCloud<pcl::PointXYZI>);
+    m_concavehull = new Cloud(cloud_h, hullName);
 
+    m_searchingDistance = searchDist;
+    computeAttributes();
 }
 ConcaveHull::~ConcaveHull()
 {
-    m_concavehull.reset();
+    delete m_concavehull;
 }
 //COMPUTE
-void ConcaveHull::compute()
+void ConcaveHull::computeAttributes()
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
-  m_concavehull = cloud;
-  cloud.reset();
-
     computeConcaveHull();
-    m_polygonArea = GeomCalc::computePolygonArea(m_concavehull);
+    m_polygonArea = GeomCalc::computePolygonArea(m_concavehull->get_Cloud());
 }
 void ConcaveHull::computeConcaveHull()
 {
     //Copy cloud and create convex hull
-   // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(m_Cloud);
-  int sizeOfCloud = m_cloud->points.size();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(m_Cloud);
+    int sizeOfCloud = cloud->points.size();
+    ConvexHull *c = new ConvexHull(cloud, "convex");
 
-  ConvexHull *c = new ConvexHull(m_cloud);
-  c->compute();
-  pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud (new pcl::PointCloud<pcl::PointXYZI>);
-  c->getPolygon(hullCloud);
-  delete c;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud (new pcl::PointCloud<pcl::PointXYZI>);
+    hullCloud = c->getPolygon().get_Cloud();
 
-  if(sizeOfCloud <= hullCloud->points.size() || m_cloud->points.size() == 1)
-  {
-    m_concavehull = hullCloud;
-    hullCloud.reset();
-    return;
-  }
-  //Edges breaking with incremental max edge lenght, start at 0.5m
-  float searchDist = m_searchingDistance;
-  int polygonSize = hullCloud->points.size();
-  for (int i=0; i<11; i++)
-    //co to je za cislo?
-  {
-    edgesBreaking(m_cloud,hullCloud,searchDist);
+    if(sizeOfCloud <= hullCloud->points.size() || cloud->points.size() == 1)
+    {
+        m_concavehull->set_Cloud(hullCloud);
+        return;
+    }else{
+        //Edges breaking with incremental max edge lenght, start at 0.5m
+        float searchDist = m_searchingDistance;
+        int polygonSize = hullCloud->points.size();
+        for (int i=0; i<11; i++)
+        {
+            edgesBreaking(cloud,hullCloud,searchDist);
             //If all edges are shorter than searchDist stop the loop
-    if(polygonSize == hullCloud->points.size())
-      {break;}
-    polygonSize = hullCloud->points.size();
+            if(polygonSize == hullCloud->points.size()){break;}
+            polygonSize = hullCloud->points.size();
             //Increase serching distance
-    searchDist +=0.1;
-  }
-  m_concavehull = hullCloud;
-  hullCloud.reset();
+            searchDist +=0.1;
+        }
+    m_concavehull->set_Cloud(hullCloud);
+    }
 }
 void ConcaveHull::edgesBreaking(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud,float searchDist)
 {
@@ -293,33 +274,38 @@ pcl::PointXYZI ConcaveHull::returnEdgeBreakingPoint(pcl::PointCloud<pcl::PointXY
 }
 
 //GET
-void  ConcaveHull::getPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+Cloud ConcaveHull::getPolygon()
 {
-    *cloud = *m_concavehull;
+    return *m_concavehull;
 }
 float ConcaveHull::getPolygonArea()
 {
     return m_polygonArea;
 }
-void ConcaveHull::getPolygonSwappedZI(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+Cloud ConcaveHull::getPolygonSwappedZI()
 {
-//     pcl::PointCloud<pcl::PointXYZI>::Ptr c (new pcl::PointCloud<pcl::PointXYZI>);
-//    c = m_concavehull->get_Cloud();
-//     for(pcl::PointCloud<pcl::PointXYZI>::iterator it = c->begin(); it != c->end(); it++)
-//    {
-//        float z = it->z;
-//        it->z = it->intensity;
-//        it->intensity = z;
-//    }
-//    QString a = QString("%1_swapppedConcavehull").arg(m_name);
-//    Cloud *cloud = new Cloud(c, a);
-//    return *cloud;
-}
-float ConcaveHull::getSearchDist()
-{
-    return m_searchingDistance;
-}
+     pcl::PointCloud<pcl::PointXYZI>::Ptr c (new pcl::PointCloud<pcl::PointXYZI>);
+     c = m_concavehull->get_Cloud();
+     for(pcl::PointCloud<pcl::PointXYZI>::iterator it = c->begin(); it != c->end(); it++)
+    {
+        float z = it->z;
+        it->z = it->intensity;
+        it->intensity = z;
+    }
+     pcl::PointXYZI p1 = c->points.at(0);
+    int s = c->points.size();
+   pcl::PointXYZI p2 = c->points.at(s-1);
+    if(p1.z<p2.z)
+    {
+          c->points.at(s-1).z = p1.z;
+          //QString a = QString(" p1 %1  p2 %2").arg(p1.z).arg(p2.z);
+          //QMessageBox::information(0,("WARNING"),a);
+    }
 
+    QString a = QString("%1_swapppedConcavehull").arg(m_name);
+    Cloud *cloud = new Cloud(c, a);
+    return *cloud;
+}
 
 
 

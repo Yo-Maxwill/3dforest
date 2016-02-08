@@ -18,9 +18,11 @@
 
 #include <QVTKWidget.h>
 #include <QtGui/QMainWindow>
-#include <gui.h>
-#include <project.h>
+#include "gui.h"
+#include "project.h"
 #include "hull.h"
+#include "segmentation.h"
+#include "terrain.h"
 
 //!  Main application window.
 /*!
@@ -31,17 +33,24 @@ class MainWindow : public QMainWindow
 {
   Q_OBJECT
 
+signals:
+  void savedVege();
+  void savedTerrain();
+  void savedTree();
+  void savedRest();
+
 public:
     //! Constructor.
     /*! Main application constructor. */
     MainWindow();
+    ~MainWindow();
+
+private slots:
+
     //! path of project.
     /*! Return path of current project.
     \return QString path to the directory of project. */
     QString get_path();
-
-private slots:
-
 //PROJECT
   //project manager
     //! New project.
@@ -57,6 +66,9 @@ private slots:
     /*! Import existing project to new path and correct all path in proj file. */
   void importProject();
   //file import/open
+  //! Show attrubute table.
+  /*! Show attribute table with tree and crown parameters. */
+  void showAttributeTable();
 
     //! Import PCD file.
     /*! Import existing file into project as a terrain cloud.  */
@@ -108,6 +120,11 @@ private slots:
   //! Save manually adjusted terrain cloud.
     /*! Save adjusted terrain cloud into old file and deleted point into new file */
   void manualAdjustStop();
+  //! Inverse distance weight interpolation.
+    /*! IDW interpolation method for terrain clouds  */
+  void IDWslot();
+  void statisticalOutlierRemoval();
+  void radiusOutlierRemoval();
 
 //VEGETATION
     //! Manual selection of trees from vegetation cloud.
@@ -116,6 +133,11 @@ private slots:
     //! Save manually selected tree cloud.
     /*! Save selected tree cloud into new file and if user do not want to continue save  rest into output file. */
   void manualSelectStop();
+    //! Automatic tree selection based on point distance.
+    /*! Slot for input parameters of autzomatic segmentation. */
+  void segmentation();
+
+
 // TREE ATRIBUTES
     //! Manual editing of tree cloud.
     /*! Choose tree cloud for manual editing. */
@@ -250,11 +272,51 @@ private slots:
     /*! Save edited DBH cloud of given tree. */
   void dbhCloudStopEdit();
 
+//CROWN
+  void set_CrownManual();
+  void CrownManualStop();
+  void set_CrownAutomatic();
+  void crownDisplay(QString name);
+  void crown_DisplayAll();
+  void crown_HideAll();
+  void CrownHeightDisplay(QString name);
+  void crownHeightsDisplayAll();
+  void crownHeightsHideAll();
+
+  void crownPositionDisplay(QString name);
+  void crownPositionDisplayAll();
+  void crownPositionHideAll();
+
+  void setSectionsVolumeSurfacePosition();
+  void crownSurfaceBySectionsHideAll();
+  void crownSurfaceBySectionsDisplayAll();
+  void crownSurfaceBySectionsDisplayName(QString name);
+
+    void create3DConvexull();
+    void crownSurface3DHullDisplayAll();
+    void crownSurface3DHullHideAll();
+    void crownSurface3DHullDisplayName(QString name);
+
+    void crownExternalPtsDisplayAll();
+    void crownExternalPtsHideAll();
+
+    void computeCrownsIntersections();
+    void intersectionsShowAll();
+    void intersectionsHideAll();
+    void showCrownIntersectionsTable();
+
+    void exportCrownAttributes();
+    void exportIntersections();
+    void recomputeAfterTreePosChenge();
+    void crownVolumeByVoxels();
+    //////
 
 //MISC
     //! Join two cloud into one.
     /*! join two input clouds into new one.  Slot only displays input dialog for entering clouds and new name.  */
-  void plusCloud();
+  void labelClouds();
+  void labelCloudsOFF();
+  void mergeClouds();
     //! subtract two clouds.
     /*! Choose two input clouds and from the bigger one subtract all point that are common with the second one. Result save into new file.  */
   void minusCloud();
@@ -264,18 +326,8 @@ private slots:
     //! Voxelize cloud.
     /*! For given cloud make new voxelized cloud with given resolution of voxel. */
   void voxelize();
-    //! IDW for given clouds - special purpose function only.
-    /*! input cloud are: reference terrain cloud, selected ground points for computing idw, original cloud for computing new height.  */
-  void IDW();
-    //! Clip of two cloud - special purpose function only.
-    /*! input clouds: original cloud, reference cloud. serve for editing clouds in strips of given width. work only in special angle of viewing clouds.  */
-  void clip();
-    //! Clip of two cloud - special purpose function only.
-    /*! if one strip is ready, you can switch to next one  */
-  void clipped();
-    //! Clip of two cloud - special purpose function only.
-    /*! finish editing clipping */
-  void clipStop();
+
+
   //! Create concave hull of cloud.
     /*! output is new ost cloud*/
   void set_ConcaveCloud();
@@ -288,6 +340,7 @@ private slots:
     //! Change background color of vTK widget.
     /*! select color for background*/
   void bgColor();
+
 
 // ABOUT
     //! Information about application
@@ -322,15 +375,27 @@ private slots:
   //! Restore deleted point during area picking event
     /*! Restore points removed during area picking event. Function is connected to undo button. */
   void undo();
+  void displayHideEditCloud();
+
+
+    void saveVegetation(Cloud *);
+    void saveTerrain (Cloud *);
+    void saveTree(Cloud *);
+    void saveRest(Cloud *c);
 
   // PROGRESSBAR
+
     void showProgressBar100percent();
-    QProgressBar* createNewProgressBar();
     void showProgressBarAt(QProgressBar *pBar,int a);
+    void showProgressBarInfinity();
+    void createPBar();
+    void showPBarValue(int);
+    void removePbar();
+
 
 private:
   //application widgets and actions
-    //! Create actions
+    //! Create actionsshowAttributeTable()
     /*! Create main window actions.  */
   void createActions();
     //! Create menus
@@ -414,9 +479,12 @@ private:
 // EDIT ToolBar
   QToolBar *editBar;/**< Define editBar Widget */
   std::vector<int> undopoint;/**< Vector of points selected during area picking event */
+  bool m_editCloud;
 
+QProgressBar* m_pBar;
 
 // save functions
+
   void saveCloud(Cloud *s_cloud, QString type);
     //! Save cloud as a tree type.
     /*! Save selected pointcloud as a new tree in project.
@@ -431,27 +499,6 @@ private:
         \param s_cloud Input Cloud \param overwrt overwrite existing file  */
   void saveVegeCloud(Cloud *s_cloud, bool overwrt  );
 
-    //! Segment input_cloud into vegetation and ground.
-    /*! Method for segmenting input cloud into vegetation and ground cloud with given resolution.
-        \param res resolution of smallest octree searchbox \param input Input Cloud \param output_vege output cloud of vegetation
-        \param output_ground output cloud of terrain */
-  void octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input, pcl::PointCloud<pcl::PointXYZI>::Ptr output_vege, pcl::PointCloud<pcl::PointXYZI>::Ptr output_ground);
-    //! Select lowest/highest point of cloud.
-    /*! From given pointCloud select all points that have in given resolution the lowest/highest z coordinate.
-        \param c Input pointCloud \param res Resolution \param v if true select lowest point else highest
-        \return  pointCloud */
-  void lowPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr input,pcl::PointCloud<pcl::PointXYZI>::Ptr output,float res);
-    //! Join two cloud into one.
-    /*! join two input clouds into new one.
-    \param  input1 first input cloud \param  input2 second input cloud \param  output name of output cloud
-    \param  typ type of new cloud, default is "ost". */
-  void plusCloud(QString, QString, QString, QString );
-    //! Make strip of two clouds based on strip widht.
-    /*! Create to strips from two clouds. Both strip starts with the same X coordiante and is widht according to resolution.
-        \param cl reference terrain cloud \param cl2 original cloud \param res widht of strip  */
-  void clip(Cloud cl, Cloud cl2, int res);
-  int m_width;  /**< width of clipped strip*/
-  int m_res;    /**< resolution of clipped strip */
 
 //cloud names
     //! Names of all clouds in project.
@@ -491,8 +538,9 @@ private:
   QMenu *terenMenu;           /**< Terrain menu */
   QMenu *vegeMenu;            /**< Vegetation menu */
   QMenu *treeMenu;            /**< Tree attributes menu */
+  QMenu *crownMenu;           /**< Crown menu */
   QMenu *helpMenu;            /**< About menu */
-  QMenu *miscMenu;             /**< Other features menu */
+  QMenu *miscMenu;            /**< Other features menu */
 
 //PROJECT ACTIONS
   QAction *new_projectAct;    /**< New project Act */
@@ -513,6 +561,12 @@ private:
   QAction *voxelAct;          /**< Voxelized terrain Act */
   QAction *octreeAct;         /**< Terrain by octree Act */
   QAction *manualADAct;       /**< manula terrain adjustment Act */
+  QAction *IDWAct;            /**< IDW Act */
+  QAction *statisticalOutlierRemovalAct;
+  QAction *radiusOutlierRemovalAct;
+  //VEGETATION
+  QAction *segmentAct;             /**< Save tree attributes into file Act */
+  QAction *manualSelAct;      /**< Manual selection of trees Act */
   //TREE ATRIBUTES ACTIONS
   QAction *tAAct;             /**< Save tree attributes into file Act */
   QAction *dbhHTAct;          /**< Compute DBH using RHT and display Act */
@@ -520,7 +574,6 @@ private:
   QAction *heightAct;         /**< Compute Height and display Act */
   QAction *posAct;            /**< Compute Position and display Act */
   QAction *posHTAct;            /**< Compute Position and display Act */
-  QAction *manualSelAct;      /**< Manual selection of trees Act */
   QAction *treeEditAct;       /**< Manual editing of tree cloud Act */
   QAction *dbhEditAct;        /**< Manual editing of tree DBH cloud Act */
   QAction *dbhCheckAct;       /**< Check DBH computation of both methods  */
@@ -530,24 +583,35 @@ private:
   QAction *concaveAct;        /**< Compute concave hull Act */
   QAction *stemCurvatureAct;  /**< Compute stem curve Act */
   QAction *exportStemCurvAct; /**< Export given tree stem curve Act*/
-
+   //CROWN ACTIONS
+  QAction *setCrownManualAct;
+  QAction *setCrownAutomaticAct;
+  QAction *setCrownSectionsAct;
+  QAction *setVolumeByVoxAct;
+  QAction *exportAttributesAct;
+  QAction *convexHull3DAct;
+  QAction *intersectionAct;
+  QAction *exportIntersectionAct;
   //MISC ACTIONS
-  QAction *plusAct;           /**< Merge two cloud into single one Act */
+    QAction *multipleMergeAct;           /**< Merge two cloud into single one Act */
   QAction *minusAct;          /**< Subtract two cloud Act */
   QAction *voxAct;            /**< Voxelize cloud Act */
-  QAction *clipAct;           /**< Clipping Act */
-  QAction *clipedAct;         /**< Clipping Act 2 */
-  QAction *convexCloudAct;    /**< ConvexCloud Act */
+    QAction *convexCloudAct;    /**< ConvexCloud Act */
   QAction *concaveCloudAct;   /**< ConcaveCloud Act */
   QAction *tiffAct;           /**< save vtkwidget into tiff file Act */
   QAction *bgcolorAct;         /**< Change background color Act */
   QAction *spitCloudAct;         /**< Change background color Act */
+  QAction *labelONAct;         /**< Change background color Act */
+  QAction *labelOFFAct;         /**< Change background color Act */
 
 
   //ABOUT ACTIONS
   QAction *aboutAct;          /**< About application Act */
   QAction *aboutQtAct;        /**< About Qt Act */
-  QAction *IDWAct;            /**< IDW Act */
+
+
+//ATTRIBUTE TABLE ACT (IN PROJ TOOLBAR)
+  QAction *showAttributTableT;
 
   //Treebar actions
   QToolBar *treeBar;          /**< Toolbar with display/hide tree attributes */
@@ -564,6 +628,18 @@ private:
   Cloud *m_cloud;             /**< temporary cloud serves mainly in editing mode */
   Cloud *m_cloud1;            /**< temporary cloud serves mainly in editing mode */
   Cloud *m_cloud2;            /**< temporary cloud serves mainly in editing mode*/
+  //Crown bar actions
+  QToolBar *crownBar;          /**< Toolbar with display/hide Crown attributes */
+  QAction *crownDisplayHideT;            /**< display/hide crown cloud */
+  QAction *crownHeightsDisplyHideT;
+  QAction *crownPositionDisplayHideT;
+  QAction *crownSurfaceBySectionsT;
+  QAction *crownSurfaceBy3DHullT;
+  QAction *crownExternalPtsT;
+  QAction *crownIntersectionsT;
+  QAction *crownIntersectionTableT;
+
+  QThread *m_thread;
 
  };
 

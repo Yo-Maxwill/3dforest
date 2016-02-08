@@ -15,15 +15,23 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "HoughTransform.h"
+#include <boost/random/linear_congruential.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 HoughTransform::HoughTransform()
 {
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   m_cloud = cloud;
+  m_it= 200;
+ // m_circle = {-1,-1,-1,-1,-0.5};
 }
 HoughTransform::HoughTransform(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   m_cloud = cloud;
+  m_it= 200;
+  //m_circle = {-1,-1,-1,-1,-0.5};
 }
 HoughTransform::~HoughTransform()
 {
@@ -35,28 +43,43 @@ void HoughTransform::set_Cloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 }
 void  HoughTransform::compute()
 {
-  int max_it = 200;
-  std::vector<float> acc_x(max_it,0);
-  std::vector<int> acc_xc(max_it,0);
-  std::vector<float> acc_y(max_it,0);
-  std::vector<int> acc_yc(max_it,0);
-  std::vector<int> acc_r(max_it,0);
-  std::vector<int> acc_rc(max_it,0);
-  int max_bod = m_cloud->points.size()-5;
+  std::vector<float> acc_x(m_it,0);
+  std::vector<int> acc_xc(m_it,0);
+  std::vector<float> acc_y(m_it,0);
+  std::vector<int> acc_yc(m_it,0);
+  std::vector<int> acc_r(m_it,0);
+  std::vector<int> acc_rc(m_it,0);
+
+  boost::mt19937 rng;
+  boost::uniform_int<> six(0,m_cloud->points.size() -1);
+  boost::variate_generator<boost::mt19937&, boost::uniform_int<> >  die(rng, six);             // glues randomness with mapping
 
     //#pragma omp parallel for
-  for(int xa = 0; xa < max_it; xa++)
+  for(int xa = 0; xa < m_it; xa++)
   {
-      //std::srand(std::time(0));
-    int a= (rand() %max_bod)+2;
-    int b= (rand() %max_bod)+4;
-    int c= (rand() %max_bod);
+    int r1 =  die();
+    int r2 =  die();
+    int r3 =  die();
 
+    while (r1 == r2)
+    {
+      r2 = die();
+    }
+
+    while (r1 == r3)
+    {
+      r3 = die();
+    }
+
+    while (r2 == r3)
+    {
+      r3 = die();
+    }
       // vybrat nahodne tri body
     pcl::PointXYZI p1,p2,p3;
-    p1 =m_cloud->points.at(a);
-    p2 =m_cloud->points.at(b);
-    p3 =m_cloud->points.at(c);
+    p1 =m_cloud->points.at(r1);
+    p2 =m_cloud->points.at(r2);
+    p3 =m_cloud->points.at(r3);
 
 
 // m1 - bod uprostřed (p1,p2), osa ním prochází
@@ -107,7 +130,6 @@ void  HoughTransform::compute()
   {
     int m=0;
     float qq = acc_x.at(i);
-
       //#pragma omp parallel for
     for(int j =0; j < acc_x.size();j++)
     {
@@ -233,4 +255,8 @@ void  HoughTransform::compute()
 stred HoughTransform::get_circle()
 {
   return m_circle;
+}
+void  HoughTransform::set_iterations( int i)
+{
+  m_it = i;
 }
