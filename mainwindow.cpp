@@ -49,9 +49,10 @@
 
 
 #include <vtkWin32OpenGLRenderWindow.h>
-
 #include <vtkTIFFWriter.h>
 #include <vtkSmartPointer.h>
+#include <vtkActor.h>
+#include <vtkActorCollection.h>
 #include <vtkWindowToImageFilter.h>
 
 
@@ -836,7 +837,7 @@ void MainWindow::openCloudFile(QString file, QString type)
   if(type == "ost")
     Proj->set_OstCloud(*c);
 
-  //dispCloud(*c);
+  dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
   delete c;
@@ -861,7 +862,7 @@ void MainWindow::openCloudFile(QString file, QString type, QColor col)
   if(type == "ost")
     Proj->set_OstCloud(*c);
 
-  //dispCloud(*c);
+  dispCloud(*c);
   addTreeItem(c->get_name());
   m_vis->resetCamera();
   delete c;
@@ -5227,32 +5228,52 @@ void MainWindow::pointEvent(const pcl::visualization::PointPickingEvent& event, 
   int idx = event.getPointIndex ();
   if (idx == -1)
     return;
-        // Get the point that was picked
-  pcl::PointXYZI pickp;
-  event.getPoint (pickp.x, pickp.y, pickp.z);
-  QString a = QString("Names of the trees around: ");
-  #pragma omp parallel
-  {
-    QString id_private;
-    #pragma omp for nowait //fill vec_private in parallel
-    for(int i = 0; i < Proj->get_sizeTreeCV(); i ++)
-    {
-      pcl::PointXYZI maxp, minp;
-      QString name;
-      name = Proj->get_TreeCloud(i).get_name();
-      pcl::getMinMax3D(*Proj->get_TreeCloud(i).get_Cloud(),minp,maxp);
-      if(minp.x < pickp.x && minp.y < pickp.y  && maxp.x > pickp.x && maxp.y > pickp.y )
-      {
-        QString b = QString(" %1").arg(name);
-        id_private.append(b);
 
-      }
+    vtkSmartPointer<vtkActor> actr;
+    actr.TakeReference(event.getPointActor());
+  std::cout<< " actor existuje:" << actr << std::endl;
+
+
+  pcl::visualization::CloudActorMapPtr cam_ptr;
+  cam_ptr = m_vis->getCloudActorMap();
+  pcl::visualization::CloudActorMap::iterator cam_it;
+  for(pcl::visualization::CloudActorMap::iterator cam_it = cam_ptr->begin(); cam_it != cam_ptr->end(); cam_it ++)
+  {
+    if(cam_it->second.actor == actr)
+    {
+      QString a = QString("Names of selected cloud: %1").arg(QString::fromStdString(cam_it->first));
+      statusBar()->showMessage(a);
     }
-  #pragma omp critical
-  a.append(id_private);
-      //used_pt.insert(used_pt.end(), vec_private.begin(), vec_private.end());
+
+
   }
-  statusBar()->showMessage(a);
+    //std::cout<< "mracno " << cam_it->first << "   actor " << cam_it->second.actor<<std::endl;
+        // Get the point that was picked
+//  pcl::PointXYZI pickp;
+//  event.getPoint (pickp.x, pickp.y, pickp.z);
+//  QString a = QString("Names of the trees around: ");
+//  #pragma omp parallel
+//  {
+//    QString id_private;
+//    #pragma omp for nowait //fill vec_private in parallel
+//    for(int i = 0; i < Proj->get_sizeTreeCV(); i ++)
+//    {
+//      pcl::PointXYZI maxp, minp;
+//      QString name;
+//      name = Proj->get_TreeCloud(i).get_name();
+//      pcl::getMinMax3D(*Proj->get_TreeCloud(i).get_Cloud(),minp,maxp);
+//      if(minp.x < pickp.x && minp.y < pickp.y  && maxp.x > pickp.x && maxp.y > pickp.y )
+//      {
+//        QString b = QString(" %1").arg(name);
+//        id_private.append(b);
+//
+//      }
+//    }
+//  #pragma omp critical
+//  a.append(id_private);
+//      //used_pt.insert(used_pt.end(), vec_private.begin(), vec_private.end());
+//  }
+
   return;
 }
 //DISPLAY CLOUD
