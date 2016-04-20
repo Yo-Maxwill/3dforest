@@ -22,6 +22,7 @@
 #include "project.h"
 #include "hull.h"
 #include "segmentation.h"
+#include "reconstruction.h"
 #include "terrain.h"
 
 //!  Main application window.
@@ -89,12 +90,6 @@ private slots:
     //! Export cloud.
     /*! Export cloud into text file  */
   void exportCloud();
-  //! Export cloud into ply file.
-    /*! Export selected cloud into ply file  */
-  void plysave();
-    //! Export cloud to pts file.
-    /*! Export cloud into pts file  */
-  void exportPts();
     //! Export convex hull.
     /*! Export convex hull of tree into text file. */
   void exportConvexTxt();
@@ -271,6 +266,7 @@ private slots:
     //! Stop manual editing of tree DBH cloud.
     /*! Save edited DBH cloud of given tree. */
   void dbhCloudStopEdit();
+  void reconstruction();
 
 //CROWN
   void set_CrownManual();
@@ -326,7 +322,7 @@ private slots:
     //! Voxelize cloud.
     /*! For given cloud make new voxelized cloud with given resolution of voxel. */
   void voxelize();
-
+  void accuracy();
 
   //! Create concave hull of cloud.
     /*! output is new ost cloud*/
@@ -583,6 +579,7 @@ QProgressBar* m_pBar;
   QAction *concaveAct;        /**< Compute concave hull Act */
   QAction *stemCurvatureAct;  /**< Compute stem curve Act */
   QAction *exportStemCurvAct; /**< Export given tree stem curve Act*/
+  QAction *reconstructionAct;         /**< Change background color Act */
    //CROWN ACTIONS
   QAction *setCrownManualAct;
   QAction *setCrownAutomaticAct;
@@ -596,6 +593,7 @@ QProgressBar* m_pBar;
     QAction *multipleMergeAct;           /**< Merge two cloud into single one Act */
   QAction *minusAct;          /**< Subtract two cloud Act */
   QAction *voxAct;            /**< Voxelize cloud Act */
+   QAction *voxAlignAct;         /**< Change background color Act */
     QAction *convexCloudAct;    /**< ConvexCloud Act */
   QAction *concaveCloudAct;   /**< ConcaveCloud Act */
   QAction *tiffAct;           /**< save vtkwidget into tiff file Act */
@@ -603,6 +601,7 @@ QProgressBar* m_pBar;
   QAction *spitCloudAct;         /**< Change background color Act */
   QAction *labelONAct;         /**< Change background color Act */
   QAction *labelOFFAct;         /**< Change background color Act */
+  QAction *acuracyAct;         /**< Change background color Act */
 
 
   //ABOUT ACTIONS

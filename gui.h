@@ -133,6 +133,8 @@ public:
     //!  get type of output cloud.
     /*!  \return true if checkbox is seleted*/
   bool get_CheckBox();
+   void set_outputDir(QString label, QString example);
+  QString get_outputDir();
 
 private slots:
     //!  when presed button ok .
@@ -154,6 +156,8 @@ private slots:
      \param text input integer valule */
   void validateOutput2(QString);
   void saveNewFile();
+  void saveIntoDir();
+
 
 public slots:
   void getINT();
@@ -168,6 +172,7 @@ private:
   QString output_cloud2;          /**< Second output cloud name */
   QString output_type;            /**< Second output cloud name */
   QString output_path;            /**< output path file */
+  QString output_dir;            /**< output path file */
   QList<QListWidgetItem*> inputList;
 
   float float_value1;             /**< input float value */
@@ -193,6 +198,8 @@ private:
   bool isOC2;                     /**< bool value if output cloud name is in proper format */
   bool output2Bool;               /**< bool value if output cloud name is empty */
   QLineEdit *outputPath;        /**< output cloud name */
+  QLineEdit *outputDir;        /**< output cloud name */
+  bool isDir;
   QPushButton *directoryButton;   /**< Button for selecting directory for project */
   bool isPath;                     /**< bool value if output cloud name is in proper format */
   bool outputPathBool;               /**< bool value if output cloud name is empty */
@@ -250,6 +257,8 @@ public:
     /*!  Sets list of all tree names into combobox for selection.
      \param li list of all trees*/
   void set_trees(QStringList li);
+  void set_list(QStringList li);
+  QList<QString> get_inputList();
     //!  Get tree name.
     /*!  return selected tree name.
      \return name of selected tree*/
@@ -307,6 +316,8 @@ private slots:
   void all_attr(int checked);
 
 private:
+  QListWidget * listWidget;
+  QList<QListWidgetItem*> inputList;
   QLabel *treeLabel;              /**< Description of tree selection combobox*/
   QComboBox * inputTrees;         /**< List of input tree names */
   QLabel *fileLabel;              /**< Desription of QlineEdit for output file */
@@ -719,6 +730,8 @@ public:
   bool getSurf3DCH();
   bool getSectionHeight();
   bool getThresholdDistance();
+  void set_list(QStringList li);
+  QList<QString> get_inputList();
 
 private slots:
     //!  Called when directory button pressed
@@ -739,6 +752,8 @@ private slots:
   void all_attr(int checked);
 
 private:
+  QListWidget * listWidget;
+  QList<QListWidgetItem*> inputList;
   QLabel *treeLabel;              /**< Description of tree selection combobox*/
   QComboBox * inputTrees;         /**< List of input tree names */
   QLabel *fileLabel;              /**< Desription of QlineEdit for output file */

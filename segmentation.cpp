@@ -19,6 +19,7 @@ Segmentation::Segmentation()
   m_treeName = "ID";
   emit started();
   percent=0;
+  m_centroids->set_name("centroids");
 
 }
 Segmentation::Segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr vegetation, pcl::PointCloud<pcl::PointXYZI>::Ptr terrain)
@@ -29,6 +30,8 @@ Segmentation::Segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr vegetation, pcl:
   m_terrain->set_Cloud(terrain);
   m_centroids = new Cloud();
   m_restCloud = new Cloud();
+  m_pointscentroid.resize(vegetation->points.size());
+  std::fill(m_pointscentroid.begin(), m_pointscentroid.end(), -1);
 
   recursive_count=1;
   percent=0;
@@ -36,6 +39,7 @@ Segmentation::Segmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr vegetation, pcl:
   neighborsize = 20;
   m_minimal_pnt = 10;
   m_treeName = "ID";
+  m_centroids->set_name("centroids");
   emit started();
 }
 Segmentation::~Segmentation()
@@ -73,6 +77,8 @@ void Segmentation::setMinimalPoint(int i)
 void Segmentation::setVegetation(Cloud input)
 {
   *m_vegetation= input;
+  m_pointscentroid.resize(m_vegetation->get_Cloud()->points.size());
+  std::fill(m_pointscentroid.begin(), m_pointscentroid.end(), -1);
 }
 void Segmentation::setTerrain(Cloud input)
 {
@@ -141,11 +147,15 @@ void Segmentation:: execute()
   cluster();
   emit percentage( percent+=2);
 
+
   stumpSegments();
   emit percentage( percent+=3);
 
   stumps();
   emit percentage( percent+=5);
+
+
+  //angleAdd();
 
   segmentsClean();
   emit percentage( percent+=7);
@@ -175,7 +185,7 @@ time.start();
   pcl::getMinMax3D(*m_terrain->get_Cloud(),minp, maxp);
   pcl::PointXYZI minpv, maxpv; // body ohranicujici vegetaci
   pcl::getMinMax3D(*m_vegetation->get_Cloud(),minpv, maxpv);
-  float h= (maxp.z + 1.3 - minpv.z)/m_cm;
+  float h= maxpv.z/m_cm;//(maxp.z + 1.3 - minpv.z)/m_cm;
 
 // rozdeleni segmentu na clustery
   for(int q=0; q < m_segments.size(); q++)
@@ -196,7 +206,45 @@ time.start();
     bod.y =centroid.y();
     bod.z =centroid.z();
 
-    bod.intensity =1;
+    //eigenvalues
+
+    pcl::PCA<pcl::PointXYZI> pca;
+    pca.setInputCloud(m_clusters.at(q));
+
+    Eigen::Matrix3f pcaEVects = pca.getEigenVectors ();
+    Eigen::Vector4f pcaMean = pca.getMean();
+    Eigen::Vector3f pcaEValues = pca.getEigenValues();
+
+
+   // std::cout <<"eigen vector pro m_cluster " << q << " : =(" << pcaEVects(0,0)<< ", "<< pcaEVects(1,0)<< ", "<< pcaEVects(2,0)<< ") "<< std::endl;
+
+
+    //float angle = std::acos (pcaEVects(2,0)/std::sqrt(pcaEVects(1,0)*pcaEVects(1,0)+pcaEVects(2,0)*pcaEVects(2,0)+ pcaEVects(0,0)*pcaEVects(0,0))) * 180.0 / M_PI;
+    float SFFIx= (pcaEValues(0)- pcaEValues(1))/(pcaEValues(0)- pcaEValues(2));
+    float SFFIy= pcaEValues(2)/pcaEValues(0);
+
+    if(SFFIx >=0 && SFFIx <0.35 && SFFIy >=0 && SFFIy <0.2 )
+      bod.intensity =1;
+    else if(SFFIx >=0 && SFFIx <0.35 && SFFIy >=0.2 && SFFIy <0.5 )
+      bod.intensity =2;
+    else if(SFFIx >=0 && SFFIx <0.35 && SFFIy >=0.5 && SFFIy <0.8)
+      bod.intensity =3;
+    else if(SFFIx >=0.35 && SFFIx <0.65 && SFFIy >=0.5 && SFFIy <0.8 )
+      bod.intensity =4;
+    else if(SFFIx >=0.35 && SFFIx <0.65 && SFFIy >=0.2 && SFFIy <0.5 )
+      bod.intensity =5;
+    else if(SFFIx >=0.35 && SFFIx <0.65 && SFFIy >=0.5 && SFFIy <0.8 )
+      bod.intensity =6;
+    else if(SFFIx >=0.65 && SFFIx <1 && SFFIy >=0 && SFFIy <0.2 )
+      bod.intensity =7;
+    else if(SFFIx >=0.65 && SFFIx <1 && SFFIy >=0.2 && SFFIy <0.5 )
+      bod.intensity =8;
+    else if(SFFIx >=0.65 && SFFIx <1 && SFFIy >=0.5 && SFFIy <0.8 )
+      bod.intensity =9;
+    else
+      bod.intensity =0;
+
+
     centroidCloud->points.push_back(bod);
     m_usedCluster.push_back(false);
   }
@@ -220,7 +268,7 @@ time.start();
     }
   }
 int difference = time.elapsed();
-qWarning()<< "cluster stop time: " << difference;
+qWarning()<< "cluster stop time: " << difference/1000 << " s";
 }
 int Segmentation::euclSegmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr input, std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > &clusters, int min_pt )
 {
@@ -251,7 +299,8 @@ int Segmentation::euclSegmentation(pcl::PointCloud<pcl::PointXYZI>::Ptr input, s
 
     for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
     {
-        cloud_cluster->points.push_back (input->points[*pit]);
+      cloud_cluster->points.push_back (input->points[*pit]);
+      m_pointscentroid[*pit] = clusters.size();
     }
     cloud_cluster->width = cloud_cluster->points.size ();
     cloud_cluster->height = 1;
@@ -272,7 +321,7 @@ void Segmentation:: stumpSegments()
   QTime time;
   time.start();
   float dist = 1; // distance from terrain
-  // vybrat jen ty clustery, ktere jsou do vysky 1 m od terenu
+  // vybrat jen ty clustery, ktere jsou do vysky dist m od terenu
   pcl::PointCloud<pcl::PointXYZI>::Ptr centroidCloud (new pcl::PointCloud<pcl::PointXYZI>);// mracno s centroidy vsech clusterů
   for(int q = 0; q < m_clusters.size(); q++)
   {
@@ -304,7 +353,7 @@ void Segmentation:: stumpSegments()
       m_crowns.push_back(r);
   }
   int difference = time.elapsed();
-  qWarning() << "stumo segment stop time: " << difference/1000 << "s";
+  qWarning() << "stump segment stop time: " << difference/1000 << "s";
 }
 bool Segmentation::isStump(int i)
 {
@@ -354,9 +403,10 @@ time.start();
           pcl::PointXYZI nn2 = m_centroids->get_Cloud()->points.at(n2);
           float dist = GeomCalc::computeDistance3D(nn1,nn2);// vzdalenost centroidu - MISTO TOHOTO SPOCITAT SKUTECFNOU VZDALENOST BODU!!!!!!!
           float dist2 = minClusterDistance(m_clusters.at(n2), m_clusters.at(n1) );
+          //float angle =
           //vzdalenost nejblizsich bodů
           // pokud je n2 rovno bodu v centr_used
-          if(dist < m_cm*2 || dist2 <= m_cm) // pokud jsou centroidy do určité vzdálenosti
+          if(dist < m_cm*2 || dist2 <= m_cm) // pokud jsou centroidy do určité vzdálenosti nebo pokud je uhel centroidu podobny tomu dosavadnimu
           //nebo pokud na sebe primo navazuji!!!!!!!!!!!!!!!!!!!!!!
             cluster_used.push_back(n1);
         }
@@ -374,16 +424,56 @@ time.start();
     for(int d=0; d< cluster_used.size(); d++)
     {
       *clustr += *m_clusters.at(cluster_used.at(d));
+      clustr->width = clustr->points.size ();
+      clustr->height = 1;
+      clustr->is_dense = true;
+    }
+
+    // pridat tady pripojovani podle uhlu
+    // pro kazdy m_clusters.at(cluster_used.at(d));
+    for(int c=0; c< cluster_used.size(); c++)
+    {
+        // zjistit eigenvecotr clusteru
+      pcl::PCA<pcl::PointXYZI> pca;
+      pca.setInputCloud(clustr);
+      Eigen::Matrix3f pcaEVects = pca.getEigenVectors ();
+      pcl::PointXYZI p = m_centroids->get_Cloud()->points.at(cluster_used.at(c));
+
+      for(int k=0; k < neighborsize; k++)
+      {
+        int n1 = m_centrNeighbors.at((neighborsize*cluster_used.at(c))+k);
+        pcl::PointXYZI nn1 = m_centroids->get_Cloud()->points.at(n1);
+        float dist =GeomCalc::computeDistance3D(p,nn1);
+// chce to vybirat jen z stumps!!!!!!!!!!!!!
+        if(m_usedCluster.at(n1) == true || dist > 4*m_cm) // pokud byl už daný centroid pouzit preskoc chce
+          continue;
+
+        float ux= p.x - nn1.x;
+        float uy= p.y - nn1.y;
+        float uz= p.z - nn1.z;
+
+        float angle = std::acos ((ux*pcaEVects(0,0) + uy*pcaEVects(1,0) + uz*pcaEVects(2,0))/std::sqrt(ux*ux+uy*uy+ uz*uz)* std::sqrt(pcaEVects(1,0)*pcaEVects(1,0)+pcaEVects(2,0)*pcaEVects(2,0)+ pcaEVects(0,0)*pcaEVects(0,0))) * 180.0 / M_PI;
+       // std::cout << "angle: "<< angle << std::endl;
+        if(angle < 5 || angle > 175)
+        {
+          *clustr += *m_clusters.at(n1);
+          m_usedCluster.at(n1) = true;
+          cluster_used.push_back(n1);
+          //pridat cluster k clustru
+          // oznacit centroid jako used
+         // pridat centroid k centroid_used
+
+        }
+      }
     }
     clustr->width = clustr->points.size ();
     clustr->height = 1;
     clustr->is_dense = true;
 
-
     pcl::PointXYZI minp,maxp;
     pcl::getMinMax3D(*clustr, minp,maxp);
     float veliksot = GeomCalc::computeDistance3D(minp,maxp);
-    if(veliksot < 0.8 )
+    if(veliksot < 1 )
     {
       for(int q=0; q < cluster_used.size(); q++)
       {
@@ -407,6 +497,72 @@ qWarning()<<"pocet nalezenych stromu: " << m_stems.size() ;
   }
   int difference = time.elapsed();
 qWarning() << "stumps hotovo time: " << difference/1000 << "s";
+}
+void Segmentation::angleAdd()
+{
+  // ke kazdemu stems pridat centroidy, ktere splnuji že mají podobný úhel jako  stems centroids a jso do urcite vzdálenosti od stems.
+    for(int c=0; c < 5; c++)
+    {
+
+std::cout << c << std::endl;
+    for(int t =0; t< m_stems.size();t++)
+    {
+      // zjistit ktere clustery ho tvoři a ziskat jejich ID
+      // potom pro kazdy najit sousedy a pokud nejsou ještě použití, tak zjisti uhel a pokud je v rozsahu ta přidat
+
+      pcl::PCA<pcl::PointXYZI> pca;
+      pca.setInputCloud(m_stems.at(t));
+      Eigen::Vector4f centroid;
+      pcl::compute3DCentroid(	*m_stems.at(t),	centroid );
+      pcl::PointXYZI bod;
+      bod.x =centroid.x();
+      bod.y =centroid.y();
+      bod.z =centroid.z();
+
+      Eigen::Matrix3f pcaEVects = pca.getEigenVectors ();
+      Eigen::Vector4f pcaMean = pca.getMean();
+      Eigen::Vector3f pcaEValues = pca.getEigenValues();
+
+  //std::cout <<"eigen vector pro strom " << t << " : =(" << pcaEVects(0,0)<< ", "<< pcaEVects(1,0)<< ", "<< pcaEVects(2,0)<< ") "<< std::endl;
+
+      #pragma omp parallel for
+      for(int r=0; r <m_centroids->get_Cloud()->points.size(); r++)
+      {
+        if(m_usedCluster.at(r) == true) // pokud byl už daný centroid pouzit preskoc
+          continue;
+        //pokud je centroid do urcite vzdalenosti a zaroven má podobný ůhel pridat k m_stems
+        float distance;
+        // spocitat sousedni centroidy
+        pcl::KdTreeFLANN<pcl::PointXYZI> kdt;
+        kdt.setInputCloud (m_stems.at(t));
+
+        std::vector<int> pointIDv;
+        std::vector<float> pointSDv;
+        pcl::PointXYZI p = m_centroids->get_Cloud()->points.at(r);
+        if(kdt.radiusSearch(p,3*m_cm,pointIDv,pointSDv) > 0)
+        {
+          float ux= p.x -centroid.x();
+          float uy= p.y -centroid.y();
+          float uz= p.z -centroid.z();
+
+          float angle = std::acos ((ux*pcaEVects(0,0) + uy*pcaEVects(1,0) + uz*pcaEVects(2,0))/std::sqrt(ux*ux+uy*uy+ uz*uz)* std::sqrt(pcaEVects(1,0)*pcaEVects(1,0)+pcaEVects(2,0)*pcaEVects(2,0)+ pcaEVects(0,0)*pcaEVects(0,0))) * 180.0 / M_PI;
+          std::cout << "angle: "<< angle << std::endl;
+          if(angle < 10 || angle > 170)
+          {
+            *m_stems.at(t) += *m_clusters.at(r);
+            m_usedCluster.at(r) = true;
+          }
+        }
+      }
+    }
+  }
+
+  for(int t =0; t< m_stems.size();t++)
+  {
+    m_stems.at(t)->width = m_stems.at(t)->points.size ();
+    m_stems.at(t)->height = 1;
+    m_stems.at(t)->is_dense = true;
+  }
 }
 void Segmentation:: segmentsClean()
 {
@@ -652,19 +808,22 @@ std::vector< std::vector<int> > segments(m_segments.size());
 
   for(int rr=0; rr <segments.size(); rr++)
   {
-    pcl::PointCloud<pcl::PointXYZI>::Ptr rest (new pcl::PointCloud<pcl::PointXYZI>);
-    boost::shared_ptr<std::vector<int> > indicesptr (new std::vector<int> (segments.at(rr)));
-    pcl::ExtractIndices<pcl::PointXYZI> extract;
-     // Extract the inliers
-    extract.setInputCloud (m_segments.at(rr));
-    extract.setIndices (indicesptr);
-    extract.setNegative (true);
-    extract.filter (*rest);
-    *m_segments.at(rr) = *rest;
-    m_segments.at(rr)->width = m_segments.at(rr)->points.size ();
-    m_segments.at(rr)->height = 1;
-    m_segments.at(rr)->is_dense = true;
-    rest.reset();
+    if(segments.at(rr).size() >0 && m_segments.at(rr)->points.size() >0 )
+    {
+      pcl::PointCloud<pcl::PointXYZI>::Ptr rest (new pcl::PointCloud<pcl::PointXYZI>);
+      boost::shared_ptr<std::vector<int> > indicesptr (new std::vector<int> (segments.at(rr)));
+      pcl::ExtractIndices<pcl::PointXYZI> extract;
+       // Extract the inliers
+      extract.setInputCloud (m_segments.at(rr));
+      extract.setIndices (indicesptr);
+      extract.setNegative (true);
+      extract.filter (*rest);
+      *m_segments.at(rr) = *rest;
+      m_segments.at(rr)->width = m_segments.at(rr)->points.size ();
+      m_segments.at(rr)->height = 1;
+      m_segments.at(rr)->is_dense = true;
+      rest.reset();
+    }
   }
 
   if(recursive_count < 500 && change == true )
@@ -794,6 +953,8 @@ void Segmentation::getData()
     Cloud *c = new Cloud(m_stems.at(i), name);
     emit sendingTree( c);
   }
+  emit sendingCentr( m_centroids);
+
   qWarning()<<"stromy odeslany";
 
   emit hotovo();

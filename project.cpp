@@ -114,10 +114,8 @@ void Project::set_VegeCloud(Cloud cloud)
 }
 void Project::set_Tree(Cloud cloud)
 {
-
   Tree t (cloud);
   m_stromy.push_back(t);
-
 }
 void Project::set_dbhCloud(QString name,pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
@@ -320,10 +318,8 @@ void Project::set_VegeCloud(QString name, pcl::PointCloud<pcl::PointXYZI>::Ptr c
   {
     if (get_VegeCloud(i).get_name() == name)
     {
-      if (i == 0)
-        m_vegeCloud.erase(m_vegeCloud.begin());
-      else
-        m_vegeCloud.erase(m_vegeCloud.begin()+i);
+      m_vegeCloud.at(i).set_Cloud(cloud);
+      return;
     }
   }
   Cloud *c = new Cloud(cloud,name);
@@ -726,3 +722,59 @@ bool Project::isIntersectionPossible(pcl::PointXYZI pos1, float lenght1, pcl::Po
         return true;
     }else return false;
 }
+
+
+
+ProjFile::ProjFile(QString name)
+{
+  m_name = name;
+  m_x=m_y=m_z=0;
+  m_version=1;
+}
+ProjFile::~ProjFile()
+{
+
+}
+void ProjFile::setPath(QString path)
+{
+  m_path = path;
+}
+void ProjFile::setTransformMatrix(double x, double y, double z)
+{
+  m_x=x;
+  m_y=y;
+  m_z=z;
+}
+void ProjFile::setVersion(int i)
+{
+  m_version = i;
+}
+void ProjFile::writeHeader()
+{
+  //check if the file do not exist
+  //open new file
+  // write version
+  // write path to projectfile
+  //write transformation matrix
+  //emit header ready
+
+}
+void ProjFile::writeNewCloud(QString name)
+{
+  //open proj file
+  // append new line with name of the cloud
+}
+void ProjFile::removeCloud(QString name)
+{
+  //open proj file
+  // find line with given name and remove it
+}
+void ProjFile::readOldFile()
+{
+
+}
+
+
+
+
+

@@ -131,7 +131,7 @@ public:
   //Skeleton(Tree strom);
     //! Constructor.
     /*! Constructor with input pointCloud and radius. */
-  Skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI pose);
+  Skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
 
   void stemSkeleton();
   void branchskeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);

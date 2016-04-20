@@ -34,6 +34,7 @@ InputDialog::InputDialog( QWidget *parent)
   isPath = false;
   isICHB = false;
   isList =false;
+  isDir = false;
 //buttons
   buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
@@ -66,11 +67,17 @@ void InputDialog::ok()
   if(isICHB == true)
   {
     if(CHBox->isChecked())
-    CHB = true;
+      CHB = true;
+    else
+      CHB = false;
   }
   if(isList ==true)
   {
     inputList =  listWidget->selectedItems();
+  }
+  if(isDir == true)
+  {
+    output_dir = outputDir->text();
   }
 }
 void InputDialog::DialogSize(int w = 500, int h = 300)
@@ -122,7 +129,7 @@ void InputDialog::set_inputList(QString label, QStringList li)
   listWidget= new QListWidget(this);
   listWidget->insertItems(0,li);
   listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
-  listWidget->sortItems();
+  listWidget->setSortingEnabled(true);
 //layout
   InputLayout->addWidget(labelList);
   InputLayout->addWidget(listWidget);
@@ -160,14 +167,16 @@ void InputDialog::set_inputCheckBox(QString label)
 {
   QLabel *labelbox = new QLabel();
   labelbox->setText(label);
-
   CHBox = new QCheckBox();
-
+  if(CHBox->checkState() == false)
+    CHBox->setChecked(true);
+  CHB = true;
   labelbox->setBuddy(CHBox);
 //layout
   InputLayout->addWidget(labelbox);
   InputLayout->addWidget(CHBox);
   isICHB =true;
+
 }
 void InputDialog::set_description(QString text)
 {
@@ -294,6 +303,34 @@ void InputDialog::set_outputPath(QString label, QString example,QString type)
   outputPathLayout->addWidget(outputPath);
   outputPathLayout->addWidget(directoryButton);
   isPath = true;
+}
+void InputDialog::set_outputDir(QString label, QString example)
+{
+  //input cloud
+  QLabel *labelDir = new QLabel();
+  labelDir->setText(label);
+
+  outputDir = new QLineEdit();
+  labelDir->setBuddy(outputDir);
+  outputDir->setMaximumWidth(300);
+  outputDir->setText(example);
+
+  directoryButton = new QPushButton(tr("Browse"));
+  directoryButton->setBaseSize(40,16);
+  connect(directoryButton, SIGNAL(clicked()), this, SLOT(saveIntoDir()));
+//layout
+  InputLayout->addWidget(labelDir);
+  outputPathLayout = new QHBoxLayout();
+  InputLayout->addLayout(outputPathLayout);
+  outputPathLayout->addWidget(outputDir);
+  outputPathLayout->addWidget(directoryButton);
+  isDir = true;
+}
+void InputDialog::saveIntoDir()
+{
+  QString fileName = QFileDialog::getExistingDirectory(this, tr("Select directory "),"",  QFileDialog::ShowDirsOnly| QFileDialog::DontResolveSymlinks);
+ // fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "", m_type);
+  outputDir->setText(fileName);
 }
 void InputDialog::saveNewFile()
 {
@@ -507,7 +544,10 @@ bool InputDialog::get_CheckBox()
 {
   return CHB;
 }
-
+QString InputDialog::get_outputDir()
+{
+  return output_dir;
+}
 
 
 
@@ -523,7 +563,8 @@ ExportAttr::ExportAttr(QWidget *parent)
 
   treeLabel = new QLabel();
   treeLabel->setText("Select tree name:");
-  inputTrees = new QComboBox();
+  //inputTrees = new QComboBox();
+  listWidget= new QListWidget(this);
 
   fileLabel = new QLabel();
   fileLabel->setText("Enter name of the file you want to save results:");
@@ -564,7 +605,7 @@ void ExportAttr::DialogLayout()
   // tree selection
   treeLayout = new QVBoxLayout();
   treeLayout->addWidget(treeLabel);
-  treeLayout->addWidget(inputTrees);
+  treeLayout->addWidget(listWidget);
   treeLayout->setSpacing(5);
   //file selection
   fileLayout = new QGridLayout();
@@ -665,6 +706,7 @@ QString ExportAttr::get_treeName()
 }
 void ExportAttr::ok()
 {
+  inputList =  listWidget->selectedItems();
   //separator
   if(radio1->isChecked())
     m_separator = (";");
@@ -771,9 +813,19 @@ void ExportAttr::set_description(QString text)
   inputareaLayout->addWidget(label);
 
 }
-void ExportAttr::set_trees(QStringList li)
+void ExportAttr::set_list(QStringList li)
 {
-  inputTrees->insertItems(0,li);
+  listWidget->insertItems(0,li);
+  listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  listWidget->setSortingEnabled(true);
+}
+QList<QString> ExportAttr:: get_inputList()
+{
+  QList<QString> result;
+  for(int i=0; i < inputList.size(); i++)
+    result.push_back( inputList.at(i)->text() );
+
+  return result;
 }
 void ExportAttr::setExistingDirectory()
 {
@@ -1623,7 +1675,7 @@ ExportCrownAttr::ExportCrownAttr(QWidget *parent)
 
   treeLabel = new QLabel();
   treeLabel->setText("Select tree name:");
-  inputTrees = new QComboBox();
+  listWidget= new QListWidget(this);
 
   fileLabel = new QLabel();
   fileLabel->setText("Enter name of the file you want to save results:");
@@ -1671,7 +1723,7 @@ void ExportCrownAttr::DialogLayout()
   // tree selection
   treeLayout = new QVBoxLayout();
   treeLayout->addWidget(treeLabel);
-  treeLayout->addWidget(inputTrees);
+  treeLayout->addWidget(listWidget);
   treeLayout->setSpacing(5);
   //file selection
   fileLayout = new QGridLayout();
@@ -1821,6 +1873,7 @@ QString ExportCrownAttr::get_treeName()
 }
 void ExportCrownAttr::ok()
 {
+  inputList =  listWidget->selectedItems();
   //separator
   if(radio1->isChecked())
     m_separator = (";");
@@ -2017,6 +2070,21 @@ void ExportCrownAttr::all_attr(int checked)
     CHB_all->setChecked(false);
   }
 }
+void ExportCrownAttr::set_list(QStringList li)
+{
+  listWidget->insertItems(0,li);
+  listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  listWidget->setSortingEnabled(true);
+}
+QList<QString> ExportCrownAttr:: get_inputList()
+{
+  QList<QString> result;
+  for(int i=0; i < inputList.size(); i++)
+    result.push_back( inputList.at(i)->text() );
+
+  return result;
+}
+
 //// THREAD
 
 

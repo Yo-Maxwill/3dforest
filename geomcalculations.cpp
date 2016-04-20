@@ -126,16 +126,16 @@ float GeomCalc::computeTriangleArea (pcl::PointXYZI pointA, pcl::PointXYZI point
 float GeomCalc::computePolygonArea (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
     // for each point
-    float sum;
+    float sum=0;
+    pcl::PointXYZI A,B;
     for(int i = 1; i < cloud->points.size(); i++)
     {
-        pcl::PointXYZI A,B;
+
         A = cloud->points.at(i);
         B = cloud->points.at(i-1);
 
         sum+= (A.x*B.y - B.x*A.y);
     }
-    pcl::PointXYZI A,B;
     A = cloud->points.at(0);
     B = cloud->points.at(cloud->points.size()-1);
     sum+= (A.x*B.y - B.x*A.y);

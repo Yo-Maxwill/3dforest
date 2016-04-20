@@ -102,7 +102,7 @@ Tree Tree::operator=(Tree &kopie)
 }
 void Tree::set_height() //check if tree is connected to terrain!!!
 {
-  if(m_pose.x == -1 && m_pose.y == -1 &&m_pose.z == -1 )
+  if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
     m_height = -1;
   else
     m_height = m_maxp.z - m_pose.z;
@@ -311,6 +311,8 @@ pcl::PointXYZI Tree::get_pose()
 
 float Tree::get_height()
 {
+  if(m_height == -1)
+    return m_height;
   float AA = ceilf(m_height * 100) / 100; //zaokrouhleni
   return AA;
 }
@@ -385,7 +387,8 @@ void Tree::set_length()
 }
 float Tree::get_length()
 {
-  set_length();
+  if(m_lenght == -1)
+    return m_lenght;
   float AA = ceilf(m_lenght * 100) / 100; //zaokrouhleni
   return AA;
 }
@@ -403,6 +406,8 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr Tree::get_dbhCloud()
 // CONVEX & CONCAVE HULL
 void Tree::setConvexhull()
 {
+  if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
+    return;
    QString aa = QString("%1_convex").arg(m_name);
     m_convexhull = new ConvexHull(CloudOperations::getCloudCopy(m_Cloud),aa);
 }
@@ -416,6 +421,8 @@ ConvexHull& Tree::getConvexhull()
 }
 void Tree::setConcavehull(float searchDist)
 {
+  if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
+    return;
    if(m_concavehull!=0)
     {
         delete m_concavehull;
@@ -897,11 +904,14 @@ std::vector<stred> Tree::get_stemCurvature()
 //CROWN
 void Tree::set_TreeCrownAutomatic()
 {
-    if(m_crown != 0){delete m_crown;}
+  if((m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1) || m_height == -1)
+    return;
+
+  if(m_crown != 0){delete m_crown;}
     //create new crown object and set as tree crown
-    CrownAutomaticDetection *ad = new CrownAutomaticDetection(CloudOperations::getCloudCopy(m_Cloud),get_dbhLSR(),m_pose);
-    QString name = QString("%1_crown").arg(m_name);
-    m_crown = new Crown(ad->getCrown(),name,m_pose,ad->getStemHighestPoint());
+  CrownAutomaticDetection *ad = new CrownAutomaticDetection(CloudOperations::getCloudCopy(m_Cloud),get_dbhLSR(),m_pose);
+  QString name = QString("%1_crown").arg(m_name);
+  m_crown = new Crown(ad->getCrown(),name,m_pose,ad->getStemHighestPoint());
 }
 void Tree::set_TreeCrownManual(pcl::PointCloud<pcl::PointXYZI>::Ptr crown,pcl::PointCloud<pcl::PointXYZI>::Ptr stem)
 {

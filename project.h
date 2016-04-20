@@ -269,4 +269,38 @@ private:
     void remove_file(QString name);
 
 };
+
+
+class ProjFile//: public QObject
+{
+  //Q_OBJECT
+public:
+  ProjFile(QString);
+  ~ProjFile();
+
+public slots:
+  void writeHeader();
+  void writeNewCloud(QString);
+  void setPath(QString);
+  void setTransformMatrix(double, double, double);
+  void readHeader();
+  void setVersion(int );
+  void readOldFile();
+  void removeCloud(QString name);
+
+signals:
+  void fileExist(bool);
+  void percentage();
+  void sendingoutput( Cloud *);
+
+
+private:
+ QString m_path;
+ QString m_name;
+ double m_x, m_y, m_z;                 /**< Transformation matrix values */
+ int m_version;
+
+};
+
+
 #endif // PROJECT_H_INCLUDED

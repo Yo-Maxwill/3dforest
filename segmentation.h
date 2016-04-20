@@ -40,6 +40,7 @@ public slots:
   void execute();
   float minClusterDistance(pcl::PointCloud<pcl::PointXYZI>::Ptr inputA, pcl::PointCloud<pcl::PointXYZI>::Ptr inputB);
   bool isStump(int i);
+  void angleAdd();
 
   //gets
   void getRestcloud(pcl::PointCloud<pcl::PointXYZI>::Ptr output);
@@ -53,6 +54,7 @@ signals:
   void finished();
   void sendingTree( Cloud *);
   void sendingRest( Cloud *);
+  void sendingCentr( Cloud *);
   void hotovo();
   void percentage(int);
 
@@ -67,6 +69,7 @@ private:
 
 
   std::vector< int > m_centrNeighbors;
+  std::vector< int > m_pointscentroid;
   std::vector< float > m_centrNeighborsDist;
   std::vector<bool> m_usedCluster;
   std::vector<bool> m_used_rest;

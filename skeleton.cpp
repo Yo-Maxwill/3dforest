@@ -37,63 +37,101 @@ Skeleton::Skeleton()
 
 
 }
-Skeleton::Skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI pose)
+Skeleton::Skeleton(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
   m_cloud = cloud;
-  m_cloud->points.push_back(pose);
+ // m_cloud->points.push_back(pose);
 }
 void Skeleton::set_Vertex()
 {
-  z_max = -1;
-  float z_look_heit = -99999999999999;
-    //pro kazdy bod v skeleton
-  pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
-  kdtree.setInputCloud (m_cloud);
-  for(int i = 0; i < m_cloud->points.size(); i++)
-  {
-    pcl::PointXYZI x;
-    x = m_cloud->points.at(i);
-    std::stringstream s;
-    s << i;
-    m_vertexNames.push_back(i);
-    boost::add_vertex(s.str(), m_graph);
-    if( z_look_heit < x.z)
-    {
-      z_max = i;
-      z_look_heit = x.z;
-    }
-    std::vector<int> pointIDv;
-    std::vector<float> pointSDv;
-    int num = 20;
-    float radius = 0.1;
-    // search num nearest
-    if( kdtree.radiusSearch(x,radius,pointIDv,pointSDv) > 5)
-    {
-      for(int j = 1; j < pointIDv.size(); j++)
-      {
-        pcl::PointXYZI bod;
-        bod = m_cloud->points.at(pointIDv.at(j));
-        float w = sqrt(pointSDv.at(j));
-
-        boost::add_edge(i, pointIDv.at(j), w, m_graph);
-      }
-    }
-    else
-    {
-      if( kdtree.nearestKSearch (x,num,pointIDv,pointSDv) > 0)
-      {
-        for(int j = 1; j < pointIDv.size(); j++)
-        {
-          pcl::PointXYZI bod;
-          bod = m_cloud->points.at(pointIDv.at(j));
-          float w = sqrt(pointSDv.at(j));
-
-          boost::add_edge(i, pointIDv.at(j), w, m_graph);
-        }
-      }
-    }
-  }
-  set_skeleton();
+//  z_max = -1;
+//  float z_look_heit = -99999999999999;
+//    //pro kazdy bod v skeleton
+//  pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+//  kdtree.setInputCloud (m_cloud);
+//  for(int i = 0; i < m_cloud->points.size(); i++)
+//  {
+//    pcl::PointXYZI x = m_cloud->points.at(i);
+//
+//    std::stringstream s;
+//    s << i;
+//    m_vertexNames.push_back(i);
+//
+//    boost::add_vertex(s.str(), m_graph);
+//
+//    if( z_look_heit < x.z)
+//    {
+//      z_max = i;
+//      z_look_heit = x.z;
+//    }
+//    std::vector<int> pointIDv;
+//    std::vector<float> pointSDv;
+//    int num = 5;
+//    float radius = 0.07;
+//    // search num nearest
+//    if( kdtree.radiusSearch(x,radius,pointIDv,pointSDv) > 3)
+//    {
+//      for(int j = 1; j < pointIDv.size(); j++)
+//      {
+//        pcl::PointXYZI bod;
+//        bod = m_cloud->points.at(pointIDv.at(j));
+//        float w = sqrt(pointSDv.at(j));
+//
+//        boost::add_edge(i, pointIDv.at(j), w, m_graph);
+//      }
+//    }
+//    else
+//    {
+//      if( kdtree.nearestKSearch (x,num,pointIDv,pointSDv) > 0)
+//      {
+//        for(int j = 1; j < pointIDv.size(); j++)
+//        {
+//          pcl::PointXYZI bod;
+//          bod = m_cloud->points.at(pointIDv.at(j));
+//          float w = sqrt(pointSDv.at(j));
+//pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+//  kdtree.setInputCloud (m_cloud);
+//  for(int i = 0; i < m_cloud->points.size(); i++)
+//  {
+//    pcl::PointXYZI x = m_cloud->points.at(i);
+//
+//    std::stringstream s;
+//    s << i;
+//    m_vertexNames.push_back(i);
+//
+//    boost::add_vertex(s.str(), m_graph);
+//
+//    if( z_look_heit < x.z)
+//    {
+//      z_max = i;
+//      z_look_heit = x.z;
+//    }
+//    std::vector<int> pointIDv;
+//    std::vector<float> pointSDv;
+//    int num = 5;
+//    float radius = 0.07;
+//    // search num nearest
+//    if( kdtree.radiusSearch(x,radius,pointIDv,pointSDv) > 3)
+//    {
+//      for(int j = 1; j < pointIDv.size(); j++)
+//      {
+//        pcl::PointXYZI bod;
+//        bod = m_cloud->points.at(pointIDv.at(j));
+//        float w = sqrt(pointSDv.at(j));
+//
+//        boost::add_edge(i, pointIDv.at(j), w, m_graph);
+//      }
+//    }
+//    else
+//    {
+//      if( kdtree.nearestKSearch (x,num,pointIDv,pointSDv) > 0)
+//      {
+//          boost::add_edge(i, pointIDv.at(j), w, m_graph);
+//        }
+//      }
+//    }
+//  }
+//  set_skeleton();
 }
 void Skeleton::stemSkeleton()
 {
@@ -113,7 +151,7 @@ void Skeleton::stemSkeleton()
 //  boost::dijkstra_shortest_paths(m_graph,m_vertexNames.at(m_cloud->points.size()-1), boost::distance_map(distanceMap).predecessor_map(predecessorMap));
 
   PathType path;
-  Vertex v = m_vertexNames.at(z_max);
+  Vertex v = m_vertexNames.at(0);
   for(Vertex u = m_predecessorMap[v]; u != v;  v = u, u = m_predecessorMap[v]) // Set the current vertex to the current predecessor, and the predecessor to one level up
   {
     std::pair<mygraph::edge_descriptor, bool> edgePair = boost::edge(u, v, m_graph);

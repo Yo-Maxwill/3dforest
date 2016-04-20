@@ -24,7 +24,7 @@ public slots:
   void setVegetationName(QString name);
   void setTerrainName(QString name);
   void execute();
-  void octree(float res,  pcl::PointCloud<pcl::PointXYZI>::Ptr input, pcl::PointCloud<pcl::PointXYZI>::Ptr output_vege, pcl::PointCloud<pcl::PointXYZI>::Ptr output_ground);
+  void octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input,pcl::PointCloud<pcl::PointXYZI>::Ptr output_ground, pcl::PointCloud<pcl::PointXYZI>::Ptr output_vege);
   void sendData();
   void hotovo();
 

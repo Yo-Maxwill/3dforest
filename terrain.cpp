@@ -39,7 +39,7 @@ void OctreeTerrain::setTerrainName(QString name)
 {
   m_terrain->set_name(name);
 }
-void OctreeTerrain::octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input, pcl::PointCloud<pcl::PointXYZI>::Ptr output_vege, pcl::PointCloud<pcl::PointXYZI>::Ptr output_ground)
+void OctreeTerrain::octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input,pcl::PointCloud<pcl::PointXYZI>::Ptr output_ground, pcl::PointCloud<pcl::PointXYZI>::Ptr output_vege)
 {
 
 // udelat octree
@@ -87,7 +87,7 @@ void OctreeTerrain::octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input
         low_voxels.push_back(q);
       else
       {
-        if(std::abs(voxels.at(ind.at(0)).z - voxels.at(ind.at(1)).z ) < (res*1.5) )
+        if(std::abs(voxels.at(ind.at(0)).z - voxels.at(ind.at(1)).z ) < (res*1.1) )
           low_voxels.push_back(q);
       }
     }
@@ -118,7 +118,8 @@ void OctreeTerrain::octree(float res, pcl::PointCloud<pcl::PointXYZI>::Ptr input
 }
 void OctreeTerrain:: execute()
 {
-  //qWarning()<<"octree terrain starts";
+
+//qWarning()<<"octree terrain starts";
 emit percentage( 5);
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>);
