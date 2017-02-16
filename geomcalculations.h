@@ -122,6 +122,7 @@ public:
     static void ifFirstLastAreEqualEraseOne(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
     static void sortPolygonFromIterator(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon, int it);
     static pcl::PolygonMesh PolygonToMesh(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
+    static void voxelizeCloud (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr output, float x, float y, float z);
 };
 
     //! Class for polygon triangulation

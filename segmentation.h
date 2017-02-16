@@ -66,8 +66,6 @@ private:
   std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > m_segments;
   std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > m_clusters;
   std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > m_stems;
-
-
   std::vector< int > m_centrNeighbors;
   std::vector< int > m_pointscentroid;
   std::vector< float > m_centrNeighborsDist;
@@ -83,6 +81,7 @@ private:
   int recursive_count;
   QString m_treeName;
   int percent;
+
 };
 
 #endif // SEGMENTATION_H_INCLUDED

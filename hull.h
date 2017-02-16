@@ -7,25 +7,27 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
 #include "cloud.h"
+#include <pcl/PolygonMesh.h>
 
 //! Class for convex hull cumputing.
 /*! Class for computinh convex polygon and holding its attributes. */
-class ConvexHull : public Cloud
+class ConvexHull
 {
 protected:
-    Cloud *m_convexhull;    /**< cloud representing convex hull */
+    pcl::PointCloud<pcl::PointXYZI>::Ptr m_convexhull;    /**< cloud representing convex hull */
     float m_polygonArea;    /**< area of convex hull */
+    pcl::PolygonMesh *m_mesh;
 
 public:
     //! Constructor.
-    /*! Costructor of ConvexHull \param pcl point cloud \param name */
-    ConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name);
+    /*! Costructor of ConvexHull \param pcl point cloud \param zh */
+    ConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
     //! Destructor.
     /*! Destructor of ConvexHull. */
     ~ConvexHull();
     //! Get polygon.
     /*! Get cloud cloud containing points in convex polygon \return pointer to cloud */
-    Cloud getPolygon();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr getPolygon();
     //! Get polygon area.
     /*! Get convex polygon area in square meters \return float */
     float getPolygonArea();
@@ -33,24 +35,15 @@ public:
 private:
     //! Compute Attributes.
     /*! Compute convex hull and area */
-    void computeAttributes();
-    //! Create convex hull.
-    /*! Compute convex hull \param pcl point cloud with points \param pcl pointcloud for resulting polygon */
-    void createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr cloudForHull);
-    //! Return point lowest YZ.
-    /*! Return pcl point with xy coordinates equal to point with lowes y coordinate in cloud, z coordinate is equal to lowest z value in cloud
-     \param pcl point cloud with points \return pcl point */
+    void computeAttributes(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float zHeight);
+    void pclCloudToVTKPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,vtkSmartPointer<vtkPoints> pointsVTK,float newZcoord);
+    void makeConvexHullDelaunay2D (vtkSmartPointer<vtkPoints> input,pcl::PointCloud<pcl::PointXYZI>::Ptr outputVertices);
+    void toPolygonOrderWithTestToConvexness(pcl::PointCloud<pcl::PointXYZI>::Ptr vertices,pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
     pcl::PointXYZI returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    //! Return second point to polygon.
-    /*! Return second point to polygon line \param pcl point cloud with points \param pcl point \return pcl point */
-    pcl::PointXYZI returnSecondPointToPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI firstPoint);
-    //! Return next point to hull.
-    /*! Return next point into polygon \param pcl point cloud  \param pcl point \param pcl point \return pcl point */
-    pcl::PointXYZI returnNextPointToHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI pointA, pcl::PointXYZI pointB);
-    void createConvexIfOnlyFourPointsInCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud);
-    void alignPolygonZToLowest(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float lowest);
-};
+    void findSecondpointInPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr vertices,pcl::PointCloud<pcl::PointXYZI>::Ptr polygon);
+    void getBackIntensityFromOrigCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr originalCloud);
 
+};
 
 //! Class for concave hull cumputing.
 /*! Class for computinh concave polygon and holding its attributes. */

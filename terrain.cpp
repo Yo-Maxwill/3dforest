@@ -121,22 +121,108 @@ void OctreeTerrain:: execute()
 
 //qWarning()<<"octree terrain starts";
 emit percentage( 5);
-
+      //velky cyklus
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp2(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp3(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp4(new pcl::PointCloud<pcl::PointXYZI>);
+    octree(m_resolution*5, m_baseCloud->get_Cloud(),cloud_tmp, cloud_tmp2);
+    cloud_tmp2->points.clear();
+emit percentage( 20);
 
-      //velky cyklus
-emit percentage( 10);
-    octree(m_resolution*5, m_baseCloud->get_Cloud(), cloud_tmp, cloud_tmp2);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_tmp3(new pcl::PointCloud<pcl::PointXYZI>);
+    octree(m_resolution/2, cloud_tmp,cloud_tmp3, cloud_tmp2);
+    cloud_tmp2->points.clear();
+    cloud_tmp->points.clear();
+emit percentage( 35);
+    //maly cyklus
+    octree(m_resolution, m_baseCloud->get_Cloud(),cloud_tmp, cloud_tmp2);
+    cloud_tmp2.reset();
+emit percentage( 50);
+
+// porovnat maly a velky cyklus
+std::vector<int> pointID_ground;
+
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+    kdtree.setInputCloud (cloud_tmp);
+
+    #pragma omp parallel
+    {
+      std::vector<int> points_ground;
+      #pragma omp for nowait //fill vec_private in parallel
+      for(int i=0; i < cloud_tmp3->points.size();i++)
+      {
+        pcl::PointXYZI searchPointV;
+        searchPointV=cloud_tmp3->points.at(i);
+        std::vector<int> pointIDv;
+        std::vector<float> pointSDv;
+      if(kdtree.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) > 0)
+          points_ground.push_back(i);
+      }
+      #pragma omp critical
+      {
+        if(points_ground.size() > 0)
+          pointID_ground.insert(pointID_ground.end(), points_ground.begin(), points_ground.end());
+      }
+    }
+emit percentage( 60);
+    boost::shared_ptr<std::vector<int> > indices_ground (new std::vector<int> (pointID_ground));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ground(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::ExtractIndices<pcl::PointXYZI> extract;
+       // Extract the inliers
+    extract.setInputCloud (cloud_tmp3);
+    extract.setIndices (indices_ground );
+//terrain
+    extract.setNegative (false);
+    extract.filter (*cloud_ground);
+    cloud_ground->width = cloud_ground->points.size ();
+    cloud_ground->height = 1;
+    cloud_ground->is_dense = true;
+    m_terrain->set_Cloud(cloud_ground);
+    cloud_tmp3.reset();
+    cloud_tmp.reset();
 emit percentage( 70);
-    octree(m_resolution/2, cloud_tmp2, cloud_tmp3, cloud_tmp4);
+
+// vegetace
+    std::vector<int> pointIDS;
+    pcl::KdTreeFLANN<pcl::PointXYZI> k;
+    k.setInputCloud (m_baseCloud->get_Cloud());
+
+    #pragma omp parallel
+    {
+      std::vector<int> points_ground;
+      #pragma omp for nowait //fill vec_private in parallel
+      for(int i=0; i < cloud_ground->points.size();i++)
+      {
+        pcl::PointXYZI searchPointV;
+        searchPointV=cloud_ground->points.at(i);
+        std::vector<int> pointIDv;
+        std::vector<float> pointSDv;
+      if(k.radiusSearch(searchPointV,0.001,pointIDv,pointSDv) > 0)
+          points_ground.push_back(pointIDv.at(0));
+      }
+      #pragma omp critical
+      {
+        if(points_ground.size() > 0)
+          pointIDS.insert(pointIDS.end(), points_ground.begin(), points_ground.end());
+      }
+    }
 emit percentage( 80);
-    *cloud_tmp += *cloud_tmp3;
-    m_vegetation->set_Cloud(cloud_tmp);
-    m_terrain->set_Cloud(cloud_tmp4);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_vege(new pcl::PointCloud<pcl::PointXYZI>);
+    boost::shared_ptr<std::vector<int> > indicesptr (new std::vector<int> (pointIDS));
+    pcl::ExtractIndices<pcl::PointXYZI> e;
+       // Extract the inliers
+    e.setInputCloud (m_baseCloud->get_Cloud());
+    e.setIndices (indicesptr);
+//vege
+    e.setNegative (true);
+    e.filter (*cloud_vege);
+    cloud_vege->width = cloud_vege->points.size ();
+    cloud_vege->height = 1;
+    cloud_vege->is_dense = true;
+    m_vegetation->set_Cloud(cloud_vege);
 emit percentage( 90);
+    cloud_vege.reset();
+    cloud_ground.reset();
+emit percentage( 95);
       sendData();
 }
 void OctreeTerrain::sendData()

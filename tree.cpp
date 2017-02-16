@@ -188,6 +188,7 @@ void Tree::set_dbhLSR()
     LeastSquaredRegression lsr;
     lsr.setCloud(m_dbhCloud->get_Cloud());
     lsr.compute();
+    //m_dbh_LSR = lsr.kamihoDBH();
     m_dbh_LSR = lsr.getCircle();
   }
   else
@@ -409,7 +410,7 @@ void Tree::setConvexhull()
   if(m_pose.x == -1 && m_pose.y == -1 && m_pose.z == -1 )
     return;
    QString aa = QString("%1_convex").arg(m_name);
-    m_convexhull = new ConvexHull(CloudOperations::getCloudCopy(m_Cloud),aa);
+    m_convexhull = new ConvexHull(CloudOperations::getCloudCopy(m_Cloud));
 }
 ConvexHull& Tree::getConvexhull()
 {

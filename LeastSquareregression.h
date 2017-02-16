@@ -67,6 +67,8 @@ class LeastSquaredRegression
     /*! Compute the square root of the average square of the distance for given pointCloud and computed circle.
      \param circle computed stredLSR \return value of sigma */
   float sigma(stredLSR circle);
+  stred kamihoDBH();
+  void TaubinFit();
 };
 
 #endif // LEASTSQUAREREGRESSION_H_INCLUDED

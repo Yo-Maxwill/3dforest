@@ -103,19 +103,19 @@ void  HoughTransform::compute()
     {
       retx = m1x;
       rety = f1*retx + g1;
-      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*1000);
+      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100000)/100.0;
     }
     else if(p2.y == p3.y)
     {
       retx = m2x;
       rety = f1*retx + g1;
-      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*1000);
+      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100000)/100.0;
     }
     else
     {
       retx = (g2-g1) / (f1 - f2);
       rety = f1*retx + g1;
-      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*1000);
+      radius = ceil(sqrt((retx-p1.x)*(retx-p1.x) + (rety-p1.y)*(rety-p1.y))*100000)/100.0;
     }
       //jen ulozit
     acc_x.at(xa) = retx;

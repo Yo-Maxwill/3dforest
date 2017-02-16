@@ -1,176 +1,192 @@
 #include "hull.h"
+#include <vtkFeatureEdges.h>
 
 //CLASS CONVEXHULL*/
-ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name)
-: Cloud(cloud, name)
+ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
-    QString hullName = QString("%1_hull").arg(name);
+  //  QString hullName = QString("%1_hull").arg(name);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_h(new pcl::PointCloud<pcl::PointXYZI>);
-    m_convexhull = new Cloud(cloud_h, hullName);
-    computeAttributes();
+    m_convexhull = cloud_h;
+    m_mesh = new pcl::PolygonMesh;
+    m_polygonArea = 0;
+
+    pcl::PointXYZI minp,maxp;
+    pcl::getMinMax3D(*cloud,minp, maxp);
+    computeAttributes(cloud,minp.z);
 }
 ConvexHull::~ConvexHull()
 {
-    delete m_convexhull;
+    //delete m_convexhull;
 }
 //COMPUTE
-void ConvexHull::computeAttributes()
+void ConvexHull::computeAttributes(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float zHeight)
 {
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(CloudOperations::getCloudCopy(m_Cloud));
-    int cloudsize = cloud->points.size();
-    float lowest = GeomCalc::findHighestAndLowestPoints(cloud).Lowest;
-    if(cloudsize < 3)
-    {
-        QString a = QString("COULD NOT CREATE CONVEX HULL FROM LESS THAN 3 POINTS !!!");
-        QMessageBox::information(0,("WARNING"),a);
-    }else if(cloudsize == 3)
-    {
-        m_convexhull->set_Cloud(cloud);
-        m_polygonArea = GeomCalc::computeTriangleArea(cloud->points.at(0),cloud->points.at(1),cloud->points.at(2));
-    }else if(cloudsize == 4)
-    {
-        createConvexIfOnlyFourPointsInCloud(cloud);
-    }else{
-    pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    createConvexHull(cloud,hullCloud);
+    // voxelize to 1 cm
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloudFiltered (new pcl::PointCloud<pcl::PointXYZI>);
+    CloudOperations::voxelizeCloud(cloud,cloudFiltered,0.01f,0.01f,100.0f);
+    //pcl to VTK points
+    vtkSmartPointer<vtkPoints> pointsVTK = vtkSmartPointer< vtkPoints >::New();
+    pclCloudToVTKPoints(cloudFiltered,pointsVTK,zHeight);
+    //Delaunay
+    pcl::PointCloud<pcl::PointXYZI>::Ptr verticesCloud (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr polygon (new pcl::PointCloud<pcl::PointXYZI>);
+    makeConvexHullDelaunay2D(pointsVTK,verticesCloud);
+    //Vertices to polygon order
+    toPolygonOrderWithTestToConvexness(verticesCloud,polygon);
+    m_convexhull = polygon;
+    getBackIntensityFromOrigCloud(cloudFiltered);
 
-    alignPolygonZToLowest(hullCloud,lowest);
-
-    m_convexhull->set_Cloud(hullCloud);
-
-    m_polygonArea = GeomCalc::computePolygonArea(hullCloud);
-    }
+   // QString info = QString("END %1 %2").arg(m_convexhull->points.size()).arg(triangles.polygons.size());
+   // QMessageBox::information(0,("ConvexHullDelaunay"),info);
 }
-void ConvexHull::createConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud)
+void ConvexHull::getBackIntensityFromOrigCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr originalCloud)
 {
-    //Find point with lowest y value, set its z value to lowest z value and set it as first polygon point
-    pcl::PointXYZI pointLowest = returnPointLowestYZ(cloud);
-    hullCloud->points.push_back(pointLowest);
-    //Erase first equal points from source point cloud
-    CloudOperations::erasePointFromCloudXY(cloud,pointLowest);
-    //Add second point to polygon and erase xy equal points from cloud
-    hullCloud->points.push_back(returnSecondPointToPolygon(cloud,pointLowest));
-    CloudOperations::erasePointFromCloudXY(cloud,hullCloud->points.at(1));
-    //Add next point into polygon until first point is not equal last point and polygon is closed
-
-     for (int k=1; k<100; k++)
-     {
-        pcl::PointXYZI pointA = hullCloud->points.at(k-1);
-        pcl::PointXYZI pointB = hullCloud->points.at(k);
-        //Select next point to polygon
-        pcl::PointXYZI point = returnNextPointToHull(cloud,pointA,pointB);
-        //Add chosen point to polygon
-        hullCloud->points.push_back(point);
-        //erase equal points from source point cloud
-        CloudOperations::erasePointFromCloudXY(cloud,point);
-        //Return first point in polygon into source cloud
-        if (k==3) {cloud->points.push_back(pointLowest);}
-        //Condition for stoping the loops, polygon is closed forst, point == last point
-        if (k > 3 && point.x == pointLowest.x && point.y == pointLowest.y){break;}
-    }
-    //erase first point in polygon from source cloud, because its z value is equal to lowest z value in the cloud
-    int s = cloud->points.size();
-    cloud->points.erase(cloud->points.begin()+s);
-}
-pcl::PointXYZI ConvexHull::returnSecondPointToPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI firstPoint)
-{
-    pcl::PointXYZI secondPoint;
-    pcl::PointXYZI backVector = firstPoint;
-    backVector.x -=1;
-    backVector.y -=1;
-    float Abigger = 0;
-    //iterate over cloud points and select that one with biggest clockwise angle
-    for(int m=0; m < cloud->points.size();m++)
+    pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
+    kdtree.setInputCloud (originalCloud);
+    for(int i=0;i<m_convexhull->points.size();i++)
     {
-        pcl::PointXYZI point = cloud->points.at(m);
-        float A = GeomCalc::computeClockwiseAngle(backVector,firstPoint,point);
-        if (A > Abigger)
-        {
-            Abigger = A;
-            secondPoint = point;
-        }
-    }
-    // align z coordinate
-    secondPoint.z = firstPoint.z;
-    return secondPoint;
-}
-pcl::PointXYZI ConvexHull::returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
-{
-    pcl::PointXYZI bodYmin = cloud->points.at(0);
-    for (int i=0; i < cloud->points.size(); i++)
-    {
-        pcl::PointXYZI bod =cloud->points.at(i);
-        if (bod.y < bodYmin.y)
-        {
-            bodYmin.y = bod.y;
-            bodYmin.x = bod.x;
-            bodYmin.z = bod.z;
-            bodYmin.intensity = bod.intensity;
-        }
-    }
-    return bodYmin;
-}
-pcl::PointXYZI ConvexHull::returnNextPointToHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI pointA, pcl::PointXYZI pointB)
-{
-    float Abigger = 0;
-    pcl::PointXYZI nextPoint;
-    //iterate over cloud points and select that one with biigest clockwise angle
-    for(int m=0; m < cloud->points.size();m++)
-    {
-        pcl::PointXYZI point = cloud->points.at(m);
-        float A = GeomCalc::computeClockwiseAngle(pointA,pointB,point);
-        if (A > Abigger)
-        {
-            if(GeomCalc::computeDistance2Dxy(pointB,point)>0)
-            {
-                Abigger = A;
-                nextPoint = point;
-            }
-        }
-    }
-    // align z coordinate
-    nextPoint.z = pointA.z;
-    return nextPoint;
-}
-void ConvexHull::createConvexIfOnlyFourPointsInCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
-{
-    pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud(new pcl::PointCloud<pcl::PointXYZI>);
-     pcl::PointXYZI first = returnPointLowestYZ(cloud);
-     pcl::PointXYZI second = returnSecondPointToPolygon(cloud,first);
-     pcl::PointXYZI third = returnNextPointToHull(cloud,first,second);
-
-    CloudOperations::erasePointFromCloudXY(cloud,first);
-    CloudOperations::erasePointFromCloudXY(cloud,second);
-    CloudOperations::erasePointFromCloudXY(cloud,third);
-
-    hullCloud->points.push_back(first);
-    hullCloud->points.push_back(second);
-    hullCloud->points.push_back(third);
-
-    pcl::PointXYZI last = cloud->points.at(0);
-    if (GeomCalc::isPointInTriangle(last,first,second,third) != true)
-    {
-       hullCloud->points.push_back(last);
-    }
-    m_convexhull->set_Cloud(hullCloud);
-    m_polygonArea = GeomCalc::computePolygonArea(hullCloud);
-}
-void ConvexHull::alignPolygonZToLowest(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float lowest)
-{
-    for(int i=0;i<cloud->points.size();i++)
-    {
-        cloud->points.at(i).z=lowest;
+        pcl::PointXYZI searchPoint = m_convexhull->points.at(i);
+        std::vector<int> pointIdxNKNSearch(1);
+        std::vector<float> pointNKNSquaredDistance(1);
+        kdtree.nearestKSearch (searchPoint, 1, pointIdxNKNSearch, pointNKNSquaredDistance);
+        m_convexhull->points.at(i).intensity = originalCloud->points[ pointIdxNKNSearch[0] ].intensity;
     }
 }
 //GET
-Cloud ConvexHull::getPolygon()
+pcl::PointCloud<pcl::PointXYZI>::Ptr ConvexHull::getPolygon()
 {
-    return *m_convexhull;
+    /*
+    Cloud *c = new Cloud(m_convexhull,"convexhull");
+    return c;
+    */
+    return m_convexhull;
 }
 float ConvexHull::getPolygonArea()
 {
     return m_polygonArea;
 }
+void ConvexHull::pclCloudToVTKPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,vtkSmartPointer<vtkPoints> pointsVTK,float newZcoord)
+{
+    for(int i=0; i<cloud->points.size(); i++)
+    {
+        pcl::PointXYZI p = cloud->points.at(i);
+        pointsVTK->InsertNextPoint(p.x, p.y, newZcoord);
+    }
+}
+void ConvexHull::makeConvexHullDelaunay2D (vtkSmartPointer<vtkPoints> input,pcl::PointCloud<pcl::PointXYZI>::Ptr outputVertices)
+{
+    //VTK Points to polydata
+    vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+    polydata->SetPoints(input);
+    //delaunay
+    vtkSmartPointer<vtkDelaunay2D> delaunay2D =vtkSmartPointer<vtkDelaunay2D>::New();
+    delaunay2D->SetInputData(polydata);
+    delaunay2D->SetAlpha(100);
+    delaunay2D->Update();
+    //Create surface from
+    vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+    surfaceFilter->SetInputConnection(delaunay2D->GetOutputPort());
+    surfaceFilter->Update();
+    //volume and surface
+    vtkSmartPointer<vtkMassProperties> mp =  vtkSmartPointer<vtkMassProperties>::New();
+    vtkPolyData* polydataToSurface = surfaceFilter->GetOutput();
+    mp->SetInputData(polydataToSurface);
+    m_polygonArea = mp->GetSurfaceArea();
+    //get boundary polygon vertices
+    vtkSmartPointer<vtkFeatureEdges> featureEdges =
+    vtkSmartPointer<vtkFeatureEdges>::New();
+    featureEdges->SetInputConnection(delaunay2D->GetOutputPort());
+    featureEdges->BoundaryEdgesOn();
+    featureEdges->FeatureEdgesOff();
+    featureEdges->ManifoldEdgesOff();
+    featureEdges->NonManifoldEdgesOff();
+    featureEdges->Update();
+    vtkPolyData* polydataVertices = featureEdges->GetOutput();
+    // to pcl mesh
+    pcl::PolygonMesh triangles;
+    pcl::VTKUtils::vtk2mesh(polydataVertices,triangles);
+    //set surface to M_MESH
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloudVertices (new pcl::PointCloud<pcl::PointXYZI>);
+    pcl::fromPCLPointCloud2(triangles.cloud,*outputVertices);
+}
+void ConvexHull::toPolygonOrderWithTestToConvexness(pcl::PointCloud<pcl::PointXYZI>::Ptr vertices,pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
+{
+    pcl::PointXYZI first = returnPointLowestYZ(vertices);
+    polygon->points.push_back(first);
+    findSecondpointInPolygon(vertices,polygon);
+
+    do{
+
+        float alfa = 0;
+        int a = polygon->points.size();
+        a-=1;
+        int iter = 0;
+
+        for(int i=0;i<vertices->points.size();i++)
+        {
+            float beta = GeomCalc::computeClockwiseAngle(polygon->points.at(a-1),polygon->points.at(a),vertices->points.at(i));
+            if(beta > alfa)
+            {
+                alfa = beta;
+                iter = i;
+            }
+        }
+        float alfaTest = GeomCalc::computeClockwiseAngle(polygon->points.at(a-1),polygon->points.at(a),first);
+
+        if(alfa > alfaTest){
+            polygon->points.push_back(vertices->points.at(iter));
+            vertices->points.erase(vertices->points.begin()+iter);
+        }else{
+                break;
+        }
+
+    }while(vertices->points.size()>0);
+
+   // polygon->points.push_back(first); //add first point to the end of polygon
+}
+void ConvexHull::findSecondpointInPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr vertices,pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
+{
+    pcl::PointXYZI first = polygon->points.at(0);
+    pcl::PointXYZI backVec = first;
+    backVec.y -=1;
+
+    float alfa = 0;
+    float iter = 0;
+    //iterate over cloud points and select that one with biggest clockwise angle
+    pcl::PointXYZI second;
+    for(int i=0; i < vertices->points.size();i++)
+    {
+        pcl::PointXYZI point = vertices->points.at(i);
+        float beta = GeomCalc::computeClockwiseAngle(backVec,first,point);
+        if (beta > alfa)
+        {
+            alfa = beta;
+            second = point;
+            iter = i;
+        }
+    }
+    polygon->points.push_back(second);
+    vertices->points.erase(vertices->points.begin()+iter);
+
+}
+pcl::PointXYZI ConvexHull::returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
+{
+    float yMin = cloud->points.at(0).y;
+    int iter = 0;
+    for (int i=0; i < cloud->points.size(); i++)
+    {
+        pcl::PointXYZI bod =cloud->points.at(i);
+        if (bod.y < yMin)
+        {
+            yMin = bod.y;
+            iter = i;
+        }
+    }
+    pcl::PointXYZI bodYmin = cloud->points.at(iter);
+    cloud->points.erase(cloud->points.begin()+iter);
+    return bodYmin;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /* CLASS CONCAVEHULL */
 ConcaveHull::ConcaveHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, float searchDist)
@@ -198,10 +214,10 @@ void ConcaveHull::computeConcaveHull()
     //Copy cloud and create convex hull
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(m_Cloud);
     int sizeOfCloud = cloud->points.size();
-    ConvexHull *c = new ConvexHull(cloud, "convex");
+    ConvexHull *c = new ConvexHull(cloud);
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud (new pcl::PointCloud<pcl::PointXYZI>);
-    hullCloud = c->getPolygon().get_Cloud();
+    hullCloud = c->getPolygon();
 
     if(sizeOfCloud <= hullCloud->points.size() || cloud->points.size() == 1)
     {

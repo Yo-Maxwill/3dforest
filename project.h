@@ -262,6 +262,11 @@ public:
     PolyhedronIntersections3D& getIntersectionsAt(int i);
     void computeCrownIntersections();
     bool isIntersectionPossible(pcl::PointXYZI pos1, float lenght1, pcl::PointXYZI pos2, float lenght2);
+    void deleteCloudNoQuestions(QString name);
+    void mergeClouds(QString treeName, QString joinCloud);
+    void mergeEraseCloudsByID();
+    QString getIDnumber(QString str);
+    bool isID(QString &str);
 
 private:
     //! Delete file from disc.

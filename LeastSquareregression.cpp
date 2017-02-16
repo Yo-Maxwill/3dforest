@@ -34,14 +34,80 @@ void LeastSquaredRegression::setCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud
 }
 void  LeastSquaredRegression::compute()
 {
-    algebraicCircle();
+    //algebraicCircle();
+    TaubinFit();
     geometricCirlce();
+    //kamihoDBH();
 }
 stred LeastSquaredRegression::getCircle()
 {
   return m_circle;
 }
+stred LeastSquaredRegression::kamihoDBH()
+{
+  // first guess
+  algebraicCircle();
+  // zjistit pozici
+      pcl::PointXYZI startPoint;
 
+      //nejlepši celkove R a  fitovany kruh;
+      float R=0;
+      stred Finalstred = {-1,-1,-1,-1,-0.5};
+      float rmseF=395000;
+
+      startPoint.x =m_circle.a;
+      startPoint.y =m_circle.b;
+      startPoint.z =m_circle.z;
+//qWarning()<< "SP x: " << startPoint.x << "SP y: " << startPoint.y << "SP z: " << startPoint.z ;
+
+      for(int b=0; b < 500; b++)
+      {
+
+        double radius = 0.0 + (double)b/200;
+        // search points in distance radius from startpoint
+        std::vector<int> pointIDv;
+        std::vector<float> pointSDv;
+        pcl::KdTreeFLANN<pcl::PointXYZI> k;
+        k.setInputCloud (m_cloud);
+        // pokud naleznu v dane vzalenosti min 3 body fituju jima kruznici
+        if(k.radiusSearch(startPoint, radius, pointIDv, pointSDv) > 5)
+        {
+        // nalezene body uloz do mracna cl_
+          pcl::PointCloud<pcl::PointXYZI>::Ptr cl_(new pcl::PointCloud<pcl::PointXYZI>);
+          for(int m=0; m< pointIDv.size(); m++)
+          {
+            cl_->points.push_back(m_cloud->points.at( pointIDv.at(m)));
+          }
+          //spocitat kruznici pomoci LSR
+          LeastSquaredRegression lsr; //=new LeastSquaredRegression();
+          lsr.setCloud(cl_);
+          lsr.compute();
+          stred c = lsr.getCircle();
+//qWarning()<< "        c.a: " << c.a << " c.b: " << c.b << " c.i " << c.i << " c.z " << c.z << " c.r " << c.r  ;
+          float d=0;
+          //spocitat RMSE
+
+          for(int v=0; v< pointIDv.size(); v++)
+          {
+            float x2 = (cl_->points.at(v).x - c.a) * (cl_->points.at(v).x - c.a);
+            float y2 = (cl_->points.at(v).y - c.b) * (cl_->points.at(v).y - c.b);
+            float dist = std::sqrt(x2+y2) - c.r;
+            d += (dist*dist);
+          }
+          float rmse=d/pointIDv.size();
+          if(rmse < rmseF )
+          {
+            rmseF=rmse;
+            Finalstred= c;
+            startPoint.x = c.a;
+            startPoint.y = c.b;
+            b=0;
+          }
+        }
+      }
+//qWarning()<< "Finalstred x: " << Finalstred.a << "Finalstred y: " << Finalstred.b << "Finalstred z: " << Finalstred.i << "Finalstred r: " << Finalstred.r;
+  return Finalstred;
+}
 void LeastSquaredRegression::algebraicCircle()
 {
   float meanX = 0;
@@ -52,7 +118,7 @@ void LeastSquaredRegression::algebraicCircle()
   float A0,A1,A2,A22;
   float Dy,xnew,x,ynew,y;
   float DET,Xcenter,Ycenter;
-  Mxx=Myy=Mxy=Mxz=Myz=0.;
+  Mxx=Myy=Mxy=Mxz=Myz=0.000000001;
     //for each point in dbh_cloud calculate mean coordinate
   for(int m=0; m < n;m++)
   {
@@ -103,7 +169,7 @@ void LeastSquaredRegression::algebraicCircle()
 //    finding the root of the characteristic polynomial
 //    using Newton's method starting at x=0
 //     (it is guaranteed to converge to the right root)
-  x=0;
+  x=0.00000001;
   y=A0;
 	for (int iter=0; iter<10; iter++)  // usually, 4-6 iterations are enough
   {
@@ -123,7 +189,7 @@ void LeastSquaredRegression::algebraicCircle()
   Ycenter = (Myz*(Mxx - x) - Mxz*Mxy)/(DET*2);
   float xx = Xcenter + meanX; //xcoord of center
   float yy = Ycenter + meanY; //ycoord of center
-  float Mr=0.; //optimal r computation
+  float Mr=0.000000001; //optimal r computation
   float dx,dy;
 
   for(int k=0; k < n; k++)
@@ -140,12 +206,156 @@ void LeastSquaredRegression::algebraicCircle()
   float ii=0;
   stred T={xx,yy,meanZ,ii,rr};
   m_circle = T;
+ //qWarning()<< "   algebraic     c.a: " << T.a << " c.b: " << T.b << " c.i " << T.i << " c.z " << T.z << " c.r " << T.r  ;
+}
+void LeastSquaredRegression::TaubinFit()
+{
+  /*
+      Circle fit to a given set of data points (in 2D)
+
+      This is an algebraic fit, due to Taubin, based on the journal article
+
+      G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar
+                  Space Curves Defined By Implicit Equations, With
+                  Applications To Edge And Range Image Segmentation",
+                  IEEE Trans. PAMI, Vol. 13, pages 1115-1138, (1991)
+
+      Input:  data     - the class of data (contains the given points):
+
+	      data.n   - the number of data points
+	      data.X[] - the array of X-coordinates
+	      data.Y[] - the array of Y-coordinates
+
+     Output:
+               circle - parameters of the fitting circle:
+
+	       circle.a - the X-coordinate of the center of the fitting circle
+	       circle.b - the Y-coordinate of the center of the fitting circle
+ 	       circle.r - the radius of the fitting circle
+ 	       circle.s - the root mean square error (the estimate of sigma)
+ 	       circle.j - the total number of iterations
+
+     The method is based on the minimization of the function
+
+                  sum [(x-a)^2 + (y-b)^2 - R^2]^2
+              F = -------------------------------
+                      sum [(x-a)^2 + (y-b)^2]
+
+     This method is more balanced than the simple Kasa fit.
+
+     It works well whether data points are sampled along an entire circle or
+     along a small arc.
+
+     It still has a small bias and its statistical accuracy is slightly
+     lower than that of the geometric fit (minimizing geometric distances),
+     but slightly higher than that of the very similar Pratt fit.
+     Besides, the Taubin fit is slightly simpler than the Pratt fit
+
+     It provides a very good initial guess for a subsequent geometric fit.
+
+       Nikolai Chernov  (September 2012)
+
+*/
+    int i,iter,IterMAX=20;
+
+    double Xi,Yi,Zi;
+    double Mz,Mxy,Mxx,Myy,Mxz,Myz,Mzz,Cov_xy,Var_z;
+    double A0,A1,A2,A22,A3,A33;
+    double Dy,xnew,x,ynew,y;
+    double DET,Xcenter,Ycenter;
+
+
+
+  float meanX = 0;
+  float meanY = 0;
+  float meanZ = 0;
+  float n = (float) m_cloud->points.size();
+
+  Mxx=Myy=Mxy=Mxz=Myz=0.000000001;
+    //for each point in dbh_cloud calculate mean coordinate
+  for(int m=0; m < n;m++)
+  {
+    pcl::PointXYZI ith = m_cloud->points.at(m);
+    meanX += ith.x;
+    meanY += ith.y;
+    meanZ += ith.z;
+  }
+  meanX /= n;
+  meanY /= n;
+  meanZ /= n;
+
+//     computing moments
+
+	Mxx=Myy=Mxy=Mxz=Myz=Mzz=0.;
+
+    for (i=0; i< n; i++)
+    {
+      pcl::PointXYZI it = m_cloud->points.at(i);
+        Xi = it.x - meanX;   //  centered x-coordinates
+        Yi = it.y - meanY;   //  centered y-coordinates
+        Zi = Xi*Xi + Yi*Yi;
+
+        Mxy += Xi*Yi;
+        Mxx += Xi*Xi;
+        Myy += Yi*Yi;
+        Mxz += Xi*Zi;
+        Myz += Yi*Zi;
+        Mzz += Zi*Zi;
+    }
+    Mxx /= n;
+    Myy /= n;
+    Mxy /= n;
+    Mxz /= n;
+    Myz /= n;
+    Mzz /= n;
+
+//      computing coefficients of the characteristic polynomial
+
+    Mz = Mxx + Myy;
+    Cov_xy = Mxx*Myy - Mxy*Mxy;
+    Var_z = Mzz - Mz*Mz;
+    A3 = 4.0*Mz;
+    A2 = -3.0*Mz*Mz - Mzz;
+    A1 = Var_z*Mz + 4.0*Cov_xy*Mz - Mxz*Mxz - Myz*Myz;
+    A0 = Mxz*(Mxz*Myy - Myz*Mxy) + Myz*(Myz*Mxx - Mxz*Mxy) - Var_z*Cov_xy;
+    A22 = A2 + A2;
+    A33 = A3 + A3 + A3;
+
+//    finding the root of the characteristic polynomial
+//    using Newton's method starting at x=0
+//     (it is guaranteed to converge to the right root)
+
+    for (x=0.,y=A0,iter=0; iter<IterMAX; iter++)  // usually, 4-6 iterations are enough
+    {
+    	    Dy = A1 + x*(A22 + A33*x);
+        xnew = x - y/Dy;
+        if ((xnew == x)||(!std::isfinite(xnew))) break;
+        ynew = A0 + xnew*(A1 + xnew*(A2 + xnew*A3));
+        if (abs(ynew)>=abs(y))  break;
+        x = xnew;  y = ynew;
+    }
+
+//       computing paramters of the fitting circle
+
+    DET = x*x - x*Mz + Cov_xy;
+    Xcenter = (Mxz*(Myy - x) - Myz*Mxy)/DET/2.0;
+    Ycenter = (Myz*(Mxx - x) - Mxz*Mxy)/DET/2.0;
+
+//       assembling the output
+    stred circle;
+    circle.a = Xcenter + meanX;
+    circle.b = Ycenter + meanY;
+    circle.r = sqrt(Xcenter*Xcenter + Ycenter*Ycenter + Mz);
+    circle.z = meanZ;
+    circle.i = 0;
+
+    m_circle = circle;
 }
 void LeastSquaredRegression::geometricCirlce()
 {
   int code,i,iter,inner,IterMAX=500;
   float n = (float) m_cloud->points.size();
-  float factorUp=10.,factorDown=0.004,lambda,ParLimit=1.e+6;
+  float factorUp=1.,factorDown=0.004,lambda,ParLimit=1.e+6;
   float dx,dy,ri,u,v;
   float Mu,Mv,Muu,Mvv,Muv,Mr,UUl,VVl,Nl,F1,F2,F3,dX,dY,dR;
   float epsilon=3.e-8;
@@ -189,7 +399,7 @@ NextIteration:
 
 //       computing moments
 
-    Mu=Mv=Muu=Mvv=Muv=Mr=0.;
+    Mu=Mv=Muu=Mvv=Muv=Mr=0.000000001;
 
     for (i=0; i<n; i++)
     {
@@ -291,10 +501,11 @@ enough:
     Old.i = iter;    // total number of outer iterations (updating the parameters)
     Old.j = inner;   // total number of inner iterations (adjusting lambda)
     stredLSR circlef = Old;
-    float r = circlef.r*1000;
-    float rr = ceil(r)/10.0;
+    float r = circlef.r*100000;
+    float rr = ceil(r)/1000.0;
     stred c = {circlef.a,circlef.b,meanZ,1,rr};
     m_circle = c;
+   // qWarning()<< "   geometric    c.a: " << c.a << " c.b: " << c.b << " c.i " << c.i << " c.z " << c.z << " c.r " << c.r  ;
 }
 float LeastSquaredRegression::sigma (stredLSR circle)
 {

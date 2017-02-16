@@ -5,12 +5,13 @@
 #include <vtkCellArray.h>
 #include <vtkProperty.h>
 #include <vtkPolyDataMapper.h>
-#include <vtkActor.h>
 #include <vtkPoints.h>
+#include <vtkActor.h>
 #include <vtkPolyData.h>
 #include <vtkPolygon.h>
 #include <vtkSmartPointer.h>
 #include <vtkDelaunay2D.h>
+#include <pcl/filters/voxel_grid.h>
 
 // GEOMETRIC CALCULATIONS
 float GeomCalc::computeDistance2Dxy(pcl::PointXYZI boda, pcl::PointXYZI bodb)
@@ -407,7 +408,13 @@ pcl::PolygonMesh CloudOperations::PolygonToMesh(pcl::PointCloud<pcl::PointXYZI>:
 
     return triangles;
 }
-
+void CloudOperations::voxelizeCloud (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr output, float x, float y, float z)
+{
+  pcl::VoxelGrid<pcl::PointXYZI> vox;
+  vox.setInputCloud (cloud);
+  vox.setLeafSize (x, y, z);
+  vox.filter (*output);
+}
 // TRIANGULATED POLYGON
 TriangulatedPolygon::TriangulatedPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr polygon)
 {

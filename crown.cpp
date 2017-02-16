@@ -14,7 +14,7 @@ Crown::Crown (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, pcl::Poi
     m_sectionsPolyhedron = 0;
     m_convexhull3D = 0;
 
-    m_convexhull = new ConvexHull(cloud, "convex");
+    m_convexhull = new ConvexHull(cloud);
     m_externalSections = new ExternalPointsBySections(CloudOperations::getCloudCopy(cloud),m_sectionHeight,m_thresholdDistance);
     computeCrownPosition();
 
@@ -99,12 +99,12 @@ void Crown::computeCrownXYLenghtAndWidth()
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     cloud = m_crownCloud->get_Cloud();
     //initialize hull object and create convexhull
-    ConvexHull *h = new ConvexHull(cloud,"convex");
+    ConvexHull *h = new ConvexHull(cloud);
     //find point with longest distance and set it as m_crownLenghtXY
-    pointsWithLongestDist PT = GeomCalc::findPointsWithLongestDistance(h->getPolygon().get_Cloud());
+    pointsWithLongestDist PT = GeomCalc::findPointsWithLongestDistance(h->getPolygon());
     m_crownLenghtXY = GeomCalc::computeDistance2Dxy(PT.pointA,PT.pointB);
     //compoute crown width from convex polygon
-    computeCrownWidth(h->getPolygon().get_Cloud(),PT.pointA,PT.pointB);
+    computeCrownWidth(h->getPolygon(),PT.pointA,PT.pointB);
 }
 void Crown::computeCrownWidth(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI &pointA, pcl::PointXYZI &pointB)
 {
@@ -176,12 +176,14 @@ void Crown::computeVolumeByVoxels(float resolution)
     // Copy base crown cloud for voxelization
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     cloud = m_crownCloud->get_Cloud();
+
     // Voxelization
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::VoxelGrid<pcl::PointXYZI> vox;
     vox.setInputCloud (cloud);
     vox.setLeafSize (resolution, resolution, resolution);
     vox.filter (*cloud_filtered);
+
     // Compute voxels volume
     int Voxels = cloud_filtered->points.size();
     float volume = Voxels * (resolution*resolution*resolution);

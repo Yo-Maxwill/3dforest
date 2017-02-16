@@ -722,7 +722,158 @@ bool Project::isIntersectionPossible(pcl::PointXYZI pos1, float lenght1, pcl::Po
         return true;
     }else return false;
 }
+//////////////////////
+void Project::mergeEraseCloudsByID()
+{
+    for(int i=0;i<get_sizeTreeCV();i++)
+    {
+        QString name = get_TreeCloud(i).get_name();
+        if(isID(name) == true){
+            QString treeID = getIDnumber(name);
+            for(int j=i+1;j<get_sizeTreeCV();j++)
+            {
+                QString id2 = getIDnumber(get_TreeCloud(j).get_name());
+                if (treeID == id2 && name != get_TreeCloud(j).get_name()){
+                    mergeClouds(name,get_TreeCloud(j).get_name());
+                }
+            }
+            for(int j=0;j<get_sizeostCV();j++)
+            {
+                QString id2 = getIDnumber(get_ostCloud(j).get_name());
+                if (treeID == id2){
+                    mergeClouds(name,get_ostCloud(j).get_name());
+                }
+            }
+           /* for(int j=0;j<get_sizevegeCV();j++)
+            {
+                QString id2 = getIDnumber(get_VegeCloud(j).get_name());
 
+                if (treeID == id2){
+                    mergeClouds(name,get_VegeCloud(j).get_name());
+                }
+            }*/
+        }
+
+    }
+}
+void Project::mergeClouds(QString treeName, QString joinCloud)
+{
+    pcl::PointCloud<pcl::PointXYZI>::Ptr tree (new pcl::PointCloud<pcl::PointXYZI>);
+    tree = get_Cloud(treeName).get_Cloud();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr join (new pcl::PointCloud<pcl::PointXYZI>);
+    join = get_Cloud(joinCloud).get_Cloud();
+    *tree += *join;
+
+    get_Cloud(treeName).set_Cloud(tree);
+
+    QString path_out = QString ("%1\\%2").arg(get_Path()).arg(treeName);
+    pcl::io::savePCDFileBinaryCompressed(path_out.toUtf8().constData(), *tree);
+}
+bool Project::isID(QString &str)
+{
+    QString id = str.left(2);
+    QString number = getIDnumber(str);
+    if((id == "id" || id == "ID") && number.size() > 0 )
+    {
+        return true;
+    }
+    else return false;
+}
+QString Project::getIDnumber(QString str)
+{
+    QString id;
+    for(int i=0; i<str.size();i++)
+    {
+        if( str.at(i).isNumber() == true){
+           id.push_back(str.at(i));
+        }
+    }
+    return id;
+}
+void Project::deleteCloudNoQuestions(QString name) // !!!!!!!!!!!!!!!!!!
+{
+    //otevrit soubor proj.3df vymazat radek vyhledany podle zadaneho textu
+  QString filepath = QString ("%1/%2.3df").arg(m_path).arg(m_projectName);
+  QString fileout = QString ("%1/%2_t.3df").arg(m_path).arg(m_projectName);
+
+  QFile file(filepath);
+  if(!file.exists())
+  {
+    filepath = QString("%1\\proj.3df").arg(get_Path());
+    fileout = QString("%1\\proj_t.3df").arg(get_Path());
+    QFile file (filepath);
+  }
+  QFile fileU(fileout);
+  file.open(QIODevice::ReadWrite| QIODevice::Text);
+  fileU.open(QIODevice::ReadWrite| QIODevice::Text);
+  QTextStream in(&file);
+  QTextStream out(&fileU);
+
+  while(!in.atEnd())
+  {
+    QString line = in.readLine();
+    if(!line.contains(name))
+      out << line<<"\n";
+  }
+  //smazat proj a prejmenovat proj_t
+  file.close();
+  fileU.close();
+  QFile::remove(filepath);
+  QFile::rename(fileout,filepath);
+
+  QString filep = QString ("%1/%2").arg(m_path).arg(name);
+  QFile::remove(filep);
+
+  std::vector<Cloud> baseCloud;
+  for (int i = 0; i < m_baseCloud.size(); i++)
+  {
+     if(m_baseCloud.at(i).get_name() != name)
+     {
+       baseCloud.push_back(m_baseCloud.at(i));
+     }
+  }
+  m_baseCloud.swap(baseCloud);
+
+  std::vector<Cloud> terrainCloud;
+  for (int i = 0; i < m_terrainCloud.size(); i++)
+  {
+     if(m_terrainCloud.at(i).get_name() != name)
+     {
+       terrainCloud.push_back(m_terrainCloud.at(i));
+     }
+  }
+  m_terrainCloud.swap(terrainCloud);
+
+  std::vector<Cloud> vegeCloud;
+  for (int i = 0; i < m_vegeCloud.size(); i++)
+  {
+     if(m_vegeCloud.at(i).get_name() != name)
+     {
+       vegeCloud.push_back(m_vegeCloud.at(i));
+     }
+  }
+  m_vegeCloud.swap(vegeCloud);
+
+  std::vector<Cloud> ostCloud;
+  for (int i = 0; i < m_ostCloud.size(); i++)
+  {
+     if(m_ostCloud.at(i).get_name() != name)
+     {
+       ostCloud.push_back(m_ostCloud.at(i));
+     }
+  }
+  m_ostCloud.swap(ostCloud);
+
+  std::vector<Tree> stromy;
+  for (int i = 0; i < m_stromy.size(); i++)
+  {
+     if(m_stromy.at(i).get_name() != name)
+     {
+       stromy.push_back(m_stromy.at(i));
+     }
+  }
+  m_stromy.swap(stromy);
+}
 
 
 ProjFile::ProjFile(QString name)

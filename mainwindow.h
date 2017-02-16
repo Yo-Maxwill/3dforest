@@ -131,7 +131,7 @@ private slots:
     //! Automatic tree selection based on point distance.
     /*! Slot for input parameters of autzomatic segmentation. */
   void segmentation();
-
+    void manualSelectExit();
 
 // TREE ATRIBUTES
     //! Manual editing of tree cloud.
@@ -310,6 +310,8 @@ private slots:
 //MISC
     //! Join two cloud into one.
     /*! join two input clouds into new one.  Slot only displays input dialog for entering clouds and new name.  */
+  void eraseSelectedClouds();
+  void mergeCloudsByID();
   void labelClouds();
   void labelCloudsOFF();
   void mergeClouds();
@@ -323,7 +325,16 @@ private slots:
     /*! For given cloud make new voxelized cloud with given resolution of voxel. */
   void voxelize();
   void accuracy();
+  void duplicatePoints();
 
+  void topView();
+  void bottomView();
+  void frontView();
+  void backView();
+  void sideAView();
+  void sideBView();
+  void perspective();
+  void ortho();
   //! Create concave hull of cloud.
     /*! output is new ost cloud*/
   void set_ConcaveCloud();
@@ -388,6 +399,13 @@ private slots:
     void showPBarValue(int);
     void removePbar();
 
+    // edit bar
+    void nextSlice();
+    void prevSlice();
+    void slice();
+    void sliceStop();
+    void refreshAttTable();
+
 
 private:
   //application widgets and actions
@@ -407,6 +425,7 @@ private:
     //! Import text file.
     /*! Import existing text file into project as a base cloud.  */
   void importTXT(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
+  void importTXTnonStandard(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
     //! Import LAS file.
     /*! Import existing las file into project as a base cloud.  */
   void importLAS(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output);
@@ -463,6 +482,11 @@ private:
     /*! If selected point displays information about cloud containing this point
         \param event pcl::visualization::AreaPickingEvent  */
   void pointEvent(const pcl::visualization::PointPickingEvent& event, void*);
+  void coordianteAxes();
+  void createAttTable();
+  QStandardItemModel* getModel();
+  void createITable();
+  QStandardItemModel*  getIntersectionModel();
 
 //TREEWIDGET
   MyTree *treeWidget; /**< Define MyTree Widget */
@@ -475,9 +499,12 @@ private:
 // EDIT ToolBar
   QToolBar *editBar;/**< Define editBar Widget */
   std::vector<int> undopoint;/**< Vector of points selected during area picking event */
+
+  std::vector< Cloud > m_slides;
+  int m_slicepos;
   bool m_editCloud;
 
-QProgressBar* m_pBar;
+  QProgressBar* m_pBar;
 
 // save functions
 
@@ -494,6 +521,7 @@ QProgressBar* m_pBar;
     /*! Save selected cloud as a new vegetation cloud in project.
         \param s_cloud Input Cloud \param overwrt overwrite existing file  */
   void saveVegeCloud(Cloud *s_cloud, bool overwrt  );
+
 
 
 //cloud names
@@ -563,6 +591,8 @@ QProgressBar* m_pBar;
   //VEGETATION
   QAction *segmentAct;             /**< Save tree attributes into file Act */
   QAction *manualSelAct;      /**< Manual selection of trees Act */
+  QAction *mergeCloudsAct;
+  QAction *eraseSelectedCloudsAct;
   //TREE ATRIBUTES ACTIONS
   QAction *tAAct;             /**< Save tree attributes into file Act */
   QAction *dbhHTAct;          /**< Compute DBH using RHT and display Act */
@@ -602,7 +632,7 @@ QProgressBar* m_pBar;
   QAction *labelONAct;         /**< Change background color Act */
   QAction *labelOFFAct;         /**< Change background color Act */
   QAction *acuracyAct;         /**< Change background color Act */
-
+  QAction *duplicateAct;         /**< Change background color Act */
 
   //ABOUT ACTIONS
   QAction *aboutAct;          /**< About application Act */
@@ -637,9 +667,35 @@ QProgressBar* m_pBar;
   QAction *crownExternalPtsT;
   QAction *crownIntersectionsT;
   QAction *crownIntersectionTableT;
+  //Viewbar actions
+  QToolBar *viewBar;          /**< Toolbar with setting for display*/
+  QAction *frontViewAct;            /**< display/hide crown cloud */
+  QAction *topViewAct;
+  QAction *sideAViewAct;
+  QAction *sideBViewAct;
+  QAction *bottomViewAct;
+  QAction *backViewAct;
+  QAction *perspectiveAct;
+  QAction *orthoAct;
+  // Edit bar
+  QAction *displEC;
+  QAction *nextSliceEC;
+  QAction *prevSliceEC;
+  QAction *undoAct;
+  QAction *stopE;
+  QAction *sliceEC;
 
   QThread *m_thread;
+  bool m_axes=false;
 
+  ///ATRIBUTE TABLE
+  QTableView *m_attributeTable;
+  bool visAtt=false;
+  QDockWidget *DockTableWidget;
+  ///INTERSECTIONTABLE
+  QTableView *m_intersectionTable;
+  bool visIT=false;
+  QDockWidget *DockITableWidget;
  };
 
 #endif // MAINWINDOW_H_INCLUDED

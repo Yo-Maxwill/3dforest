@@ -500,6 +500,7 @@ qWarning() << "stumps hotovo time: " << difference/1000 << "s";
 }
 void Segmentation::angleAdd()
 {
+  qWarning()<<"angle add";
   // ke kazdemu stems pridat centroidy, ktere splnuji že mají podobný úhel jako  stems centroids a jso do urcite vzdálenosti od stems.
     for(int c=0; c < 5; c++)
     {
@@ -739,8 +740,7 @@ time.start();
 }
 bool Segmentation::crowns(std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > &clusters)
 {
-//qWarning()<<"count " <<recursive_count;
-//qWarning()<< "poradove cislo: "<< recursive_count;
+
   bool change = false;
   std::vector<int> pointID;
   std::vector<int> clusterID;
@@ -756,8 +756,6 @@ bool Segmentation::crowns(std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > &c
     {
       for(int s = 0; s < clusters.size(); s++)
       {
-        if(m_finishedStem.at(s) == true)
-          continue;
         pcl::octree::OctreePointCloudSearch<pcl::PointXYZI> os (m_cm);
         os.setInputCloud(clusters.at(s));
         os.addPointsFromInputCloud();
@@ -777,9 +775,10 @@ bool Segmentation::crowns(std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > &c
         }
       }
     }
+
     #pragma omp critical
     {
-      if(point_private.size()!=0)
+      if(point_private.size() > 0)
       {
         pointID.insert(pointID.end(), point_private.begin(), point_private.end());
         clusterID.insert(clusterID.end(), cluster_private.begin(), cluster_private.end());
@@ -787,7 +786,6 @@ bool Segmentation::crowns(std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > &c
       }
     }
   }
-
   // naplneni noveho vectoru mracen a vymazani bodu z m_segments
   std::vector< pcl::PointCloud<pcl::PointXYZI>::Ptr > clusters2;
 std::vector< std::vector<int> > segments(m_segments.size());

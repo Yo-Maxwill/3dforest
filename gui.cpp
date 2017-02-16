@@ -15,7 +15,8 @@
 //////////////////////////////////////////////////////////////////////
 #include "gui.h"
 #include "cloud.h"
-
+#include <vtkAxesActor.h>
+#include <vtkOrientationMarkerWidget.h>
 
 ////INPUTDIALOG
 InputDialog::InputDialog( QWidget *parent)
@@ -115,6 +116,7 @@ void InputDialog::set_inputCloud1(QString label, QStringList li)
   QLabel *label1 = new QLabel();
   label1->setText(label);
   inputCloud1= new QComboBox();
+  inputCloud1->setMinimumWidth(300);
   inputCloud1->insertItems(0,li);
 //layout
   InputLayout->addWidget(label1);
@@ -130,6 +132,7 @@ void InputDialog::set_inputList(QString label, QStringList li)
   listWidget->insertItems(0,li);
   listWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
   listWidget->setSortingEnabled(true);
+  listWidget->sortItems (Qt::AscendingOrder );
 //layout
   InputLayout->addWidget(labelList);
   InputLayout->addWidget(listWidget);
@@ -183,12 +186,21 @@ void InputDialog::set_description(QString text)
   // text about function
   QLabel *label = new QLabel();
   label->setText(text);
-  label->setMaximumSize(180,300);
+  //label->setMaximumSize(180,300);
+  label->setFixedWidth(180);
   label->setWordWrap(true);
   label->setMargin(10);
   label->setAlignment(Qt::AlignJustify | Qt::AlignTop);
+
+  QScrollArea* scr = new QScrollArea;
+  scr->setWidget(label);
+  scr->setFixedSize(200,300);
+  scr->setFrameShape(QFrame::NoFrame);
+  scr->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+
   //layout
-  inputareaLayout->addWidget(label);
+  inputareaLayout->addWidget(scr);
 
 }
 
@@ -2093,10 +2105,21 @@ QList<QString> ExportCrownAttr:: get_inputList()
 Visualizer::Visualizer()
 {
   PCLVisualizer ("3D Viewer", false);
-  //coordinateMark();
+
+
+
+
+
 }
 void Visualizer::coordinateMark()
 {
+
+// axes coordinate system
+
+
+
+
+//
 //  if ( !axes_widget_ )
 //    {
 //    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New ();
