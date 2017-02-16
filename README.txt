@@ -13,7 +13,7 @@ Another dependencies are: VTK, Qt, Boost, Flann, libLAS and Eigen.
 
 
 CHANGELOG:
-v0.42 - export convex hull for all tree bug fied, description of methods improved, LSR method improved using taub fit,new convexhull method, adding stop edit action menu, import of txt improved, axis widget added, attribute and intersection tables are now docked. 
+v0.42 - export convex hull for all tree bug fixed, description of methods improved, LSR method improved using taub fit,new convexhull method, adding stop edit action menu, import of txt improved, axis widget added, attribute and intersection tables are now docked. 
 v0.41 - terrain extraction bug fixing, automated segmentation bug fixing, 
 v0.40 - Crown attributes of tree - surface and volume using two methods (concave and section convex hulls), crown intersection area estimation, improved performace using threads and multicore programing, automated segmentation of trees from vegetation, 
 defined views, improve of terrain extraction division to slices, duplicate points removal, multiple selection of clouds and trees, bug fixing, and lots of other improvements.
