@@ -16,7 +16,7 @@
 #ifndef HOUGHTRANSFORM_H_INCLUDED
 #define HOUGHTRANSFORM_H_INCLUDED
 
-#include "Cloud.h"
+#include "cloud.h"
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
