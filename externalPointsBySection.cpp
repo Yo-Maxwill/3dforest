@@ -56,7 +56,7 @@ void ExternalPointsBySections::computeExternalPoints(pcl::PointCloud<pcl::PointX
         pcl::PointCloud<pcl::PointXYZI>::Ptr sectionCloud (new pcl::PointCloud<pcl::PointXYZI>);
         fillSectionCloud(cloud,sectionCloud,sectionHeight,HL.Lowest);
 
-        if(sectionCloud->points.size() > 3)
+        if(sectionCloud->points.size() > 5)
         {
             GeomCalc::cloudIntesityEqualToZCoordinate(sectionCloud);
             ConcaveHull ch(CloudOperations::getCloudCopy(sectionCloud),"name",m_concaveHullThresholdDist);

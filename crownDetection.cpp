@@ -2,6 +2,7 @@
 
 CrownAutomaticDetection::CrownAutomaticDetection(pcl::PointCloud<pcl::PointXYZI>::Ptr tree,stred dbhLSR,pcl::PointXYZI treePosition)
 {
+  //std::cout<<"CrownAutomaticDetection::CrownAutomaticDetection()\n";
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(CloudOperations::getCloudCopy(tree));
     m_crown = cloud;
 
@@ -19,14 +20,17 @@ CrownAutomaticDetection::CrownAutomaticDetection(pcl::PointCloud<pcl::PointXYZI>
 }
 pcl::PointCloud<pcl::PointXYZI>::Ptr CrownAutomaticDetection::getCrown()
 {
+ // std::cout<<"CrownAutomaticDetection::getCrown()\n";
     return m_crown;
 }
 pcl::PointXYZI CrownAutomaticDetection::getStemHighestPoint()
 {
+  //std::cout<<"CrownAutomaticDetection::getStemHighestPoint()\n";
     return m_stemHighestPoint;
 }
 void CrownAutomaticDetection::detectCrown(pcl::PointCloud<pcl::PointXYZI>::Ptr tree)
 {
+  //std::cout<<"CrownAutomaticDetection::detectCrown()\n";
     float zmax = m_startHeightForDetailedSearch +0.1;
     stred s1 = getDiameterFrom(tree,m_startHeightForDetailedSearch,zmax);
     zmax += 0.1;
@@ -35,10 +39,9 @@ void CrownAutomaticDetection::detectCrown(pcl::PointCloud<pcl::PointXYZI>::Ptr t
     float a=0;
     do
     {
-
         if (a >0) {s1 =s;}
-        pcl::PointCloud<pcl::PointXYZI>::Ptr selectedPoints (new pcl::PointCloud<pcl::PointXYZI>);
         float n = (float) tree->points.size();
+        std::vector<bool> stem (n);
         for (int i=0; i<n; i++)
         {
             pcl::PointXYZI bod = tree->points.at(i);
@@ -49,43 +52,85 @@ void CrownAutomaticDetection::detectCrown(pcl::PointCloud<pcl::PointXYZI>::Ptr t
                 if (a == 0) {dist =0;}
                 if (dist < (s1.r*2))
                 {
-                    selectedPoints->points.push_back(bod);
-                    m_stem->points.push_back(bod);
-                    tree->points.erase(tree->points.begin()+i);
-                    n--;
-                    if(i>0){i--;}
+                  stem.at(i )=true;
+//                    selectedPoints->points.push_back(bod);
+//                    m_stem->points.push_back(bod);
+//                    tree->points.erase(tree->points.begin()+i);
+//                    n--;
+//                    if(i>0){i--;}
                 }
             }
         }
+        pcl::PointCloud<pcl::PointXYZI>::Ptr selectedPoints (new pcl::PointCloud<pcl::PointXYZI>);
+         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
+        for(int q=0; q < n; q++)
+        {
+          if( stem.at(q) == true)
+          {
+            selectedPoints->points.push_back(tree->points.at(q));
+            m_stem->points.push_back(tree->points.at(q));
+          }
+
+          else
+            cloud_->points.push_back(tree->points.at(q));
+        }
+        *tree = *cloud_;
+
         s = getCenterByLSR(selectedPoints);
         sPoint =predictNextStemCenter(s1,s);
         a++;
         zmax +=0.1;
     }while((s1.r*1.25) > s.r);
-    cloudHighestAndLowestZValue hl = GeomCalc::findHighestAndLowestPoints(m_stem);
-    m_stemHighestPoint = hl.highestPoint;
+
+    if(m_stem->points.size() > 0)
+    {
+      cloudHighestAndLowestZValue hl = GeomCalc::findHighestAndLowestPoints(m_stem);
+      m_stemHighestPoint = hl.highestPoint;
+    }
+    else
+    {
+      cloudHighestAndLowestZValue hl = GeomCalc::findHighestAndLowestPoints(tree);
+      m_stemHighestPoint = hl.lowestPoint;
+    }
+
     //QString xxx = QString("stem highest %1\n l %2 h %3").arg(m_stemHighestPoint).arg(hl.Lowest).arg(hl.Highest);
     //QMessageBox::information(0,("WARNING"),xxx);
 }
 stred CrownAutomaticDetection::getDiameterFrom(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float zmin, float zmax)
 {
+  // std::cout<<"CrownAutomaticDetection::getDiameterFrom()\n";
     pcl::PointCloud<pcl::PointXYZI>::Ptr selectedPoints (new pcl::PointCloud<pcl::PointXYZI>);
     float n = (float) cloud->points.size();
+    std::vector<bool> stem (n);
     for(int i=0; i<n;i++)
     {
         pcl::PointXYZI p = cloud->points.at(i);
         if(p.z > zmin && p.z<zmax){
-            selectedPoints->points.push_back(p);
-            cloud->points.erase(cloud->points.begin()+i);
-            n--;
-            i--;
+//            selectedPoints->points.push_back(p);
+//            cloud->points.erase(cloud->points.begin()+i);
+//            n--;
+//            i--;
+              stem.at(i)= true;
         }
+        else
+          stem.at(i)= false;
     }
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
+    for(int q=0; q < n; q++)
+    {
+      if( stem.at(q) == true)
+        selectedPoints->points.push_back(cloud->points.at(q));
+      else
+        cloud_->points.push_back(cloud->points.at(q));
+    }
+    *cloud = *cloud_;
     stred s = getCenterByLSR(selectedPoints);
     return s;
 }
 void CrownAutomaticDetection::findDilatation()
 {
+ // std::cout<<"CrownAutomaticDetection::findDilatation()\n";
     for(int i=1; i<m_diff.size(); i++)
     {
         if(m_diff.at(i)>(m_diff.at(i-1)*1.25))
@@ -103,6 +148,7 @@ void CrownAutomaticDetection::findDilatation()
 }
 void CrownAutomaticDetection::computeDiameters(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float cloudHighest, float cloudLowest)
 {
+  //std::cout<<"CrownAutomaticDetection::computeDiameters()\n";
     float zmin = cloudLowest;
       do{
             pcl::PointCloud<pcl::PointXYZI>::Ptr test (new pcl::PointCloud<pcl::PointXYZI>);
@@ -136,6 +182,7 @@ void CrownAutomaticDetection::computeDiameters(pcl::PointCloud<pcl::PointXYZI>::
 }
 float CrownAutomaticDetection::computeXAxisExtension(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+//  std::cout<<"CrownAutomaticDetection::computeXAxisExtension()\n";
     float xmin = cloud->points.at(0).x;
     float xmax = cloud->points.at(0).x;
     for(int i=0; i<cloud->points.size();i++)
@@ -151,6 +198,7 @@ float CrownAutomaticDetection::computeXAxisExtension(pcl::PointCloud<pcl::PointX
 }
 float CrownAutomaticDetection::computeYAxisExtension(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+  //std::cout<<"CrownAutomaticDetection::computeYAxisExtension()\n";
     float ymin = cloud->points.at(0).y;
     float ymax = cloud->points.at(0).y;
     for(int i=0; i<cloud->points.size();i++)
@@ -166,21 +214,36 @@ float CrownAutomaticDetection::computeYAxisExtension(pcl::PointCloud<pcl::PointX
 }
 void CrownAutomaticDetection::separateStemPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, float cloudLowest)
 {
+  // std::cout<<"CrownAutomaticDetection::separateStemPoints()\n";
     int s = cloud->points.size();
+    std::vector<bool> stem (s);
+    //#pragma omp parallel for
     for(int i=0; i<s;i++)
     {
         pcl::PointXYZI p = cloud->points.at(i);
         if(p.z<m_startHeightForDetailedSearch)
         {
-            cloud->points.erase(cloud->points.begin()+i);
-            s--;
-            i--;
-            m_stem->points.push_back(p);
+          stem.at(i) = false;
+           // cloud->points.erase(cloud->points.begin()+i);
+           // s--;
+           // i--;
+            //m_stem->points.push_back(p);
         }
+        else{stem.at(i) =true;}
     }
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>);
+    for(int q=0; q < s; q++)
+    {
+      if( stem.at(q) == true)
+        cloud_->points.push_back(cloud->points.at(q));
+      else
+        m_stem->points.push_back(cloud->points.at(q));
+    }
+    *cloud = *cloud_;
 }
 stred CrownAutomaticDetection::getCenterByLSR(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+ // std::cout<<"CrownAutomaticDetection::getCenterByLSR()\n";
     LeastSquaredRegression *lr = new LeastSquaredRegression();
     lr->setCloud(cloud);
     lr->compute();
@@ -188,6 +251,7 @@ stred CrownAutomaticDetection::getCenterByLSR(pcl::PointCloud<pcl::PointXYZI>::P
 }
 void CrownAutomaticDetection::erasePointsUnder1_3m(pcl::PointCloud<pcl::PointXYZI>::Ptr tree, stred dbhLSR)
 {
+ // std::cout<<"CrownAutomaticDetection::erasePointsUnder1_3m()\n";
     float n = (float) tree->points.size();
     for (int i=0; i<n; i++)
         {
@@ -203,6 +267,7 @@ void CrownAutomaticDetection::erasePointsUnder1_3m(pcl::PointCloud<pcl::PointXYZ
 }
 pcl::PointXYZI CrownAutomaticDetection::predictNextStemCenter(stred A, stred B)
 {
+ // std::cout<<"CrownAutomaticDetection::predictNextStemCenter()\n";
     float vx =B.a-A.a;
     float vy =B.b-A.b;
     float vz =B.z-A.z;
@@ -214,7 +279,7 @@ pcl::PointXYZI CrownAutomaticDetection::predictNextStemCenter(stred A, stred B)
 
     return point;
 }
-/*void CrownAutomaticDetection::computeCrownHeights(pcl::PointXYZI treePosition)
+/*void CrownAutomaticDetection::computeCstem.at(i) =false;rownHeights(pcl::PointXYZI treePosition)
 {
     //Find highest and lowest point in cloud
     float Highest = 0;

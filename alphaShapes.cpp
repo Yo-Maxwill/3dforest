@@ -1,32 +1,41 @@
 #include "alphaShapes.h"
+#include <vtkCleanPolyData.h>
 
 // 3D CONVEXHULL
 ConvexHull3D::ConvexHull3D(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+ std::cout<<"ConvexHull3D::ConvexHull3D()\n";
     m_surface = 0;
     m_volume = 0;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr clo (new pcl::PointCloud<pcl::PointXYZI>);
+   // pcl::PointCloud<pcl::PointXYZI>::Ptr clo (new pcl::PointCloud<pcl::PointXYZI>);
    // m_cloudProjected = clo;
     createConvexHull(cloud);
 }
 void ConvexHull3D::createConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cl)
 {
+   std::cout<<"ConvexHull3D::createConvexHull()\n";
+   std::cout<<"ConvexHull3D::createConvexHull() cl: " <<cl->points.size() << "\n";
     // pcl cloud to VTK points
     vtkSmartPointer<vtkPoints> pointsVTK = vtkSmartPointer< vtkPoints >::New();
-    for(int i=0; i<cl->points.size();i++)
+    for(int i=0; i < cl->points.size();i++)
     {
         pcl::PointXYZI p = cl->points.at(i);
         pointsVTK->InsertNextPoint(p.x, p.y, p.z);
     }
+
+    std::cout<<"ConvexHull3D::createConvexHull() poladata \n";
     //VTK Points to polydata
     vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
     polydata->SetPoints(pointsVTK);
+
     //DELAUNAY
+    std::cout<<"ConvexHull3D::createConvexHull() delaunay3D \n";
     vtkSmartPointer<vtkDelaunay3D> delaunay3D =vtkSmartPointer<vtkDelaunay3D>::New();
     delaunay3D->SetInputData(polydata);
     delaunay3D->SetAlpha(0);
     delaunay3D->Update();
     //Create surface from
+    std::cout<<"ConvexHull3D::createConvexHull() surfaceFilter \n";
     vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     surfaceFilter->SetInputConnection(delaunay3D->GetOutputPort());
     surfaceFilter->Update();
@@ -36,7 +45,9 @@ void ConvexHull3D::createConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cl)
     vtkSmartPointer<vtkMassProperties> mp =  vtkSmartPointer<vtkMassProperties>::New();
     mp->SetInputData(polydataOut);
     m_surface = mp->GetSurfaceArea();
+    std::cout<<"ConvexHull3D::createConvexHull()  m_surface: " << m_surface<< "\n";
     m_volume = mp->GetVolume();
+    std::cout<<"ConvexHull3D::createConvexHull()  m_volume: " << m_volume<< "\n";
     //Convert to pclMesh
     pcl::PolygonMesh triangles;
     pcl::VTKUtils::vtk2mesh(polydataOut,triangles);

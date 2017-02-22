@@ -48,8 +48,8 @@ float GeomCalc::computeClockwiseAngle(pcl::PointXYZI pointA, pcl::PointXYZI poin
 cloudHighestAndLowestZValue GeomCalc::findHighestAndLowestPoints (pcl::PointCloud<pcl::PointXYZI>::Ptr cloudXYZI)
 {
     cloudHighestAndLowestZValue HL;
-    HL.Highest = -9999;
-    HL.Lowest = 9999;
+    HL.Highest = -999999;
+    HL.Lowest = 9999999;
     for(int i=0; i<cloudXYZI->points.size();i++)
        {
            if (cloudXYZI->points.at(i).z < HL.Lowest){
@@ -61,6 +61,7 @@ cloudHighestAndLowestZValue GeomCalc::findHighestAndLowestPoints (pcl::PointClou
                 HL.highestPoint = cloudXYZI->points.at(i);
            }
        }
+
    return HL;
 }
 void GeomCalc::cloudIntesityEqualToZCoordinate(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
@@ -420,7 +421,7 @@ TriangulatedPolygon::TriangulatedPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr po
 {
     polygonTriangulation(polygon);
     QString xx = QString("triangles %1").arg(m_triangles.size());
-    //QMessageBox::information(0,("WARNING"),xx);
+    QMessageBox::information(0,("WARNING"),xx);
 }
 //GET
 pcl::PointCloud<pcl::PointXYZI>::Ptr TriangulatedPolygon::getTriangleAt(int i)

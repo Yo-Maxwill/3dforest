@@ -5,6 +5,7 @@
 Crown::Crown (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, pcl::PointXYZI treePosition, pcl::PointXYZI stemHighestPoint)
 : Cloud(cloud, name)
 {
+  //std::cout<<"Crown::Crown (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, pcl::PointXYZI treePosition, pcl::PointXYZI stemHighestPoint)\n";
     m_crownCloud = new Cloud(cloud, name);
     m_treePosition = treePosition;
     m_volumeVoxels = 0;
@@ -13,33 +14,58 @@ Crown::Crown (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, pcl::Poi
     m_thresholdDistance = 1;//m
     m_sectionsPolyhedron = 0;
     m_convexhull3D = 0;
+if(cloud->points.size() > 5)
+{
+  m_convexhull = new ConvexHull(cloud);
+  m_externalSections = new ExternalPointsBySections(CloudOperations::getCloudCopy(cloud),m_sectionHeight,m_thresholdDistance);
+  computeCrownPosition();
 
-    m_convexhull = new ConvexHull(cloud);
-    m_externalSections = new ExternalPointsBySections(CloudOperations::getCloudCopy(cloud),m_sectionHeight,m_thresholdDistance);
-    computeCrownPosition();
+  computeCrownHeights(treePosition,stemHighestPoint);
+  computeCrownXYLenghtAndWidth();
+}
 
-    computeCrownHeights(treePosition,stemHighestPoint);
-    computeCrownXYLenghtAndWidth();
 }
 Crown::~Crown()
 {
-    delete m_crownCloud;
-    delete m_convexhull;
-    delete m_concavehull;
+ //  std::cout<<"Crown::~Crown()\n";
+   // delete m_crownCloud;
+   // delete m_convexhull;
+   // delete m_concavehull;
 }
 // COMPUTE
 void Crown::computeConvexhull3D(bool useFullCrownCloud)
 {
-    if(useFullCrownCloud == true || m_externalSections->getExternalPtsAll()->points.size()<500){
+  std::cout<<"Crown::computeConvexhull3D()\n";
+  if(m_crownCloud->get_Cloud()->points.size() <8)
+  {
+    return;
+  }
+ // std::cout<<"useFullCrownCloud: "<< useFullCrownCloud<< "\n";
+    if(useFullCrownCloud == true ){
         m_convexhull3D = new ConvexHull3D(m_crownCloud->get_Cloud());
-    }else{
-         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(CloudOperations::getCloudCopy(m_externalSections->getExternalPtsAll()));
-         addFirstAndLastSectionPointsAll(cloud);
-         m_convexhull3D = new ConvexHull3D(cloud);
+    }
+    else{
+          std::cout<<"m_crownCloud->get_Cloud()->points.size()  "<<m_crownCloud->get_Cloud()->points.size()<<"\n";
+
+          ExternalPointsBySections  *es = new ExternalPointsBySections(CloudOperations::getCloudCopy(m_crownCloud->get_Cloud()),1,1);
+          std::cout<<"es->getSectionsExternalPtsSize()  "<< es->getSectionsExternalPtsSize()<<"\n";
+          std::cout<<"es->getExternalPtsAll()->points.size()  "<< es->getExternalPtsAll()->points.size()<<"\n";
+          if(es->getSectionsExternalPtsSize() < 2 || es->getExternalPtsAll()->points.size() < 5)
+          {
+             m_convexhull3D = new ConvexHull3D(m_crownCloud->get_Cloud());
+          }
+          else
+          {
+            pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(CloudOperations::getCloudCopy(es->getExternalPtsAll()));
+            addFirstAndLastSectionPointsAll(cloud);
+            m_convexhull3D = new ConvexHull3D(cloud);
+          }
+          delete es;
     }
 }
 void Crown::addFirstAndLastSectionPointsAll(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+  std::cout<<"Crown::addFirstAndLastSectionPointsAll()\n";
     if(m_sectionHeight == 1){
         pcl::PointCloud<pcl::PointXYZI>::Ptr c0(CloudOperations::getCloudCopy(m_externalSections->getSectionAt(0)));
         pcl::PointCloud<pcl::PointXYZI>::Ptr c1(CloudOperations::getCloudCopy(m_externalSections->getSectionAt(1)));
@@ -63,6 +89,7 @@ void Crown::addFirstAndLastSectionPointsAll(pcl::PointCloud<pcl::PointXYZI>::Ptr
 }
 void Crown::computeSectionsAttributes(pcl::PointXYZI treePosition)
 {
+  std::cout<<"Crown::computeSectionsAttributes()\n";
     if(m_sectionHeight != 1 && m_thresholdDistance !=1)
     {
         m_externalSections = new ExternalPointsBySections(CloudOperations::getCloudCopy(m_crownCloud->get_Cloud()),m_sectionHeight,m_thresholdDistance);
@@ -74,40 +101,48 @@ void Crown::computeSectionsAttributes(pcl::PointXYZI treePosition)
 }
 void Crown::computeSurfaceAndVolumeBySections()
 {
+  std::cout<<"Crown::computeSurfaceAndVolumeBySections()\n";
     ExternalPointsBySections *ep = new ExternalPointsBySections(m_crownCloud->get_Cloud(),m_sectionHeight,m_thresholdDistance);
+std::cout<<"Crown::computeSurfaceAndVolumeBySections() getSectionsExternalPtsSize() "<< ep->getSectionsExternalPtsSize()<<"\n";
+if(ep->getSectionsExternalPtsSize() <2 )
+  return;
 
     for(int i=0; i<ep->getSectionsExternalPtsSize();i++)
     {
         computeVolumeBySections(ep->getAreaSectionAt(i));
         m_sectionsPolyhedron->addSectionCloud(ep->getSectionExternalPtsAt(i));
     }
+    delete ep;
     m_sectionsPolyhedron->computeSurfaceTriangulation();
 }
 void Crown::computeCrownHeights(pcl::PointXYZI treePosition, pcl::PointXYZI stemHighestPoint)
 {
+  // std::cout<<"Crown::computeCrownHeights()\n";
     //Find highest and lowest point in cloud
     cloudHighestAndLowestZValue HL = GeomCalc::findHighestAndLowestPoints(m_crownCloud->get_Cloud());
     //Compute and set heights
-    m_crownTotalHeight = HL.Highest-HL.Lowest;
-    m_bottomHeight = stemHighestPoint.z-treePosition.z;
-    m_crownHeight = HL.Highest-stemHighestPoint.z;
+    m_crownTotalHeight = HL.Highest - HL.Lowest;
+    m_bottomHeight = stemHighestPoint.z - treePosition.z;
+    m_crownHeight = HL.Highest - stemHighestPoint.z;
 
 }
 void Crown::computeCrownXYLenghtAndWidth()
 {
+  //std::cout<<"Crown::computeCrownXYLenghtAndWidth()\n";
     //copy points from m_crownCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     cloud = m_crownCloud->get_Cloud();
     //initialize hull object and create convexhull
-    ConvexHull *h = new ConvexHull(cloud);
+   // ConvexHull *h = new ConvexHull(cloud);
     //find point with longest distance and set it as m_crownLenghtXY
-    pointsWithLongestDist PT = GeomCalc::findPointsWithLongestDistance(h->getPolygon());
+    pointsWithLongestDist PT = GeomCalc::findPointsWithLongestDistance(m_convexhull->getPolygon());
     m_crownLenghtXY = GeomCalc::computeDistance2Dxy(PT.pointA,PT.pointB);
     //compoute crown width from convex polygon
-    computeCrownWidth(h->getPolygon(),PT.pointA,PT.pointB);
+    computeCrownWidth(m_convexhull->getPolygon(),PT.pointA,PT.pointB);
 }
 void Crown::computeCrownWidth(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointXYZI &pointA, pcl::PointXYZI &pointB)
 {
+  //std::cout<<"Crown::computeCrownWidth()\n";
     //find sequence number of points with longest distance
     float itA, itB;
     for (int i=0; i<cloud->points.size();i++)
@@ -133,11 +168,13 @@ void Crown::computeCrownWidth(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::P
 }
 void Crown::computeCrownPosition()
 {
+ // std::cout<<"Crown::computeCrownPosition()\n";
     //compute average XY coordinates as crown position, Z coordinates is equal to tree Z position
     float x =0;
     float y =0;
     float z =0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(m_externalSections->getExternalPtsAll());
+    #pragma omp parallel for shared (x,y,z)
     for (int i =0; i<cloud->points.size(); i++)
     {
         pcl::PointXYZI bod = cloud->points.at(i);
@@ -156,6 +193,7 @@ void Crown::computeCrownPosition()
 }
 void Crown::computePosDeviation()
 {
+  //std::cout<<"Crown::computePosDeviation()\n";
     // Crown position
     pcl::PointXYZI crownP = m_poseCrown;
     // point for computing back vector (0,1) from tree position
@@ -167,12 +205,14 @@ void Crown::computePosDeviation()
 }
 void Crown::computeVolumeBySections(float area)
 {
+  //std::cout<<"Crown::computeVolumeBySections()\n";
     float m = m_volumeSections;
     float sliceVol = area*m_sectionHeight;
     m_volumeSections = sliceVol+m;
 }
 void Crown::computeVolumeByVoxels(float resolution)
 {
+  //std::cout<<"Crown::computeVolumeByVoxels()\n";
     // Copy base crown cloud for voxelization
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
     cloud = m_crownCloud->get_Cloud();
@@ -264,6 +304,7 @@ ConcaveHull Crown::getCrownConcavehull()
 }
 PolyhedronFromSections Crown::getPolyhedronFromSections()
 {
+ // std::cout<<"Crown::getPolyhedronFromSections()\n";
     return *m_sectionsPolyhedron;
 }
 float Crown::getSectionHeight()

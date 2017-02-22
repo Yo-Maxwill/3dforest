@@ -4,11 +4,13 @@
 //CLASS CONVEXHULL*/
 ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+ // std::cout<<"ConvexHull::ConvexHull()\n";
   //  QString hullName = QString("%1_hull").arg(name);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_h(new pcl::PointCloud<pcl::PointXYZI>);
     m_convexhull = cloud_h;
     m_mesh = new pcl::PolygonMesh;
     m_polygonArea = 0;
+
 
     pcl::PointXYZI minp,maxp;
     pcl::getMinMax3D(*cloud,minp, maxp);
@@ -17,10 +19,12 @@ ConvexHull::ConvexHull (pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 ConvexHull::~ConvexHull()
 {
     //delete m_convexhull;
+    delete m_mesh;
 }
 //COMPUTE
 void ConvexHull::computeAttributes(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,float zHeight)
 {
+  //std::cout<<"ConvexHull::computeAttributes()\n";
     // voxelize to 1 cm
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloudFiltered (new pcl::PointCloud<pcl::PointXYZI>);
     CloudOperations::voxelizeCloud(cloud,cloudFiltered,0.01f,0.01f,100.0f);
@@ -41,14 +45,16 @@ void ConvexHull::computeAttributes(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,fl
 }
 void ConvexHull::getBackIntensityFromOrigCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr originalCloud)
 {
+ // std::cout<<"ConvexHull::getBackIntensityFromOrigCloud()\n";
     pcl::KdTreeFLANN<pcl::PointXYZI> kdtree;
     kdtree.setInputCloud (originalCloud);
+    //#pragma omp parallel
     for(int i=0;i<m_convexhull->points.size();i++)
     {
         pcl::PointXYZI searchPoint = m_convexhull->points.at(i);
         std::vector<int> pointIdxNKNSearch(1);
         std::vector<float> pointNKNSquaredDistance(1);
-        kdtree.nearestKSearch (searchPoint, 1, pointIdxNKNSearch, pointNKNSquaredDistance);
+       kdtree.nearestKSearch (searchPoint, 1, pointIdxNKNSearch, pointNKNSquaredDistance);
         m_convexhull->points.at(i).intensity = originalCloud->points[ pointIdxNKNSearch[0] ].intensity;
     }
 }
@@ -67,6 +73,9 @@ float ConvexHull::getPolygonArea()
 }
 void ConvexHull::pclCloudToVTKPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,vtkSmartPointer<vtkPoints> pointsVTK,float newZcoord)
 {
+ // std::cout<<"ConvexHull::pclCloudToVTKPoints()\n";
+  //if(cloud->points.size()==0)
+  //std::cout<<"velikost cloudu:  " << cloud->points.size()<< "\n";
     for(int i=0; i<cloud->points.size(); i++)
     {
         pcl::PointXYZI p = cloud->points.at(i);
@@ -75,24 +84,34 @@ void ConvexHull::pclCloudToVTKPoints(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
 }
 void ConvexHull::makeConvexHullDelaunay2D (vtkSmartPointer<vtkPoints> input,pcl::PointCloud<pcl::PointXYZI>::Ptr outputVertices)
 {
+  //std::cout<<"ConvexHull::makeConvexHullDelaunay2D ()\n";
     //VTK Points to polydata
     vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
     polydata->SetPoints(input);
+
     //delaunay
+   // std::cout<<"ConvexHull::makeConvexHullDelaunay2D () delaunay\n";
     vtkSmartPointer<vtkDelaunay2D> delaunay2D =vtkSmartPointer<vtkDelaunay2D>::New();
     delaunay2D->SetInputData(polydata);
     delaunay2D->SetAlpha(100);
     delaunay2D->Update();
+    //std::cout<<"ConvexHull::makeConvexHullDelaunay2D () surface\n";
     //Create surface from
     vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     surfaceFilter->SetInputConnection(delaunay2D->GetOutputPort());
     surfaceFilter->Update();
     //volume and surface
+   // std::cout<<"ConvexHull::makeConvexHullDelaunay2D () volume and surface\n";
     vtkSmartPointer<vtkMassProperties> mp =  vtkSmartPointer<vtkMassProperties>::New();
     vtkPolyData* polydataToSurface = surfaceFilter->GetOutput();
-    mp->SetInputData(polydataToSurface);
+    mp->SetInputData(surfaceFilter->GetOutput());
     m_polygonArea = mp->GetSurfaceArea();
+    if(m_polygonArea ==0)
+      return;
+
+   // std::cout<<"m_polygonArea:  " << m_polygonArea << "\n";
     //get boundary polygon vertices
+   // std::cout<<"ConvexHull::makeConvexHullDelaunay2D () boundary\n";
     vtkSmartPointer<vtkFeatureEdges> featureEdges =
     vtkSmartPointer<vtkFeatureEdges>::New();
     featureEdges->SetInputConnection(delaunay2D->GetOutputPort());
@@ -103,9 +122,11 @@ void ConvexHull::makeConvexHullDelaunay2D (vtkSmartPointer<vtkPoints> input,pcl:
     featureEdges->Update();
     vtkPolyData* polydataVertices = featureEdges->GetOutput();
     // to pcl mesh
+  //  std::cout<<"ConvexHull::makeConvexHullDelaunay2D () pcl mesh\n";
     pcl::PolygonMesh triangles;
     pcl::VTKUtils::vtk2mesh(polydataVertices,triangles);
     //set surface to M_MESH
+   // std::cout<<"ConvexHull::makeConvexHullDelaunay2D () pcl PCLpointcloud\n";
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloudVertices (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromPCLPointCloud2(triangles.cloud,*outputVertices);
 }
@@ -171,6 +192,7 @@ void ConvexHull::findSecondpointInPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr v
 }
 pcl::PointXYZI ConvexHull::returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud)
 {
+ // std::cout<<"ConvexHull::returnPointLowestYZ()\n";
     float yMin = cloud->points.at(0).y;
     int iter = 0;
     for (int i=0; i < cloud->points.size(); i++)
@@ -192,6 +214,8 @@ pcl::PointXYZI ConvexHull::returnPointLowestYZ(pcl::PointCloud<pcl::PointXYZI>::
 ConcaveHull::ConcaveHull(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, float searchDist)
 : Cloud(cloud, name)
 {
+  //std::cout<<"ConcaveHull::ConcaveHull()\n";
+  //std::cout<<"ConcaveHull::ConcaveHull() cloud size: "<< cloud->points.size()<< "\n";
     QString hullName = QString("%1_hull").arg(name);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_h(new pcl::PointCloud<pcl::PointXYZI>);
     m_concavehull = new Cloud(cloud_h, hullName);
@@ -206,11 +230,13 @@ ConcaveHull::~ConcaveHull()
 //COMPUTE
 void ConcaveHull::computeAttributes()
 {
+  //std::cout<<"ConcaveHull::computeAttributes()\n";
     computeConcaveHull();
     m_polygonArea = GeomCalc::computePolygonArea(m_concavehull->get_Cloud());
 }
 void ConcaveHull::computeConcaveHull()
 {
+  //std::cout<<"ConcaveHull::computeConcaveHull()\n";
     //Copy cloud and create convex hull
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(m_Cloud);
     int sizeOfCloud = cloud->points.size();
@@ -218,6 +244,7 @@ void ConcaveHull::computeConcaveHull()
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud (new pcl::PointCloud<pcl::PointXYZI>);
     hullCloud = c->getPolygon();
+    // std::cout<<"ConcaveHull::computeConcaveHull() hullCloud size: "<< hullCloud->points.size()<< "\n";
 
     if(sizeOfCloud <= hullCloud->points.size() || cloud->points.size() == 1)
     {
@@ -241,6 +268,7 @@ void ConcaveHull::computeConcaveHull()
 }
 void ConcaveHull::edgesBreaking(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl::PointCloud<pcl::PointXYZI>::Ptr hullCloud,float searchDist)
 {
+  //std::cout<<"ConcaveHull::edgesBreaking()\n";
     float n = (float) hullCloud->points.size();
     int a =0;
     do{
@@ -265,6 +293,7 @@ void ConcaveHull::edgesBreaking(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, pcl:
 }
 pcl::PointXYZI ConcaveHull::returnEdgeBreakingPoint(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,pcl::PointXYZI boda, pcl::PointXYZI bodb,float searchDist)
 {
+ // std::cout<<"ConcaveHull::returnEdgeBreakingPoint()\n";
     float Amax = 9999;
     pcl::PointXYZI bodx;
     float distAB =GeomCalc::computeDistance2Dxy(boda,bodb);
@@ -273,7 +302,7 @@ pcl::PointXYZI ConcaveHull::returnEdgeBreakingPoint(pcl::PointCloud<pcl::PointXY
         pcl::PointXYZI bodc =cloud->points.at(g);
         if(GeomCalc::isXYequal(boda,bodc)!=true || GeomCalc::isXYequal(bodb,bodc)!=true)
         {
-            if ((GeomCalc::computeDistance2Dxy(boda,bodc) < searchDist and GeomCalc::computeDistance2Dxy(bodb,bodc) < distAB) or
+            if ((GeomCalc::computeDistance2Dxy(boda,bodc) < searchDist and std::abs(GeomCalc::computeDistance2Dxy(bodb,bodc)) < std::abs(distAB)) or
                 (GeomCalc::computeDistance2Dxy(bodb,bodc) < searchDist and GeomCalc::computeDistance2Dxy(boda,bodc) < distAB))
             {
                 float A =GeomCalc::computeClockwiseAngle(boda,bodc,bodb);
@@ -292,14 +321,17 @@ pcl::PointXYZI ConcaveHull::returnEdgeBreakingPoint(pcl::PointCloud<pcl::PointXY
 //GET
 Cloud ConcaveHull::getPolygon()
 {
+  //std::cout<<"ConcaveHull::getPolygon())\n";
     return *m_concavehull;
 }
 float ConcaveHull::getPolygonArea()
 {
+  //std::cout<<"ConcaveHull::getPolygonArea()\n";
     return m_polygonArea;
 }
 Cloud ConcaveHull::getPolygonSwappedZI()
 {
+  //std::cout<<"ConcaveHull::getPolygonSwappedZI()\n";
      pcl::PointCloud<pcl::PointXYZI>::Ptr c (new pcl::PointCloud<pcl::PointXYZI>);
      c = m_concavehull->get_Cloud();
      for(pcl::PointCloud<pcl::PointXYZI>::iterator it = c->begin(); it != c->end(); it++)
