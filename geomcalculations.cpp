@@ -420,7 +420,7 @@ TriangulatedPolygon::TriangulatedPolygon(pcl::PointCloud<pcl::PointXYZI>::Ptr po
 {
     polygonTriangulation(polygon);
     QString xx = QString("triangles %1").arg(m_triangles.size());
-    QMessageBox::information(0,("WARNING"),xx);
+    //QMessageBox::information(0,("WARNING"),xx);
 }
 //GET
 pcl::PointCloud<pcl::PointXYZI>::Ptr TriangulatedPolygon::getTriangleAt(int i)

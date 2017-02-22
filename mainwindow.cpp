@@ -49,7 +49,8 @@
 #include <pcl/filters/voxel_grid.h>
 
 
-#include <vtkWin32OpenGLRenderWindow.h>
+//#include <vtkWin32OpenGLRenderWindow.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkTIFFWriter.h>
 #include <vtkRenderWindow.h>
 #include <vtkRendererCollection.h>
@@ -81,14 +82,15 @@ BOOST_FUSION_ADAPT_STRUCT(double3, (double, x)(double, y)(double, z))
   Q_INIT_RESOURCE(3dforest);
   setWindowTitle ( tr("3D Forest - Forest lidar data processing tool") );
 //QVTKwidget - visualizer
-  qvtkwidget = new QVTKWidget();
+
+qvtkwidget = new QVTKWidget();
   m_vis  = new Visualizer();
   vtkSmartPointer<vtkRenderWindow> renderWindow = m_vis->getRenderWindow();
+ // coordianteAxes();
 
-  coordianteAxes();
-  m_vis->setShowFPS(false);
   qvtkwidget->SetRenderWindow(renderWindow);
   setCentralWidget(qvtkwidget);
+   m_vis->setShowFPS(false);
   qvtkwidget->show();
 
 // Tree widget
@@ -219,7 +221,7 @@ void MainWindow::openProject(QString path)
       {
         QFileInfo fileInfo (coords.at(1));
         QString name= Proj->get_Path();
-        name.append("\\");
+        name.append("/");
         name.append( fileInfo.fileName());
         QFile f (name);
 
@@ -311,7 +313,7 @@ void MainWindow::importProject()
   wiz->setStartId(3);
   if(wiz->exec() == 1)
   {
-    QString filename = QString("%1\\%2\\%2.3df").arg(wiz->field("newprojectPath").toString()).arg(wiz->field("newprojectname").toString());
+    QString filename = QString("%1/%2/%2.3df").arg(wiz->field("newprojectPath").toString()).arg(wiz->field("newprojectname").toString());
     closeProject();
     openProject(filename);
   }
@@ -384,7 +386,7 @@ QStandardItemModel* MainWindow::getModel()
     if(Proj->get_TreeCloud(row).isCrownExist() == true)
     {
       index= model->index(row,8,QModelIndex());
-      model->setData(index,Proj->get_TreeCloud(row).get_TreeCrown().get_Cloud()->points.size());
+      model->setData(index,(int)Proj->get_TreeCloud(row).get_TreeCrown().get_Cloud()->points.size());
 
                 index= model->index(row,9,QModelIndex());
                 model->setData(index,Proj->get_TreeCloud(row).get_TreeCrown().getCrownBottomHeight());
@@ -466,7 +468,7 @@ void MainWindow::refreshAttTable()
 void MainWindow::importTXT(QString file, pcl::PointCloud<pcl::PointXYZI>::Ptr output)
 {
     boost::iostreams::mapped_file mmap(
-        file.toAscii().constData(),
+        file.toLatin1().constData(),
         boost::iostreams::mapped_file::readonly);
 
     BOOST_AUTO (f, mmap.const_data());
@@ -788,10 +790,10 @@ qWarning()<<"vybrano";
       importPTX(fileName, cloud);
 
 
-    QStringList Fname = fileName.split("\\");
+    QStringList Fname = fileName.split("/");
     QStringList name = Fname.back().split(".");
     //if file exist in project folder, ask for another name
-    QString newFile = QString("%1\\%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
+    QString newFile = QString("%1/%2.pcd").arg(Proj->get_Path()).arg(name.at(0));
     QString newName;
     if(QFile(newFile).exists())
     {
@@ -1029,7 +1031,7 @@ void MainWindow::openCloudFile(QString file, QString type)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   pcl::io::loadPCDFile<pcl::PointXYZI> (file.toUtf8().constData(), *cloud);
 
-  QStringList coords = file.split("\\");
+  QStringList coords = file.split("/");
   QColor col = QColor(rand() %255,rand() %255,rand() %255);
   Cloud *c =new Cloud(cloud,coords.back(),col);
   if(type == "teren")
@@ -1054,7 +1056,7 @@ void MainWindow::openCloudFile(QString file, QString type, QColor col)
   pcl::PointCloud<pcl::PointXYZI>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZI>);
   pcl::io::loadPCDFile<pcl::PointXYZI> (file.toUtf8().constData(), *cloud);
 
-  QStringList coords = file.split("\\");
+  QStringList coords = file.split("/");
   Cloud *c =new Cloud(cloud,coords.back(),col);
 
   if(type == "teren")

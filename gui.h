@@ -17,10 +17,12 @@
 #define GUI_H_INCLUDED
 
 #include <QtGui/QtGui>
-#include <QtGui/QDialog>
-#include <QtGui/QWizard>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QToolBar>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QWizard>
+#include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QToolBar>
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QtWidgets>
 #include <pcl/visualization/pcl_visualizer.h>
 #include "cloud.h"
 

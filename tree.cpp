@@ -18,6 +18,7 @@
 #include "hull.h"
 #include "HoughTransform.h"
 #include "LeastSquareregression.h"
+#include <QtWidgets/QtWidgets>
 
 //Tree
 Tree::Tree(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud, QString name, QColor col)

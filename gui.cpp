@@ -985,7 +985,7 @@ void NewProjectPage::setExistingDirectory()
 void NewProjectPage::nameCheck(QString name)
 {
   bool used=false;
-  QString path = QString("%1\\%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
+  QString path = QString("%1/%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
   QDir myDir(path);
 
   if(myDir.exists())
@@ -1005,7 +1005,7 @@ void NewProjectPage::nameCheck(QString name)
 void NewProjectPage::pathCheck(QString name)
 {
   bool used=false;
-  QString path = QString("%1\\%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
+  QString path = QString("%1/%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
   QDir myDir(path);
 
   if(myDir.exists())
@@ -1025,7 +1025,7 @@ void NewProjectPage::pathCheck(QString name)
 int NewProjectPage::nextId() const
 {
   // create dir in path;
-  QString pathDir = QString("%1\\%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
+  QString pathDir = QString("%1/%2").arg(field("projectPath").toString()).arg(field("projectName").toString());
   QDir myDir(pathDir);
 
   if(!myDir.exists())
@@ -1374,12 +1374,12 @@ void ImportPage::pathCheck(QString name)
 int ImportPage::nextId() const
 {
   // open new project file
-  QString pathDir = QString("%1\\%2").arg(field("newprojectPath").toString()).arg(field("newprojectname").toString());
+  QString pathDir = QString("%1/%2").arg(field("newprojectPath").toString()).arg(field("newprojectname").toString());
   QDir myDir(pathDir);
   if(!myDir.exists())
     myDir.mkpath(".");
 
-  QString fileN =QString("%1\\%2.3df").arg(pathDir).arg(field("newprojectname").toString());
+  QString fileN =QString("%1/%2.3df").arg(pathDir).arg(field("newprojectname").toString());
   QFile filenew (fileN);
   filenew.open(QIODevice::WriteOnly| QIODevice::Text);
   QTextStream out(&filenew);
@@ -1417,9 +1417,15 @@ int ImportPage::nextId() const
     {
       if(coords.size() == 5) //type, path, r,g,b
       {
-        QStringList apth = coords.at(1).split("\\");
-        QString new_file = QString("%1\\%2").arg(pathDir).arg(apth.at(apth.size()-1));
-        QString old_file = QString("%1\\%2").arg(fileold_path).arg(apth.at(apth.size()-1));
+        QStringList apth = coords.at(1).split("/");
+        if(apth.size() == 1)
+        {
+            apth.clear();
+            apth = coords.at(1).split("\\");
+        }
+
+        QString new_file = QString("%1/%2").arg(pathDir).arg(apth.at(apth.size()-1));
+        QString old_file = QString("%1/%2").arg(fileold_path).arg(apth.at(apth.size()-1));
 
         // zkopirovat soubor
         QFile::copy(old_file, new_file);
@@ -1428,9 +1434,14 @@ int ImportPage::nextId() const
       }
       else if (coords.size() > 0)
       {
-        QStringList apth = coords.at(1).split("\\");
-        QString new_file = QString("%1\\%2").arg(pathDir).arg(apth.at(apth.size()-1));
-        QString old_file = QString("%1\\%2").arg(fileold_path).arg(apth.at(apth.size()-1));
+        QStringList apth = coords.at(1).split("/");
+        if(apth.size() == 1)
+          {
+            apth.clear();
+            apth = coords.at(1).split("\\");
+        }
+        QString new_file = QString("%1/%2").arg(pathDir).arg(apth.at(apth.size()-1));
+        QString old_file = QString("%1/%2").arg(fileold_path).arg(apth.at(apth.size()-1));
         // zkopirovat soubor
         QFile::copy(old_file, new_file);
         //ulozit do proj.3df
@@ -2105,9 +2116,6 @@ QList<QString> ExportCrownAttr:: get_inputList()
 Visualizer::Visualizer()
 {
   PCLVisualizer ("3D Viewer", false);
-
-
-
 
 
 }

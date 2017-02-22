@@ -17,7 +17,7 @@
 #define MAINWINDOW_H_INCLUDED
 
 #include <QVTKWidget.h>
-#include <QtGui/QMainWindow>
+#include <QtWidgets/QMainWindow>
 #include "gui.h"
 #include "project.h"
 #include "hull.h"
